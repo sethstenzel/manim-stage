@@ -14,7 +14,7 @@ How Motion Canvas features map to manim-stage. Behaviour is described in our own
 | `waitUntil` / time events | Named events; absolute scene-relative times in a `.meta` sidecar; drag ripples later events | `self.cue(...)` with `cues.json` (ADR-0006). Adds validation, orphan detection, atomic writes, undo, headless bake | Planned (M2) |
 | Audio | One audio track per project, offset only (multi-sound unreleased) | [Audio workspace](../manim-stage/audio.md): many clips per scene with start/trim/gain/fades/mute/solo on Manim's `add_sound`; waveforms; synced preview | Available |
 | Code animations | Token-level patience diff; unchanged tokens slide, changed ones cross-fade | [`AnimatedCode`](../manim-stage/animated-code.md): `animate_to` / `replace` / `insert` / `remove`. Line-level patience diff, then a token LCS; adds moved-line detection, override mappings and ambiguity warnings | Available |
-| Signals | Lazy computed values with dependency tracking | Derived values built on `ValueTracker` and updaters (no separate signal model) | Planned (M3) |
+| Signals | Lazy computed values with dependency tracking | [`Signal`](../manim-stage/signals.md) *is* a `ValueTracker`; `computed`, `bind`, `effect` are cached updaters | Available |
 | Project variables | Reactive variables, untyped, no editor UI | Typed, validated project variables and themes | Planned (M3) |
 | Inspector | Read-only node inspection | Opt-in inspector with editing persisted to a sidecar | Planned (M3) |
 | Transitions | Slide/fade/zoom between scenes | File-level transitions between scenes | Planned (M3) |
@@ -35,7 +35,7 @@ Motion Canvas concepts are ported into Manim's model. They stay available under 
 | `waitFor(s)` | unchanged: `self.wait(s)` | `Scene.wait` | Available (Manim) |
 | `waitUntil("name")`, time events | [`self.cue("name", at=, after=)`](../manim-stage/cues.md) | `Scene.wait` | Available (incl. timeline dragging, ripple, undo) |
 | Timing functions / easing | unchanged: `rate_func` | `manim.rate_functions` | Available (Manim) |
-| `createSignal`, computed, effects | `Signal`, `computed`, `effect` | `ValueTracker`, updaters | Planned (M3) |
+| `createSignal`, computed, effects | [`Signal`, `computed`, `effect`, `bind`](../manim-stage/signals.md) | `ValueTracker`, updaters | Available |
 | Project variables | `stage.variables`, project theme | `config` | Planned (M3) |
 | Slides | unchanged: sections (`next_section`) | `Scene.next_section` | Available (Manim) |
 | Code block, `lines()`, `word()`, ranges | [`AnimatedCode`](../manim-stage/animated-code.md), `CodeRange`, `lines()`, `word()`, `find()` | `VGroup` of token Mobjects | Available |
