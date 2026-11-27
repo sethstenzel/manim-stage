@@ -28,6 +28,7 @@ A local, offline reference for **every manim-stage feature and how to use it**. 
 | [Frame cache and preview frames](manim-stage/frame-cache.md) | Cache every frame for scrubbing; parallel drawing | Available | Cairo | F01, §4 P1 |
 | [Studio editor](manim-stage/studio-editor.md) | Python (PySide6) desktop editor: scene picker, viewport, playback, live reload, errors | Partial (export: Planned) | Cairo | F01 |
 | [Command line](manim-stage/cli.md) | `manim-stage studio / scenes / timeline / doctor / cache` | Available | — | F01 |
+| [Library and catalog](manim-stage/library.md) | Searchable catalog of every Manim feature (mobjects, animations, rate functions with curves, colours, scene types) plus manim-stage APIs; copy-Python snippets; `manim-stage catalog` | Available | — | MF.1, MF.4 |
 | [Demo parameters](manim-stage/demo-params.md) | `demo.param(...)` knobs with live Studio controls (Demo tab); exports use defaults unless baked | Available | — | F12 |
 | [Web player with chapters](manim-stage/web-player.md) | `manim-stage web` / Export option: static player, chapters from sections, captions, poster | Available | — | F12 |
 | [Educational helpers](manim-stage/edu.md) | Array, LinkedList, Tree/tree_layout, label_edges, CallStack, SequenceDiagram; data-driven traces (`trace_calls`, `Trace`, `play_trace`) | Available | — | F12 |
@@ -77,6 +78,7 @@ A local, offline reference for **every manim-stage feature and how to use it**. 
 | Run a scene safely in the background and get errors with line numbers | [Scene runner](manim-stage/runner.md) |
 | Find which line produced a moment in the video | [Timeline](manim-stage/timeline.md#quick-start) |
 | See a LaggedStart's staircase and each animation's rate_func | [Timeline → how it works](manim-stage/timeline.md#how-it-works) |
+| Find a Manim class, animation or rate function and its snippet | [Library](manim-stage/library.md#quick-start) |
 | Explore a scene with sliders while presenting | [Demo parameters](manim-stage/demo-params.md#quick-start) |
 | Share a video with chapters as a web page | [Web player](manim-stage/web-player.md#quick-start) |
 | Animate an array, tree, call stack or protocol | [Educational helpers](manim-stage/edu.md#quick-start) |

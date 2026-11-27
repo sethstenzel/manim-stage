@@ -2,6 +2,13 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-27 — Library tab and feature catalog (backlog MF.1, MF.4)
+
+- **New:** [Library](manim-stage/library.md):
+  - a catalog of everything `from manim import *` provides (144 mobjects, 74 animations, 47 rate functions, 89 colours, scene and camera types…) plus manim-stage APIs;
+  - each entry has its signature, summary, docs link and a Copy Python snippet; rate functions show their curve.
+- **New:** `manim-stage catalog` (search or `--json`).
+
 ## 2026-11-27 — demo parameters and web player (backlog 4.3)
 
 - **New:** [`demo.param(...)`](manim-stage/demo-params.md) and the Studio **Demo** tab:
