@@ -32,26 +32,22 @@ from .project import VAR_TYPES, ProjectError, Variable, _infer, _validate
 ENV = "MANIM_STAGE_DEMO"
 USED: dict[str, dict[str, Any]] = {}  # params read in this process (reported to the Studio)
 
-_cache: tuple[str, float, dict[str, Any]] | None = None
-
-
 def overrides() -> dict[str, Any]:
-    """The current override values (``{}`` when no override file is set)."""
-    global _cache
+    """The current override values (``{}`` when no override file is set).
+
+    Read on every call: the file is tiny, and an mtime cache can miss a rewrite that
+    lands within the file system's timestamp resolution.
+    """
     path = os.environ.get(ENV)
     if not path:
         return {}
-    p = Path(path)
     try:
-        mtime = p.stat().st_mtime
+        text = Path(path).read_text(encoding="utf-8")
     except OSError:
         return {}
-    if _cache and _cache[0] == path and _cache[1] == mtime:
-        return _cache[2]
-    data = json.loads(p.read_text(encoding="utf-8") or "{}")
+    data = json.loads(text or "{}")
     if not isinstance(data, dict):
         raise ProjectError(f"{path}: demo overrides must be a JSON object")
-    _cache = (path, mtime, data)
     return data
 
 
