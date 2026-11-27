@@ -1,0 +1,46 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uvx ruff check .
+      - run: uvx ruff format --check src tests scripts
+
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python: ["3.11", "3.12", "3.13"]
+    env:
+      PYTHONIOENCODING: utf8
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: System libraries for pycairo/manimpango (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libcairo2-dev libpango1.0-dev pkg-config
+
+      - name: System libraries for pycairo/manimpango (macOS)
+        if: runner.os == 'macOS'
+        run: brew install cairo pango pkg-config
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python }}
+          enable-cache: true
+
+      - run: uv sync --locked
+      - run: uv run pytest

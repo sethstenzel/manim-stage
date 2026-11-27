@@ -24,5 +24,10 @@
 - `docs/architecture-decisions.md` — ADRs
 - `docs/backlog.md` — implementation backlog
 
+## Dev commands
+- `uv sync` → venv with Manim pinned to the commit in `pyproject.toml` (`[tool.uv.sources]`)
+- `uv run pytest` · `uv run ruff check .` · `uv run ruff format src tests scripts`
+- All Manim-version-specific code goes in `src/manim_stage/_compat.py` (feature-detected, not version-checked).
+
 ## Environment notes
 - Primary dev machine is Windows; keep scripts cross-platform (stdlib Python, no bash-only tooling).

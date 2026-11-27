@@ -105,8 +105,13 @@ def new_tags(path: Path, pin: str) -> list[str]:
     descendants = set(git(path, "tag", "--contains", pin).splitlines())
     pin_time = int(git(path, "show", "-s", "--format=%ct", pin))
     out = []
-    refs = git(path, "for-each-ref", "--sort=-creatordate",
-               "--format=%(refname:short) %(creatordate:unix)", "refs/tags")
+    refs = git(
+        path,
+        "for-each-ref",
+        "--sort=-creatordate",
+        "--format=%(refname:short) %(creatordate:unix)",
+        "refs/tags",
+    )
     for line in refs.splitlines():
         name, _, ts = line.rpartition(" ")
         if name and name not in pinned and (name in descendants or int(ts) > pin_time):
@@ -150,10 +155,14 @@ def cmd_status(args: argparse.Namespace) -> int:
         print(f"== {name} ({r['role']}) pinned at {r['pinned_ref']} ({r['pinned_commit'][:9]})")
         print(f"   {r['branch']} tip: {r['branch_tip'][:9]}")
         tags = r["new_tags"]
-        print(f"   New tags since pin: {', '.join(tags[:10]) if tags else 'none'}"
-              + (f" (+{len(tags) - 10} more)" if len(tags) > 10 else ""))
-        print(f"   Commits since pin: {r['commits_total']} total, "
-              f"{len(r['commits_watched'])} touching watched paths")
+        print(
+            f"   New tags since pin: {', '.join(tags[:10]) if tags else 'none'}"
+            + (f" (+{len(tags) - 10} more)" if len(tags) > 10 else "")
+        )
+        print(
+            f"   Commits since pin: {r['commits_total']} total, "
+            f"{len(r['commits_watched'])} touching watched paths"
+        )
         for line in r["commits_watched"][:25]:
             print(f"     {line}")
         if len(r["commits_watched"]) > 25:
@@ -199,24 +208,35 @@ def cmd_bump(args: argparse.Namespace) -> int:
     path = ensure_checkout(args.name, up)
     sha = resolve(path, args.ref)
     old = up["pinned"]
-    ancestor = subprocess.run(
-        ["git", "-C", str(path), "merge-base", "--is-ancestor", old["commit"], sha]
-    ).returncode == 0
+    ancestor = (
+        subprocess.run(
+            ["git", "-C", str(path), "merge-base", "--is-ancestor", old["commit"], sha]
+        ).returncode
+        == 0
+    )
     if not ancestor:
         print(f"warning: {args.ref} is not a descendant of the current pin", file=sys.stderr)
     label = args.label or args.ref
     up["pinned"] = {"ref": label, "commit": sha}
     save_config(config)
     print(f"{args.name}: {old['ref']} ({old['commit'][:9]}) -> {label} ({sha[:9]})")
-    if up["role"] == "dependency":
-        print("Reminder: update the version constraint in pyproject.toml (once it exists) "
-              "and run the full test suite against the new version.")
+    pyproject = ROOT / "pyproject.toml"
+    text = pyproject.read_text(encoding="utf-8") if pyproject.exists() else ""
+    if old["commit"] in text:
+        pyproject.write_text(text.replace(old["commit"], sha), encoding="utf-8", newline="\n")
+        print("Updated the pinned commit in pyproject.toml. Run `uv lock` and the test suite.")
+    elif up["role"] == "dependency":
+        print(
+            "Reminder: update the version constraint in pyproject.toml, run `uv lock` "
+            "and the full test suite against the new version."
+        )
     return 0
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__,
-                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     sub = parser.add_subparsers(dest="cmd")
 
     p = sub.add_parser("status")
