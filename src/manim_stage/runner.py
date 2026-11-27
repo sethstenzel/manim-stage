@@ -472,8 +472,12 @@ def run_capture(
     seed: int = 0,
     timeout: float | None = 300,
     python: str = sys.executable,
+    cwd: str | os.PathLike[str] | None = None,
 ) -> RunResult:
     """Run the scene in fresh child processes and collect its timeline (and frames).
+
+    Children run in ``cwd`` (default: the scene file's folder), so relative asset
+    paths resolve as they do when you run ``manim`` from that folder.
 
     With ``cache_dir`` and ``workers > 1``, frame drawing is split across that many
     children; each replays the scene from the start (cheap without drawing) and draws
@@ -483,6 +487,10 @@ def run_capture(
 
     if cache_dir is None:
         workers = 1
+    file = Path(file).resolve()
+    if cache_dir is not None:
+        cache_dir = Path(cache_dir).resolve()
+    workdir = Path(cwd).resolve() if cwd else file.parent
 
     def one(shard: int) -> RunResult:
         # Manim writes Text/SVG caches into media_dir without locking; concurrent
@@ -495,7 +503,7 @@ def run_capture(
         )  # fmt: skip
         proc = subprocess.run(
             cmd, capture_output=True, text=True, encoding="utf-8", timeout=timeout,
-            env=child_env(),
+            env=child_env(), cwd=workdir,
         )  # fmt: skip
         return _parse(proc.stdout, proc.stderr, proc.returncode)
 

@@ -19,6 +19,7 @@ a helper module or replacing an image invalidates cached frames.
 from __future__ import annotations
 
 import contextlib
+import functools
 import hashlib
 import os
 import sys
@@ -41,13 +42,14 @@ def _hook(event: str, args: tuple) -> None:
         rec._seen.add(os.fsdecode(path))
 
 
-def _system_roots() -> list[Path]:
+@functools.lru_cache(maxsize=1)
+def _system_roots() -> tuple[Path, ...]:
     roots = {sys.prefix, sys.base_prefix, sys.exec_prefix, sys.base_exec_prefix}
     for key in ("stdlib", "platstdlib", "purelib", "platlib"):
         with contextlib.suppress(Exception):
             roots.add(sysconfig.get_path(key))
     roots.add(str(Path(__file__).resolve().parent))  # manim_stage itself
-    return [Path(r).resolve() for r in roots if r]
+    return tuple(Path(r).resolve() for r in roots if r)
 
 
 class DependencyRecorder:
@@ -74,7 +76,7 @@ class DependencyRecorder:
 
     def files(self) -> list[Path]:
         """Existing project files, resolved, sorted, without duplicates."""
-        skip = _system_roots() + self._exclude
+        skip = [*_system_roots(), *self._exclude]
         out: set[Path] = set()
         for raw in self._seen:
             try:

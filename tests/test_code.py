@@ -125,3 +125,11 @@ def test_layout_is_deterministic():
     a, b = AnimatedCode(SRC), AnimatedCode(SRC)
     for x, y in zip(a.family_members_with_points(), b.family_members_with_points(), strict=True):
         assert np.array_equal(x.points, y.points)
+
+
+def test_ligatures_do_not_merge_glyphs():
+    """JetBrains Mono turns '==', '->', '!=' into ligatures unless disabled; every
+    character must stay its own glyph so tokens map to glyphs exactly."""
+    c = AnimatedCode("if a == b and c != d:\n    f = lambda x: x >= 0 -> None\n")
+    for t, m in zip(c.tokens, c.token_mobjects, strict=True):
+        assert len(m) == len(t.text.replace(" ", "")), t

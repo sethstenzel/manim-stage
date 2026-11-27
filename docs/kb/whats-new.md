@@ -2,6 +2,14 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-27 — M2 gate passed: narrated bubble-sort demo (backlog 2.7)
+
+- **New:** `examples/bubble_sort/` and the [tutorial](tutorials/narrated-bubble-sort.md): narration + cues + AnimatedCode, with no `wait()` timing.
+- **Report:** `docs/m2-gate-report.md`. Headless renders are pixel-reproducible, and the F03 scenario passes: a 30 → 35 s take, five cues moved, no Python edits.
+- **Fixed:** AnimatedCode disables font ligatures (`==`, `->` and `!=` used to merge glyphs).
+- **Faster:** AnimatedCode lays out uncached lines in one Pango call and skips Manim's system-font scan (cold demo timeline 43 s → 13 s).
+- **Changed:** `run_capture` runs children in the scene's folder (`cwd=`), like the Studio. Narration events point at the user's line.
+
 ## 2026-11-27 — animated code edits (backlog 2.6)
 
 - **New:** [`code.animate_to(new_source)`](manim-stage/animated-code.md#animated-edits): kept tokens slide, others fade, and highlights survive. Also `replace`, `insert` and `remove`.

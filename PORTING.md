@@ -27,6 +27,7 @@ Newest first. One line per decision; details in the linked ADR or PR.
 
 | Date | Decision | Why | Where |
 |---|---|---|---|
+| 2026-11-27 | M2 gate passed. AnimatedCode: ligatures off, all uncached lines in one Pango call, no system-font scan; `run_capture` cwd = scene folder | Exact glyph↔char mapping; a cold Pango call costs ~3.4 s on Windows; relative assets behave like `manim` | PR #25 |
 | 2026-11-27 | Code diff = patience lines → token LCS + moved lines + overrides + ambiguity warnings; `CodeEdit` interpolates raw arrays; line-glyph cache | MC behaviour plus explicit control; deterministic and fast enough for many edits | PR #24 |
 | 2026-11-27 | AnimatedCode: token = VGroup of glyphs; one MarkupText per line; marker glyph for exact grid; VectorizedPoint anchors; bundled JetBrains Mono; 1-based lines/cols | Fast, exact, OS-independent layout that survives transforms; editor-style coordinates | PR #23 |
 | 2026-11-27 | Voiceover = `self.narration()` on add_sound/add_subcaption/cues; bookmarks are cues `<name>.<mark>`; no TTS in core; manim-voiceover cache importer instead of a runtime dependency | manim-voiceover breaks on 0.30; keep concepts (ADR-0013); draggable bookmarks | PR #22 |
@@ -219,6 +220,8 @@ One record per Motion Canvas feature. Status: **Ported** (implemented and tested
 - **Implementation:** `src/manim_stage/studio/service.py`, `watcher.py`, `playback.py`, `app.py`, `ui/` (main window, viewport, transport, log, theme, icons); `deps.py`, `runner.py` (`RunnerProcess`, `--list`). Tests: `test_service.py`, `test_watcher.py`, `test_playback.py`, `test_studio_ui.py` (pytest-qt, offscreen on all CI OSes). KB: `preview-service.md`, `studio-editor.md`.
 
 ## 4. Processes in use
+
+- **Milestone gates:** each milestone ends with a gate report (`docs/m0-gate-report.md`, `m1-`, `m2-`), an end-to-end test of the spec's acceptance scenario, and measurements.
 
 - **Upstream sync:** `docs/upstream-sync.md`, `/upstream-sync` skill, weekly watch workflow. Each sync classifies upstream changes Adopt/Adapt/Inspire/Ignore and updates the KB and this file when a port is affected.
 - **PR flow:** one backlog item per PR; CI on Windows/Linux/macOS × Python 3.11–3.13; merge when green. PR template checklist includes KB and this file.

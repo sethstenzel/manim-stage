@@ -42,6 +42,12 @@ A local, offline reference for **every manim-stage feature and how to use it**. 
 | [Evaluate and timeline export](manim/evaluate-and-timeline.md) | `Manager.evaluate`, `--timeline-output`, frame-quantized time | Experimental (0.30 line) |
 | [Sound and sections](manim/sound-and-sections.md) | `add_sound`, `next_section`, `--save_sections`, MP4 chapters | Stable API; 0.30 mixer |
 
+### Tutorials
+
+| Page | What |
+|---|---|
+| [Narrated bubble sort](tutorials/narrated-bubble-sort.md) | End-to-end lesson: narration, cues, AnimatedCode; re-time to a new take without touching Python |
+
 ### Reference
 
 | Page | What |
@@ -66,6 +72,7 @@ A local, offline reference for **every manim-stage feature and how to use it**. 
 | Check what my machine can render (LaTeX, fonts, codecs) | [CLI → doctor](manim-stage/cli.md#commands) |
 | Print a scene's timing without opening the editor | [CLI → timeline](manim-stage/cli.md#quick-start) |
 | Make animations wait for the narration without hand-tuned waits | [Named cues](manim-stage/cues.md#quick-start) |
+| Build a narrated lesson end to end | [Tutorial: narrated bubble sort](tutorials/narrated-bubble-sort.md) |
 | Animate a code edit | [AnimatedCode → animated edits](manim-stage/animated-code.md#animated-edits) |
 | Show code and highlight lines or words | [AnimatedCode](manim-stage/animated-code.md#quick-start) |
 | Narrate with a recording and wait for words in it | [Narration](manim-stage/narration.md#quick-start) |
