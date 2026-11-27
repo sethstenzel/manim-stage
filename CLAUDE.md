@@ -6,7 +6,8 @@
 
 ## Hard rules (from spec §2, §12)
 - Manim stays the engine and source of truth. Existing Manim scripts must render identically. New behavior is opt-in.
-- Python is the authoring API. The editor (TS/React) is a control/visualization layer, never a renderer.
+- Python is the authoring API **and** the editor language (PySide6, ADR-0012). The editor is a control/visualization layer, never a renderer.
+- Use Manim terminology and concepts everywhere (ADR-0013); map Motion Canvas features onto them.
 - Never copy Motion Canvas source or UI assets. Describe its behavior in your own words.
 - Don't monkeypatch Manim internals without a documented, tested, short-lived adapter. Prefer narrow upstream PRs.
 - Local server binds 127.0.0.1; CSRF/origin checks on state-changing endpoints.

@@ -47,12 +47,12 @@ A local, offline knowledge base in `docs/kb/` covering **every feature and how t
 
 | # | Item | Status | Notes |
 |---|---|---|---|
-| 1.1 | Preview service: 127.0.0.1, host/origin checks, CSRF token, versioned WebSocket protocol, revision discard, cancel/restart; dependency-aware revisions (hash imported modules/assets) | ☐ | F01, spec §2.8; gate-report risk 2; ADR-0010 |
+| 1.1 | `PreviewService` (no Qt, no socket): revisions, cancel/restart, stale-message discard, typed `PreviewMessage` events; dependency-aware revisions (hash imported modules/assets) | ☐ | F01; gate-report risk 2; ADR-0010 |
 | 1.2 | File watcher (debounce 200–500 ms) → new runner revision; traceback with file/line | ☐ | F01 |
-| 1.3 | Editor shell (React/TS): scene picker, viewport, play/pause/step/speed, timecode, zoom/fit, dark/light, keyboard shortcuts, accessibility | ☐ | F01, ADR-0012 |
+| 1.3 | Editor shell (Python/PySide6): scene picker, viewport, play/pause/step/speed, timecode, zoom/fit, dark/light, keyboard shortcuts, accessibility | ☐ | F01, ADR-0012, ADR-0013 |
 | 1.4 | Timeline UI: ruler (s/frames), zoom, range, play/wait/section/sound tracks, nested children, jump-to-source | ☐ | F02 |
 | 1.5 | Snapshot + range/full export through Manim CLI with progress/cancel | ☐ | F01, F10 |
-| 1.6 | `manim-stage studio` CLI; wheel ships prebuilt editor | ☐ | ADR-0009 |
+| 1.6 | `manim-stage studio` CLI; `[studio]` extra; packaging smoke test | ☐ | ADR-0009 |
 
 ## Manim feature coverage in the editor (continuous, requested by owner 2026-11-27)
 
@@ -87,7 +87,7 @@ The editor must cover every Motion Canvas editor capability **and** surface Mani
 
 | # | Item | Status | Notes |
 |---|---|---|---|
-| 3.1 | Signals: `Signal[T]`, `computed`, `effect`, `bind` on `ValueTracker` storage; cycle detection, disposal | ☐ | F06 |
+| 3.1 | Derived values on `ValueTracker` (F06 in Manim terms, ADR-0013): derived trackers, bound updaters, dependency tracking, cycle detection, disposal | ☐ | F06 |
 | 3.2 | Project config / variables / themes (`project.json` settings, `stage.theme`) resolved identically in CLI and Studio | ☐ | F07 |
 | 3.3 | `expose()` editable properties + inspector editing, sidecar persistence, undo/redo, copy-as-Python | ☐ | F08 |
 | 3.4 | Transitions + choreography helpers; multi-scene sequence with cross-scene transitions | ☐ | F09 |

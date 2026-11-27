@@ -122,22 +122,19 @@ Record of decisions required by the spec (§3, §12.9). Status: Proposed → Acc
 - **Decision:**
   - Distribution `manim-stage`, import `manim_stage`, console script `manim-stage` (`manim-stage studio lesson.py Scene`, `manim-stage bake`, `manim-stage validate`). Manim's CLI has no subcommand plugin hook.
   - Editor-extension entry-point group `manim_stage.plugins` with a version handshake.
-  - Optional extras: `[voiceover]`, `[treesitter]`, `[dev]`.
-  - Editor: React + TypeScript, pinned lockfile, prebuilt assets shipped inside the wheel so end users need no Node.
+  - Optional extras: `[studio]`, `[voiceover]`, `[treesitter]`.
+  - Editor: Python + PySide6 in the `studio` extra (ADR-0012 supersedes the React/TS plan).
 
-## ADR-0010 — Preview service: aiohttp, one WebSocket, token + origin checks
+## ADR-0010 — Studio core: in-process Python service, no network listener by default
 
-- **Status:** Accepted (2026-11-27)
-- **Context:** spec §2.8, §4, §8 `PreviewMessage`. Needs HTTP (editor assets, frame PNGs), a WebSocket (commands/events), Windows/Linux/macOS, few dependencies.
+- **Status:** Accepted (2026-11-27). Supersedes the first draft of this ADR (aiohttp WebSocket server), after the owner's direction that the editor is implemented in Python as one cohesive application.
+- **Context:** spec §4 asks for a preview service between runner and editor, and §2.8 for 127.0.0.1 binding with CSRF/origin protection. With a Python editor in the same process, a network service adds attack surface for no benefit.
 - **Decision:**
-  - `aiohttp` (one package: HTTP server, WebSocket, static files; no ASGI server). Shipped in the optional `studio` extra so headless users (`cue`, `AnimatedCode`, `bake`) don't pull it.
-  - Binds `127.0.0.1` only; refuses other hosts unless `--host` is given with an explicit `--allow-remote` (documented as unsafe).
-  - **Host check** on every request (`127.0.0.1:<port>` / `localhost:<port>`) against DNS rebinding.
-  - **Session token:** random 32-byte token printed in the editor URL; required on the WebSocket handshake (`?token=`) and as `X-Stage-Token` on every non-GET request. **Origin check** on the WebSocket and state-changing requests: must equal the server's own origin.
-  - Frames are served by `GET /frames/<revision>/<index>.png` (revision regex-validated, no path joins with user input), cacheable forever (content-addressed).
-  - Protocol `manim_stage.preview` v1, JSON over one WebSocket; every message has `v`, `type`; requests carry `id`. Schema in `docs/schemas/preview-message.schema.json`.
-  - Revisions are monotonically increasing integers per scene. Messages tagged with an older revision are dropped by server and client. A new revision cancels (kills) the previous runner.
-  - **Dependency-aware revision:** the runner reports the files of user modules it imported (outside site-packages/stdlib) plus assets passed to `add_sound`/`ImageMobject`/`SVGMobject`; the service watches all of them and the cache key includes their content hashes.
+  - `manim_stage.studio.service.PreviewService`: a pure-Python, GUI-independent controller (threads + queues, no Qt imports). It owns runner child processes (ADR-0004), revisions, cancellation, file watching and the frame cache, and publishes typed `PreviewMessage` events (spec §8) to subscribers. Unit-tested headless.
+  - The editor subscribes in-process. **No socket is opened by default**, so the §2.8 trust boundary is just "loading a scene executes local Python"; documented in the KB.
+  - Revisions are monotonically increasing integers per scene. A new revision cancels (kills) the previous runner; messages tagged with an older revision are dropped.
+  - **Dependency-aware revision:** the runner reports the user modules it imported (outside site-packages/stdlib) and assets Manim loaded (sounds, images, SVGs); the service watches all of them and the cache key includes their content hashes.
+  - If a network transport is ever added (e.g. F12 web playback, remote control), it must bind 127.0.0.1, check Host/Origin and require a session token; it is a separate ADR.
 
 ## ADR-0011 — Manim feature coverage via an introspected catalog
 
@@ -148,11 +145,29 @@ Record of decisions required by the spec (§3, §12.9). Status: Proposed → Acc
   - Categories are derived from module paths, with a small override table for curated grouping. A test asserts every name in `manim.__all__` maps to a category or an explicit ignore list, so a sync that adds a public feature fails until it is classified (and the KB updated).
   - The editor consumes the catalog (library panel, timeline colouring, inspector, config panel). Nothing in the editor hardcodes Manim class lists.
 
-## ADR-0012 — Editor stack
+## ADR-0012 — Editor stack: Python + Qt (PySide6)
 
-- **Status:** Accepted (2026-11-27)
+- **Status:** Accepted (2026-11-27). Supersedes the first draft (React/TypeScript). Owner direction: implement the best of Motion Canvas **in Python, including the editor**, as one cohesive application.
 - **Decision:**
-  - `editor/`: React 18 + TypeScript + Vite, npm with committed `package-lock.json`. No UI component framework (small bundle, own accessible components). Vitest for unit tests.
-  - Build output goes to `src/manim_stage/studio/static/` (gitignored); CI builds it before packaging; wheels include it (hatch `artifacts`).
-  - The server serves a plain fallback page when the build is missing (dev checkouts without Node).
+  - Desktop editor written in Python with **PySide6** (Qt for Python, LGPLv3, used as an unmodified dynamic dependency; noted in `NOTICE`). Cross-platform (Windows/Linux/macOS), no Node or browser required. Spec F01's "browser-based (preferred)" is a preference; Python-only wins on cohesion.
+  - Shipped in the optional `studio` extra: `pip install manim-stage[studio]`. Headless features (cues, `AnimatedCode`, `bake`) don't need Qt.
+  - Layering: `studio.service` (no Qt) ← `studio.models` (Qt models/adapters) ← `studio.widgets` (viewport, timeline, panels). Widgets never render scenes; they display runner frames (spec §4: the editor is not a second renderer).
+  - Timeline and viewport are custom `QWidget`/`QPainter` widgets. Accessibility: accessible names on every control, full keyboard navigation, non-colour signals, honours system text scaling.
+  - Tests: `pytest` with `QT_QPA_PLATFORM=offscreen` on all CI OSes; widget logic kept in plain-Python helpers where possible.
   - No Motion Canvas UI code or assets; layout ideas described in our own words only.
+
+## ADR-0013 — Manim terminology and concepts first
+
+- **Status:** Accepted (2026-11-27). Owner direction: keep Manim's abstractions, terminology and methodology; bring Motion Canvas's best features *into* them.
+- **Decision:**
+  - Every API, UI label, file format and KB page uses Manim's vocabulary: `Scene`, `construct`, `Mobject`/`VMobject`, `Animation`, `play`, `wait`, `run_time`, `rate_func`, `lag_ratio`, `AnimationGroup`/`LaggedStart`, `ValueTracker`, updaters, sections, `config`, renderer, camera.
+  - Motion Canvas concepts are mapped, not imported:
+    - time events / `waitUntil` → **cues** (`self.cue(...)`, a timed `wait`) — ADR-0006;
+    - signals / computed → **`ValueTracker`-based derived values and updaters** (F06 builds on `ValueTracker`, `add_updater`, `always_redraw`; no parallel "signal" object model);
+    - nodes / scene graph → **Mobject families** (`submobjects`);
+    - generator threads → **`AnimationGroup`/`LaggedStart`/`Succession`** and `play` calls;
+    - project variables → **`config` + a project theme** layered on `ManimConfig`;
+    - code block → **`AnimatedCode`**, alongside `manim.Code`;
+    - scene transitions → **Manim `Animation`s** across scene boundaries.
+  - The mapping table lives in `docs/kb/reference/motion-canvas-equivalents.md`. Where Manim has no term, choose a plain English one and record it there.
+

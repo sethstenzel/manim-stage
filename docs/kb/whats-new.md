@@ -2,6 +2,12 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-27 — M1 plan
+
+- **Decided:** the Studio editor is written in Python (PySide6), with no web server (ADR-0010, ADR-0012).
+- **Decided:** Manim terminology everywhere. See the new [terminology table](reference/motion-canvas-equivalents.md#terminology-motion-canvas--manim-adr-0013) (ADR-0013).
+- **Planned:** the editor surfaces every Manim feature through an introspected catalog (ADR-0011, backlog MF track).
+
 ## 2026-11-26 — M0 gate: deterministic replay (backlog 0.9)
 
 - **Runner always seeds randomness** (`--seed`, default 0, part of the revision). Seeded `random`/`numpy.random` scenes now replay identically across workers.

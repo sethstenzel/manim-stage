@@ -24,7 +24,7 @@ A local, offline reference for **every manim-stage feature and how to use it**. 
 | [Event capture](manim-stage/event-capture.md) | Turn a scene into frame-exact timeline events | Available | Cairo | F02 |
 | [Scene runner](manim-stage/runner.md) | Run a scene in a child process; JSON-lines protocol; errors with file/line | Available | Cairo | F01 |
 | [Frame cache and preview frames](manim-stage/frame-cache.md) | Cache every frame for scrubbing; parallel drawing | Available | Cairo | F01, §4 P1 |
-| Studio editor | Browser editor: viewport, playback, timeline | Planned (M1) | — | F01, F02 |
+| Studio editor | Python (PySide6) desktop editor: viewport, playback, timeline, Manim library | Planned (M1) | — | F01, F02 |
 | Named cues (`self.cue`) | Narration-aligned timing with editable sidecar | Planned (M2) | — | F03 |
 | Audio workspace | Waveforms, offset/trim/fade, voiceover adapter | Planned (M2) | — | F04 |
 | `AnimatedCode` | Token-level code-diff animations | Planned (M2) | — | F05 |
@@ -40,7 +40,7 @@ A local, offline reference for **every manim-stage feature and how to use it**. 
 
 | Page | What |
 |---|---|
-| [Motion Canvas equivalents](reference/motion-canvas-equivalents.md) | Motion Canvas feature → manim-stage status |
+| [Motion Canvas equivalents](reference/motion-canvas-equivalents.md) | Motion Canvas feature → manim-stage status; MC → Manim terminology |
 | [Data formats and the time model](reference/data-formats.md) | JSON contracts (timeline, runner messages, cues, project) and frame/time rules |
 | [Upstream sync](workflow/upstream-sync.md) | How new Manim / Motion Canvas changes are brought in |
 | [Regression tests and golden frames](workflow/regression-tests.md) | Proving manim-stage never changes Manim output; catching upstream rendering changes |
