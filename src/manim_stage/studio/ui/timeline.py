@@ -14,6 +14,10 @@ Mouse: click the ruler or empty space to seek (drag to scrub); click a bar to se
 double-click a bar to open its source line. Ctrl+wheel zooms around the cursor;
 Shift+wheel or a horizontal wheel scrolls. Keyboard (when focused): Alt+←/→ previous/
 next event, Enter go to selected event, Ctrl+Enter open source, +/− zoom, F fit.
+
+Cues (StageScene): drag a cue flag to retime it; Shift while dragging ripples later
+cues. Alt+Shift+←/→ nudges the selected cue one frame (add Ctrl to ripple). Esc
+cancels a drag.
 """
 
 from __future__ import annotations
@@ -47,6 +51,7 @@ from PySide6.QtWidgets import (
 )
 
 from ...catalog import CATEGORY_LABELS
+from ..cue_edit import CueInfo, MovePlan, plan_move
 from ..timeline_model import EventBox, Layout, build_layout, ruler_ticks
 from .theme import category_color, colors, is_dark
 
@@ -99,6 +104,7 @@ class TimelineCanvas(QWidget):
     seekRequested = Signal(int)
     eventSelected = Signal(object)  # EventBox | None
     sourceRequested = Signal(object)  # EventBox
+    cueMoved = Signal(object)  # MovePlan (drop or keyboard nudge)
     viewChanged = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
@@ -116,6 +122,8 @@ class TimelineCanvas(QWidget):
         self.selected: str | None = None
         self.hover: str | None = None
         self._drag_seek = False
+        self._drag_cue: str | None = None
+        self.drag_plan: MovePlan | None = None
         fm = QFontMetrics(self.font())
         self.row_h = max(22, fm.height() + 8)
 
@@ -242,6 +250,8 @@ class TimelineCanvas(QWidget):
             if rect.right() < LABEL_W or rect.left() > self.width():
                 continue
             self._paint_box(p, c, box, rect)
+        if self.drag_plan is not None:
+            self._paint_drag(p, c, self.drag_plan)
         self._paint_playhead(p, c)
         p.end()
 
@@ -344,7 +354,8 @@ class TimelineCanvas(QWidget):
         if rect.width() > 28:
             label = box.label
             if box.kind == "wait":
-                label = "wait (frozen)" if box.meta.get("frozen") else "wait"
+                base = f"cue {box.meta['cue']}" if box.meta.get("cue") else "wait"
+                label = f"{base} (frozen)" if box.meta.get("frozen") else base
             fm = p.fontMetrics()
             text = fm.elidedText(label, Qt.TextElideMode.ElideRight, int(rect.width() - 8))
             p.setPen(QColor("#ffffff") if cat != "wait" else QColor(c["text"]))
@@ -385,6 +396,53 @@ class TimelineCanvas(QWidget):
         p.setBrush(col)
         p.drawPolygon(QPolygonF([QPointF(x - 6, 0), QPointF(x + 6, 0), QPointF(x, 8)]))
 
+    def _paint_drag(self, p: QPainter, c: dict[str, str], plan: MovePlan) -> None:
+        """Preview of a cue drag: shifted downstream events, new cue positions, delta."""
+        rects = self.box_rects()
+        dx = plan.delta * self.ppf
+        ghost = QColor(c["text"])
+        ghost.setAlpha(140)
+        p.setBrush(Qt.BrushStyle.NoBrush)
+        p.setPen(QPen(ghost, 1, Qt.PenStyle.DashLine))
+        for box, rect, _ in rects:
+            if box.kind == "cue" or box.start < plan.shift_from:
+                continue
+            if plan.shift_until is not None and box.start >= plan.shift_until:
+                continue
+            p.drawRoundedRect(rect.translated(dx, 0), 3, 3)
+        cue_col = QColor(category_color("cue"))
+        for box, _rect, _ in rects:
+            name = box.meta.get("name") if box.kind == "cue" else None
+            if name in plan.targets:
+                x = self.x_of(plan.targets[name])
+                p.setPen(QPen(cue_col, 2, Qt.PenStyle.DashLine))
+                p.drawLine(QPointF(x, RULER_H), QPointF(x, self.height()))
+        x = self.x_of(plan.target)
+        secs = plan.delta / self.fps if self.fps else 0.0
+        text = f"{plan.target / self.fps:.2f} s ({secs:+.2f} s)" + (
+            " ripple" if plan.ripple else ""
+        )
+        if plan.clamped:
+            text += f" - {plan.clamped}"
+        p.setPen(QColor(c["text"]))
+        p.drawText(QPointF(x + 6, RULER_H + STRIP_H + 12), text)
+
+    def cue_infos(self) -> list[CueInfo]:
+        if not self.layout_:
+            return []
+        cues = [b for b in self.layout_.by_id.values() if b.kind == "cue"]
+        return [CueInfo.from_meta(b.meta) for b in sorted(cues, key=lambda b: b.meta["call_frame"])]
+
+    def nudge_selected_cue(self, frames: int, *, ripple: bool = False) -> bool:
+        """Keyboard alternative to dragging (Alt+Shift+arrows; add Ctrl to ripple)."""
+        box = self.layout_.by_id.get(self.selected) if (self.layout_ and self.selected) else None
+        if box is None or box.kind != "cue":
+            return False
+        plan = plan_move(self.cue_infos(), box.meta["name"], box.start + frames, ripple=ripple)
+        if plan.delta:
+            self.cueMoved.emit(plan)
+        return True
+
     # -- interaction ------------------------------------------------------------------
 
     def mousePressEvent(self, e: QMouseEvent) -> None:  # noqa: N802
@@ -394,12 +452,20 @@ class TimelineCanvas(QWidget):
         box = None if pos.y() < RULER_H + STRIP_H else self.box_at(pos)
         if box is not None:
             self.select(box.id)
+            if box.kind == "cue":
+                self._drag_cue = box.meta["name"]
         else:
             self._drag_seek = True
             self.seekRequested.emit(self.frame_of(pos.x()))
 
     def mouseMoveEvent(self, e: QMouseEvent) -> None:  # noqa: N802
         pos = e.position()
+        if self._drag_cue and e.buttons() & Qt.MouseButton.LeftButton:
+            frame = int((pos.x() - LABEL_W) / self.ppf + self.scroll + 0.5)
+            ripple = bool(e.modifiers() & Qt.KeyboardModifier.ShiftModifier)
+            self.drag_plan = plan_move(self.cue_infos(), self._drag_cue, frame, ripple=ripple)
+            self.update()
+            return
         if self._drag_seek and e.buttons() & Qt.MouseButton.LeftButton:
             self.seekRequested.emit(self.frame_of(pos.x()))
             return
@@ -415,6 +481,11 @@ class TimelineCanvas(QWidget):
 
     def mouseReleaseEvent(self, e: QMouseEvent) -> None:  # noqa: N802
         self._drag_seek = False
+        plan, self.drag_plan, self._drag_cue = self.drag_plan, None, None
+        if plan is not None:
+            self.update()
+            if plan.delta:
+                self.cueMoved.emit(plan)
 
     def mouseDoubleClickEvent(self, e: QMouseEvent) -> None:  # noqa: N802
         box = self.box_at(e.position())
@@ -467,7 +538,15 @@ class TimelineCanvas(QWidget):
         alt = mods & Qt.KeyboardModifier.AltModifier
         ctrl = mods & Qt.KeyboardModifier.ControlModifier
         box = self.layout_.by_id.get(self.selected) if (self.layout_ and self.selected) else None
-        if alt and k in (Qt.Key.Key_Left, Qt.Key.Key_Right):
+        shift = mods & Qt.KeyboardModifier.ShiftModifier
+        if k == Qt.Key.Key_Escape and self.drag_plan is not None:
+            self.drag_plan, self._drag_cue = None, None
+            self.update()
+        elif alt and shift and k in (Qt.Key.Key_Left, Qt.Key.Key_Right):
+            step = -1 if k == Qt.Key.Key_Left else 1
+            if not self.nudge_selected_cue(step, ripple=bool(ctrl)):
+                super().keyPressEvent(e)
+        elif alt and k in (Qt.Key.Key_Left, Qt.Key.Key_Right):
             self.select_step(-1 if k == Qt.Key.Key_Left else 1)
         elif k in (Qt.Key.Key_Return, Qt.Key.Key_Enter) and box is not None:
             (self.sourceRequested if ctrl else self.seekRequested).emit(box if ctrl else box.start)

@@ -39,6 +39,7 @@ SCHEMA = "manim_stage.cues"
 VERSION = 1
 SIDECAR_DIR = ".manim-stage"
 SIDECAR_NAME = "cues.json"
+DEFAULT_FRAME_RATE = 60.0  # new sidecars: exact for 15/30/60 fps previews and renders
 NAME_RE = re.compile(r"^[A-Za-z0-9_.-]{1,64}$")
 _EPS = 1e-9
 
@@ -108,7 +109,7 @@ class CueOverride:
 class CueFile:
     """In-memory ``cues.json``. ``scenes[scene][cue] -> CueOverride``."""
 
-    frame_rate: float = 30.0
+    frame_rate: float = DEFAULT_FRAME_RATE
     scenes: dict[str, dict[str, CueOverride]] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:

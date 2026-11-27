@@ -1,8 +1,8 @@
 # Named cues (`self.cue`)
 
-- **Status:** Available (API, sidecar, validate, bake, timeline lane). Dragging cues on the timeline is Planned (backlog 2.2).
+- **Status:** Available: API, sidecar, validate, bake, and dragging on the timeline with hold/ripple and undo/redo.
 - **Renderer:** Both (pure timing; no drawing)
-- **Since:** PR #18
+- **Since:** PR #18 (timeline editing: PR #19)
 - **Spec:** F03 · **Backlog:** 2.1 · **ADRs:** ADR-0006, ADR-0013 · **Source:** `src/manim_stage/scene.py`, `cues.py`, `cuetools.py`
 - **Motion Canvas origin:** `waitUntil("name")` time events, whose times are dragged on the timeline and stored in a `.meta` file. **Built on:** Manim's `Scene.wait`. A cue *is* a wait whose end time has a name and can be edited.
 
@@ -84,6 +84,19 @@ class CameraLesson(StageMixin, MovingCameraScene):
 | Invalid name, `at=` with `after=`, or a negative time | **Error** |
 | An override for a cue the scene no longer reaches (renamed/removed) | **Warning.** The override is kept (and marked a tombstone by `bake`) until you remove it. |
 
+## Editing cues in the Studio
+
+![Dragging a cue with ripple: dashed lines show where cues land, outlines show shifted animations](../img/cue-drag.png)
+
+- **Drag** a cue flag on the **Cues** lane. While you drag, dashed lines show where the cues will land, and outlines show the animations that shift with them. A label gives the new time and the change, e.g. `2.80 s (+0.80 s)`.
+- **Hold (default).** Other cues keep their absolute times. Animations between this cue and the next one move, and the next cue's wait absorbs the change. You can't drag past the point where the next cue would need a negative wait; the label says why the drag stopped.
+- **Ripple (hold Shift while dragging).** Every later cue moves by the same amount, so the rest of the scene shifts as a block. Use this after replacing a narration take that is longer overall.
+- **You can never drag a cue earlier than where it is reached** in the code.
+- **Dropping** writes `.manim-stage/cues.json` atomically and re-renders straight away; the file watcher doesn't render it a second time.
+- **Undo / redo:** Ctrl+Z, and Ctrl+Shift+Z or Ctrl+Y (also in the toolbar). Each drag, nudge or reset is one step, and undoing restores the exact previous sidecar values, including "no override".
+- **Keyboard:** select a cue, then Alt+Shift+←/→ nudges it one frame; add Ctrl to ripple.
+- **Event panel:** type an exact time and press **Set time**, or **Reset to default** to remove the override.
+
 ## Command line
 
 ```bash
@@ -96,7 +109,7 @@ manim-stage bake lesson.py                # write every resolved target into cue
 
 ## Limitations and unsupported cases
 
-- **No dragging in the editor yet.** Moving cues on the timeline, ripple editing and undo/redo are backlog 2.2.
+- **The undo history is per editor session.** The sidecar itself keeps only the previous version (`cues.json.bak`).
 - **Fixed order.** Cues are reached in code order; a cue can't be moved before the moment it's reached. That is the negative-wait error, by design.
 - **Audio alignment.** Linking a cue to a narration segment (`audio_segment`) is stored but not yet used. That comes with the audio workspace (2.3) and the voiceover adapter (2.4).
 

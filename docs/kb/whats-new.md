@@ -2,6 +2,12 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-27 — cue editing on the timeline (backlog 2.2)
+
+- **New:** drag cue flags on the timeline. Hold mode bounds the drag by the next cue's wait; Shift ripples every later cue. A live preview shows where cues land and which animations shift.
+- **New:** undo/redo (Ctrl+Z, Ctrl+Shift+Z / Ctrl+Y), Alt+Shift+arrow nudging, and Set time / Reset to default in the Event panel.
+- **Changed:** new sidecars use 60 fps; cue waits are labelled `cue <name>` on the timeline; the editor's own sidecar writes don't trigger a second re-render.
+
 ## 2026-11-27 — named cues (backlog 2.1)
 
 - **New:** [`self.cue(name, at=, after=, description=)`](manim-stage/cues.md) on `StageScene`, or any scene via `StageMixin`. It is Motion Canvas's `waitUntil`, built on Manim's `wait`.
