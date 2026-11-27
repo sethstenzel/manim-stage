@@ -11,7 +11,7 @@
 - Don't monkeypatch Manim internals without a documented, tested, short-lived adapter. Prefer narrow upstream PRs.
 - Local server binds 127.0.0.1; CSRF/origin checks on state-changing endpoints.
 - Work milestone by milestone (M0 → M4). Small, reviewable commits/PRs with tests and docs. Don't claim done for mockups or single-renderer features without labelling limits.
-- Surface architecture conflicts and scope choices for approval.
+- Owner directive (2026-11-27): work autonomously through M1–M4; decide ADRs/scope yourself (record them as Accepted with rationale), merge green PRs and continue. Do not stop to ask for acceptance.
 
 ## Upstream changes
 - Pins: `upstreams.json`. Process: `docs/upstream-sync.md`. Tool: `scripts/upstream_sync.py`.

@@ -45,36 +45,63 @@ A local, offline knowledge base in `docs/kb/` covering **every feature and how t
 
 ## M1 — Studio MVP (P1)
 
-| # | Item | Notes |
-|---|---|---|
-| 1.1 | Preview service: 127.0.0.1, host/origin checks, CSRF token, versioned WebSocket protocol, revision discard, cancel/restart; dependency-aware revisions (hash imported modules/assets) | F01, spec §2.8; gate-report risk 2 |
-| 1.2 | File watcher (debounce 200–500 ms) → new runner revision; traceback with file/line | F01 |
-| 1.3 | Editor shell (React/TS): scene picker, viewport, play/pause/step/speed, timecode, zoom/fit, dark/light, keyboard shortcuts, accessibility | F01 |
-| 1.4 | Timeline UI: ruler (s/frames), zoom, range, play/wait/section/sound tracks, nested children, jump-to-source | F02 |
-| 1.5 | Snapshot + range/full export through Manim CLI with progress/cancel | F01, F10 |
-| 1.6 | `manim-stage studio` CLI; wheel ships prebuilt editor | ADR-0009 |
+| # | Item | Status | Notes |
+|---|---|---|---|
+| 1.1 | Preview service: 127.0.0.1, host/origin checks, CSRF token, versioned WebSocket protocol, revision discard, cancel/restart; dependency-aware revisions (hash imported modules/assets) | ☐ | F01, spec §2.8; gate-report risk 2; ADR-0010 |
+| 1.2 | File watcher (debounce 200–500 ms) → new runner revision; traceback with file/line | ☐ | F01 |
+| 1.3 | Editor shell (React/TS): scene picker, viewport, play/pause/step/speed, timecode, zoom/fit, dark/light, keyboard shortcuts, accessibility | ☐ | F01, ADR-0012 |
+| 1.4 | Timeline UI: ruler (s/frames), zoom, range, play/wait/section/sound tracks, nested children, jump-to-source | ☐ | F02 |
+| 1.5 | Snapshot + range/full export through Manim CLI with progress/cancel | ☐ | F01, F10 |
+| 1.6 | `manim-stage studio` CLI; wheel ships prebuilt editor | ☐ | ADR-0009 |
+
+## Manim feature coverage in the editor (continuous, requested by owner 2026-11-27)
+
+The editor must cover every Motion Canvas editor capability **and** surface Manim's own feature set intelligently, not just play back frames. Approach (ADR-0011): an **introspected catalog** of the pinned Manim build, so features added upstream appear automatically after a sync, and a test fails when a new public Manim export is not classified (forcing a KB/editor decision during `/upstream-sync`).
+
+| # | Item | Status | Notes |
+|---|---|---|---|
+| MF.1 | `manim_stage.catalog`: introspect Mobjects, Animations, rate functions, colors, scene types, camera types, config options, plugins → JSON with category, signature, doc summary, KB link; coverage test over `manim.__all__` | ☐ | ADR-0011 |
+| MF.2 | Rich event metadata: animation class + category, rate function name, run_time, lag_ratio, target mobject class/name, `.animate` method chain, updaters, `ValueTracker` | ☐ | F02 |
+| MF.3 | Timeline knows Manim: per-category colour + icon (non-colour signal too), rate-function curve drawn in event bars, lag-ratio staircase for `LaggedStart`, wait vs `wait_until` vs frozen frame, `skip_animations` sections shown | ☐ | F02 |
+| MF.4 | Library panel: searchable catalog (Mobjects, Animations, rate functions with live curve, colours with swatches, scene types), docs summary, "copy Python" snippets | ☐ | |
+| MF.5 | Scene-tree inspector for any frame: `scene.mobjects` families (class, name, bounds, colour, opacity, z-index, updaters), read-only by default; opt-in editable via `expose()` (F08) | ☐ | F08 |
+| MF.6 | Manim config panel: quality presets (`-ql…-qk`), fps, resolution, background colour, renderer, format (mp4/mov/webm/gif/png), transparent, sections export | ☐ | F10 |
+| MF.7 | Sections navigator: Manim `next_section` names/types, `skip_animations`, per-section export (`--save_sections`) | ☐ | F02, F10 |
+| MF.8 | Camera-aware preview: `MovingCameraScene` frame overlay, `ZoomedScene`, `ThreeDScene` orientation readout; renderer capability labels (Cairo/OpenGL) | ☐ | spec §2.7 |
+| MF.9 | Environment health: LaTeX availability, fonts (`manimpango.list_fonts()`), FFmpeg/PyAV codecs, installed Manim plugins (`manim.plugins` entry points) | ☐ | F10 |
+| MF.10 | Text/LaTeX helpers: font picker, `MathTex` substring colouring preview, `Tex` template selection | ☐ | F07 |
 
 ## M2 — Teaching workflow (P1)
 
-| # | Item | Notes |
-|---|---|---|
-| 2.1 | `StageScene.cue()` + resolver + `cues.json` (atomic, versioned) + `validate` + `bake` | F03, ADR-0006 |
-| 2.2 | Timeline cue drag with ripple/hold, undo/redo, downstream preview | F03 |
-| 2.3 | Audio workspace: multi-clip import, PyAV peaks → wavesurfer.js, offset/trim/gain/fade/mute/solo, mixdown via pre-processed assets + `add_sound` | F04 |
-| 2.4 | manim-voiceover adapter (+ upstream PRs: 0.30 compat, manual bookmark times #113, pre-recorded audio #100) | F04 |
-| 2.5 | `AnimatedCode` layout: Pygments tokens, token IDs, anchored grid, bundled font, `CodeRange`, `highlight_lines` | F05, ADR-0008 |
-| 2.6 | Diff engine (patience line→token, moves, overrides) + `animate_to`; tests: repeated tokens, multi-line, non-ASCII, 500+ lines | F05 |
-| 2.7 | End-to-end narrated bubble-sort demo + headless reproducibility test | M2 gate |
+| # | Item | Status | Notes |
+|---|---|---|---|
+| 2.1 | `StageScene.cue()` + resolver + `cues.json` (atomic, versioned) + `validate` + `bake` | ☐ | F03, ADR-0006 |
+| 2.2 | Timeline cue drag with ripple/hold, undo/redo, downstream preview | ☐ | F03 |
+| 2.3 | Audio workspace: multi-clip import, PyAV peaks → waveform, offset/trim/gain/fade/mute/solo, mixdown via pre-processed assets + `add_sound` | ☐ | F04 |
+| 2.4 | manim-voiceover adapter (+ upstream PRs: 0.30 compat, manual bookmark times #113, pre-recorded audio #100) | ☐ | F04 |
+| 2.5 | `AnimatedCode` layout: Pygments tokens, token IDs, anchored grid, bundled font, `CodeRange`, `highlight_lines` | ☐ | F05, ADR-0008 |
+| 2.6 | Diff engine (patience line→token, moves, overrides) + `animate_to`; tests: repeated tokens, multi-line, non-ASCII, 500+ lines | ☐ | F05 |
+| 2.7 | End-to-end narrated bubble-sort demo + headless reproducibility test | ☐ | M2 gate |
 
-## M3 / M4 (P2/P3) — outline only, refine after M2
+## M3 — Composition and customization (P2)
 
-- F06 signals on `ValueTracker` storage.
-- F07 project config / themes.
-- F08 `expose()` inspector.
-- F09 transitions (file-level crossfades).
-- F10 asset validator, presets, video input.
-- F11 editor plugin SDK with handshake.
-- F12 educational layouts and trace-driven animation.
+| # | Item | Status | Notes |
+|---|---|---|---|
+| 3.1 | Signals: `Signal[T]`, `computed`, `effect`, `bind` on `ValueTracker` storage; cycle detection, disposal | ☐ | F06 |
+| 3.2 | Project config / variables / themes (`project.json` settings, `stage.theme`) resolved identically in CLI and Studio | ☐ | F07 |
+| 3.3 | `expose()` editable properties + inspector editing, sidecar persistence, undo/redo, copy-as-Python | ☐ | F08 |
+| 3.4 | Transitions + choreography helpers; multi-scene sequence with cross-scene transitions | ☐ | F09 |
+| 3.5 | Asset manager + validator; render presets; range export; export metadata inspection | ☐ | F10 |
+| 3.6 | M3 gate: multi-scene lesson with configurable visuals, deterministic exports | ☐ | |
+
+## M4 — Ecosystem and polish (P2/P3)
+
+| # | Item | Status | Notes |
+|---|---|---|---|
+| 4.1 | Editor plugin SDK: `manim_stage.plugins` entry points, handshake, panels/tracks/inspectors/commands/exporters; sample plugin | ☐ | F11 |
+| 4.2 | Educational helpers: call stack, array/linked list/tree layouts, graph edges, sequence diagrams, trace-driven animation | ☐ | F12 |
+| 4.3 | Interactive demo parameters (editor-time) vs linear export; rendered web playback with chapters | ☐ | F12 |
+| 4.4 | Performance pass, migration guide, three third-party-style examples, release packaging, compatibility suite | ☐ | M4 gate |
 
 ## Upstream contributions to propose (spec §12.5)
 

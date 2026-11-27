@@ -46,7 +46,7 @@ Record of decisions required by the spec (§3, §12.9). Status: Proposed → Acc
 
 ## ADR-0004 — Runner: fresh child process per revision, JSON-lines protocol
 
-- **Status:** Proposed
+- **Status:** Accepted (owner, 2026-11-27)
 - **Context:**
   - Manim keeps process-global state: `set_default` class mutation, an SVG cache keyed without file content, a `ConvertToOpenGL` metaclass bound at class creation, and eagerly loaded plugins.
   - The OpenGL rerun path doesn't re-import user modules.
@@ -60,7 +60,7 @@ Record of decisions required by the spec (§3, §12.9). Status: Proposed → Acc
 
 ## ADR-0005 — Scene events: ingest Manim's timeline, own the schema and IDs
 
-- **Status:** Proposed
+- **Status:** Accepted (owner, 2026-11-27)
 - **Decision:**
   - Our public contract is `SceneEvent` (spec §8), versioned by us.
   - On MAIN it is populated from `Manager.evaluate(capture_timeline=True)` plus one private-listener shim (in `_compat`) for nested `AnimationGroup`/`LaggedStart` child ranges.
@@ -74,7 +74,7 @@ Record of decisions required by the spec (§3, §12.9). Status: Proposed → Acc
 
 ## ADR-0006 — Cue API and semantics
 
-- **Status:** Proposed
+- **Status:** Accepted (owner, 2026-11-27)
 - **Context:** `Scene.wait_until(stop_condition, max_time)` already exists, so the spec's `self.wait_until("name")` would overload it. Motion Canvas stores absolute scene-relative cue times. Its weak edges: silent drops, negative waits clamped only in the editor, non-atomic writes.
 - **Decision:**
   - API: `self.cue("explain_swap", at=None, after=None, description=None)` on `StageScene`. It waits until the cue time; with no override it uses `at=` (absolute seconds from scene start) or `after=` (duration from the call), and with neither it waits 0.
@@ -87,7 +87,7 @@ Record of decisions required by the spec (§3, §12.9). Status: Proposed → Acc
 
 ## ADR-0007 — Seek: own frame store fed by `Manager.evaluate`
 
-- **Status:** Proposed
+- **Status:** Accepted (owner, 2026-11-27)
 - **Decision:**
   - **P1:** the runner evaluates the scene once with `on_frame`, writing preview-resolution frames into a content-addressed, LRU-bounded disk cache keyed by (scene revision, frame index, resolution). The editor scrubs cached frames.
   - Partial movie files are not used for preview.
@@ -105,7 +105,7 @@ Record of decisions required by the spec (§3, §12.9). Status: Proposed → Acc
 
 ## ADR-0008 — Code animation engine
 
-- **Status:** Proposed
+- **Status:** Accepted (owner, 2026-11-27)
 - **Decision:**
   - New `AnimatedCode` mobject (does not subclass `Code` internals; `manim.Code` untouched).
   - Tokens come from Pygments lexers and styles (keeping bold/italic).
@@ -118,9 +118,41 @@ Record of decisions required by the spec (§3, §12.9). Status: Proposed → Acc
 
 ## ADR-0009 — Packaging and entry points
 
-- **Status:** Proposed
+- **Status:** Accepted (owner, 2026-11-27)
 - **Decision:**
   - Distribution `manim-stage`, import `manim_stage`, console script `manim-stage` (`manim-stage studio lesson.py Scene`, `manim-stage bake`, `manim-stage validate`). Manim's CLI has no subcommand plugin hook.
   - Editor-extension entry-point group `manim_stage.plugins` with a version handshake.
   - Optional extras: `[voiceover]`, `[treesitter]`, `[dev]`.
   - Editor: React + TypeScript, pinned lockfile, prebuilt assets shipped inside the wheel so end users need no Node.
+
+## ADR-0010 — Preview service: aiohttp, one WebSocket, token + origin checks
+
+- **Status:** Accepted (2026-11-27)
+- **Context:** spec §2.8, §4, §8 `PreviewMessage`. Needs HTTP (editor assets, frame PNGs), a WebSocket (commands/events), Windows/Linux/macOS, few dependencies.
+- **Decision:**
+  - `aiohttp` (one package: HTTP server, WebSocket, static files; no ASGI server). Shipped in the optional `studio` extra so headless users (`cue`, `AnimatedCode`, `bake`) don't pull it.
+  - Binds `127.0.0.1` only; refuses other hosts unless `--host` is given with an explicit `--allow-remote` (documented as unsafe).
+  - **Host check** on every request (`127.0.0.1:<port>` / `localhost:<port>`) against DNS rebinding.
+  - **Session token:** random 32-byte token printed in the editor URL; required on the WebSocket handshake (`?token=`) and as `X-Stage-Token` on every non-GET request. **Origin check** on the WebSocket and state-changing requests: must equal the server's own origin.
+  - Frames are served by `GET /frames/<revision>/<index>.png` (revision regex-validated, no path joins with user input), cacheable forever (content-addressed).
+  - Protocol `manim_stage.preview` v1, JSON over one WebSocket; every message has `v`, `type`; requests carry `id`. Schema in `docs/schemas/preview-message.schema.json`.
+  - Revisions are monotonically increasing integers per scene. Messages tagged with an older revision are dropped by server and client. A new revision cancels (kills) the previous runner.
+  - **Dependency-aware revision:** the runner reports the files of user modules it imported (outside site-packages/stdlib) plus assets passed to `add_sound`/`ImageMobject`/`SVGMobject`; the service watches all of them and the cache key includes their content hashes.
+
+## ADR-0011 — Manim feature coverage via an introspected catalog
+
+- **Status:** Accepted (2026-11-27)
+- **Context:** owner requirement: the editor surfaces all Manim features intelligently, including features added by future upstream syncs. Hand-maintained lists go stale.
+- **Decision:**
+  - `manim_stage.catalog` introspects the installed Manim: public `Mobject`/`Animation` subclasses, `rate_functions`, colour constants, `Scene` subclasses (camera types), `ManimConfig` options, installed plugins. Each entry: name, module, category (from Manim's module layout: `animation.creation`, `mobject.geometry`, …), signature, first doc paragraph, renderer support, KB link.
+  - Categories are derived from module paths, with a small override table for curated grouping. A test asserts every name in `manim.__all__` maps to a category or an explicit ignore list, so a sync that adds a public feature fails until it is classified (and the KB updated).
+  - The editor consumes the catalog (library panel, timeline colouring, inspector, config panel). Nothing in the editor hardcodes Manim class lists.
+
+## ADR-0012 — Editor stack
+
+- **Status:** Accepted (2026-11-27)
+- **Decision:**
+  - `editor/`: React 18 + TypeScript + Vite, npm with committed `package-lock.json`. No UI component framework (small bundle, own accessible components). Vitest for unit tests.
+  - Build output goes to `src/manim_stage/studio/static/` (gitignored); CI builds it before packaging; wheels include it (hatch `artifacts`).
+  - The server serves a plain fallback page when the build is missing (dev checkouts without Node).
+  - No Motion Canvas UI code or assets; layout ideas described in our own words only.
