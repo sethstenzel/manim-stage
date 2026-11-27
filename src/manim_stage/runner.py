@@ -235,6 +235,9 @@ def _main(argv: list[str] | None = None) -> int:
                 p = os.environ.get(var)
                 if p and Path(p).is_file() and Path(p).resolve() not in deps:
                     deps.append(Path(p).resolve())
+            cfg = args.file.resolve().parent / "manim.cfg"  # read by Manim at import time
+            if cfg.is_file() and cfg.resolve() not in deps:
+                deps.append(cfg.resolve())
             pixel_settings = {k: v for k, v in settings.items() if k != "media_dir"}
             revision = revision_key(
                 args.file,

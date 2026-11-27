@@ -82,6 +82,11 @@ The **Preset** list holds Manim's quality presets, 1080p30 and 4K30 (`-r W,H --f
 | `resolution` | `-r W,H` | quality's size |
 | `fps` | `--fps` | quality's rate |
 
+## Sections and manim.cfg
+
+- The [Sections](sections.md) tab opens this dialog for one section (as an in/out range), or for all sections with `--save_sections`.
+- Exports run in the scene's folder, so `manim.cfg` defaults apply; edit them in the [Config](config.md) tab. A preset or quality choice still overrides size and frame rate.
+
 ## Demo parameters
 
 Exports are linear videos rendered with the scene's [demo parameter](demo-params.md) defaults. When the Demo tab has changed values, the dialog offers **Bake demo values**, which renders with the current values instead.

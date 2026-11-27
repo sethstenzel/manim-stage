@@ -2,6 +2,14 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-27 — Config and Sections tabs (backlog MF.6, MF.7)
+
+- **New:** [Config tab](manim-stage/config.md):
+  - edits `manim.cfg` `[CLI]` in the scene folder (undoable; other keys and sections kept);
+  - a background change shows in the preview;
+  - `manim.cfg` is now a preview dependency.
+- **New:** [Sections tab](manim-stage/sections.md): jump to, loop and export Manim sections; **Export all** uses `--save_sections`.
+
 ## 2026-11-27 — Library tab and feature catalog (backlog MF.1, MF.4)
 
 - **New:** [Library](manim-stage/library.md):

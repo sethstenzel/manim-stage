@@ -27,6 +27,7 @@ Newest first. One line per decision; details in the linked ADR or PR.
 
 | Date | Decision | Why | Where |
 |---|---|---|---|
+| 2026-11-27 | Config panel edits Manim's own `manim.cfg` [CLI] (not a new sidecar), so plain Manim, preview and export agree; `manim.cfg` joins the preview cache key. Sections navigator is built on `next_section`/`--save_sections`; a section export is an in/out range | Manim methodology first; no parallel config format | PR #36 |
 | 2026-11-27 | Manim feature catalog is introspected from the installed `manim` (no hand-kept lists); grouped by Manim's package layout; `ease_*` rate functions listed with `rate_functions.` prefix; Library tab copies snippets only (never edits scenes) | ADR-0011; editor must know all Manim features and pick up new upstream ones | PR #35 |
 | 2026-11-27 | Demo parameters are a separate, never-saved channel (`demo.param`, `MANIM_STAGE_DEMO` override file) reusing project-variable types; exports use defaults unless baked. Web playback = static page over the rendered MP4; chapters from Manim sections; captions embedded as VTTCues so it works from file:// | F12: distinguish editor-time preview from linear export; no server, no scene code in the browser | PR #34 |
 | 2026-11-27 | Educational helpers are Manim VGroups whose methods return animations; tree layout feeds Manim's `Graph` instead of a new graph class; traces recorded first (trusted function, JSON) then replayed with `play_trace` | F12; audit: Manim has `Graph`/`Table` but no array/stack/sequence helpers; no live execution in the viewer | PR #33 |
