@@ -23,6 +23,7 @@
 - `docs/capability-audit.md` — Existing/Partial/Missing per requirement (spec §3)
 - `docs/architecture-decisions.md` — ADRs
 - `docs/backlog.md` — implementation backlog
+- `docs/kb/` — local knowledge base of every feature and its use. **Every feature PR and every upstream sync must update it** (pages + `whats-new.md`); KB examples are smoke-tested.
 
 ## Dev commands
 - `uv sync` → venv with Manim pinned to the commit in `pyproject.toml` (`[tool.uv.sources]`)
