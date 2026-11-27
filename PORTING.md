@@ -27,6 +27,7 @@ Newest first. One line per decision; details in the linked ADR or PR.
 
 | Date | Decision | Why | Where |
 |---|---|---|---|
+| 2026-11-27 | Live reload by polling `stat()` of the scene + dependencies (no watchdog dependency), 0.3 s debounce | Small watched set; identical behaviour on all OSes; handles atomic-rename saves | PR #11 |
 | 2026-11-27 | Revision key includes every local module/asset the scene opened (audit hook, PEP 578); service drops messages from superseded revisions | MC's Vite HMR knows the module graph; Manim scenes need an equivalent so edits to helpers invalidate cached frames | ADR-0010, PR #10 |
 | 2026-11-27 | Port MC concepts as Python APIs on Manim primitives (`Signal` is a `ValueTracker`, `all_of`/`sequence`/`chain` return Manim groups, `self.cue` is a named `wait`) | Owner: keep Manim's abstractions and terms, keep MC concepts accessible | ADR-0013 |
 | 2026-11-27 | Editor in Python + PySide6, in a `[studio]` extra | Owner: one cohesive Python application, including the editor | ADR-0012 |
@@ -98,7 +99,8 @@ One record per Motion Canvas feature. Status: **Ported** (implemented and tested
 - **MC behaviour:** the editor runs the project in the page; Vite hot-reloads changed modules and the player re-runs the scene, keeping the playhead.
 - **Manim mapping:** `PreviewService` (no Qt, no socket) runs each revision in fresh runner children; frames come from the cache; PySide6 UI subscribes to typed `PreviewMessage`s.
 - **Improvements over MC:** a crashing or hanging scene can't take down the editor (separate process, killable tree); dependency-aware cache keys; stale results can never overwrite current ones (integer `seq`).
-- **Implementation:** `src/manim_stage/studio/service.py`, `deps.py`, `runner.py` (`RunnerProcess`, `--list`). Tests: `tests/test_service.py`. KB: `docs/kb/manim-stage/preview-service.md`.
+- **Hot reload:** MC relies on Vite's HMR. Ported as `PreviewService.watch()`: a stdlib polling watcher over the scene file and its recorded dependencies, debounced (default 0.3 s), which starts a new revision (the old one is killed). Syntax errors point at their line.
+- **Implementation:** `src/manim_stage/studio/service.py`, `watcher.py`, `deps.py`, `runner.py` (`RunnerProcess`, `--list`). Tests: `tests/test_service.py`, `tests/test_watcher.py`. KB: `docs/kb/manim-stage/preview-service.md`.
 
 ## 4. Processes in use
 

@@ -55,6 +55,7 @@ A local, offline reference for **every manim-stage feature and how to use it**. 
 | See when each member of a `LaggedStart` runs | [Event capture → nested animations](manim-stage/event-capture.md#nested-animations) |
 | Run a scene safely in the background and get errors with line numbers | [Scene runner](manim-stage/runner.md) |
 | Drive previews from code (render, cancel, listen for frames/errors) | [Preview service](manim-stage/preview-service.md) |
+| Re-render automatically when I save | [Preview service → live reload](manim-stage/preview-service.md#live-reload) |
 | Know which files a scene depends on | [Preview service → dependencies](manim-stage/preview-service.md#how-it-works) |
 | Pre-render frames for fast scrubbing | [Frame cache](manim-stage/frame-cache.md) |
 | Render frames faster on a multi-core machine | [Frame cache → parallel drawing](manim-stage/frame-cache.md#parallel-drawing) |

@@ -2,7 +2,7 @@
 
 - **Status:** Available (engine). The editor UI that uses it is Planned (M1).
 - **Renderer:** Cairo (OpenGL untested)
-- **Since:** PR #10
+- **Since:** PR #10 (live reload: PR #11)
 - **Spec:** F01, §4, §8 `PreviewMessage` · **ADRs:** ADR-0004, ADR-0010 · **Source:** `src/manim_stage/studio/service.py`
 - **Motion Canvas origin:** the editor's live project preview. **Built on:** Manim's `Manager.evaluate`, run in [runner](runner.md) child processes.
 
@@ -57,6 +57,45 @@ svc.close()
 
 Message format: `docs/schemas/preview-message.schema.json`; see [data formats](../reference/data-formats.md).
 
+## Live reload
+
+`svc.watch()` re-renders the last scene whenever the scene file or any [dependency](#how-it-works) changes on disk.
+
+```python
+import time
+from pathlib import Path
+
+from manim_stage.studio import PreviewService, RenderSettings
+
+Path("live.py").write_text('''
+from manim import *
+from shapes import SIDE
+
+class Live(Scene):
+    def construct(self):
+        self.play(FadeIn(Square(side_length=SIDE)), run_time=0.3)
+''')
+Path("shapes.py").write_text("SIDE = 1")
+
+with PreviewService("live.py", cache_dir=".preview-cache",
+                    settings=RenderSettings(fps=10, width=160, height=90)) as svc:
+    events = []
+    svc.subscribe(lambda m: events.append(m.type))
+    svc.render("Live")
+    svc.wait_idle(120)
+    svc.watch(debounce=0.3)                 # 200–500 ms is a good range
+    Path("shapes.py").write_text("SIDE = 2  # edited")
+    end = time.time() + 120
+    while events.count("done") < 2 and time.time() < end:
+        time.sleep(0.1)
+    assert "changed" in events and events.count("done") == 2
+```
+
+- **Debounce:** a burst of saves within `debounce` seconds (default 0.3) produces one re-render, after the files have been quiet that long.
+- **Polling:** the watcher checks each file's modification time and size every 0.1 s. It needs no extra package, behaves the same on every OS, and handles editors that save by writing a temporary file and renaming it.
+- **Errors:** a syntax error or exception points at the file and line (`error` event). The scene file and the last known dependencies stay watched, so saving a fix re-renders.
+- Events: `changed` (the changed files) precedes the new revision's `status: running`. The running revision is cancelled.
+
 ## Options
 
 | `PreviewService(...)` / `RenderSettings(...)` | Default | Meaning |
@@ -68,6 +107,7 @@ Message format: `docs/schemas/preview-message.schema.json`; see [data formats](.
 | `budget_mb` | 2048 | Frame cache size limit |
 | `cwd` | the scene's folder | Working directory of the children (relative asset paths resolve here) |
 | `python` | current interpreter | Interpreter for the children |
+| `watch(debounce=, interval=)` | 0.3 s, 0.1 s | Live reload quiet period and polling interval |
 
 ## Limitations and unsupported cases
 

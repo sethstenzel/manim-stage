@@ -48,7 +48,7 @@ A local, offline knowledge base in `docs/kb/` covering **every feature and how t
 | # | Item | Status | Notes |
 |---|---|---|---|
 | 1.1 | `PreviewService` (no Qt, no socket): revisions, cancel/restart, stale-message discard, typed `PreviewMessage` events; dependency-aware revisions (hash imported modules/assets) | ☑ | F01; gate-report risk 2; ADR-0010 |
-| 1.2 | File watcher (debounce 200–500 ms) → new runner revision; traceback with file/line | ☐ | F01 |
+| 1.2 | File watcher (debounce 200–500 ms) → new runner revision; traceback with file/line | ☑ | F01 |
 | 1.3 | Editor shell (Python/PySide6): scene picker, viewport, play/pause/step/speed, timecode, zoom/fit, dark/light, keyboard shortcuts, accessibility | ☐ | F01, ADR-0012, ADR-0013 |
 | 1.4 | Timeline UI: ruler (s/frames), zoom, range, play/wait/section/sound tracks, nested children, jump-to-source | ☐ | F02 |
 | 1.5 | Snapshot + range/full export through Manim CLI with progress/cancel | ☐ | F01, F10 |
