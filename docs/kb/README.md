@@ -28,6 +28,7 @@ A local, offline reference for **every manim-stage feature and how to use it**. 
 | [Frame cache and preview frames](manim-stage/frame-cache.md) | Cache every frame for scrubbing; parallel drawing | Available | Cairo | F01, §4 P1 |
 | [Studio editor](manim-stage/studio-editor.md) | Python (PySide6) desktop editor: scene picker, viewport, playback, live reload, errors | Partial (export: Planned) | Cairo | F01 |
 | [Command line](manim-stage/cli.md) | `manim-stage studio / scenes / timeline / doctor / cache` | Available | — | F01 |
+| [Educational helpers](manim-stage/edu.md) | Array, LinkedList, Tree/tree_layout, label_edges, CallStack, SequenceDiagram; data-driven traces (`trace_calls`, `Trace`, `play_trace`) | Available | — | F12 |
 | [Studio plugins (SDK)](manim-stage/plugins.md) | Entry-point plugins with API handshake: timeline lanes, panels, inspector rows, commands, post-export actions | Available | — | F11 |
 | [Assets and environment checks](manim-stage/assets.md) | List/check images, SVGs, sounds, fonts the way Manim resolves them; Add asset…; environment (LaTeX, fonts, encoders) | Available | Both | F10 |
 | [Export and snapshots](manim-stage/export.md) | Render via `manim render` (quality, format, range, transparency, sections) with progress, cancel and result check; save/copy frames | Available | Cairo | F01, F10 |
@@ -74,6 +75,8 @@ A local, offline reference for **every manim-stage feature and how to use it**. 
 | Run a scene safely in the background and get errors with line numbers | [Scene runner](manim-stage/runner.md) |
 | Find which line produced a moment in the video | [Timeline](manim-stage/timeline.md#quick-start) |
 | See a LaggedStart's staircase and each animation's rate_func | [Timeline → how it works](manim-stage/timeline.md#how-it-works) |
+| Animate an array, tree, call stack or protocol | [Educational helpers](manim-stage/edu.md#quick-start) |
+| Animate a recorded algorithm run | [Educational helpers: traces](manim-stage/edu.md#traces-record-first-animate-second) |
 | Add my own timeline track, panel or command to the Studio | [Studio plugins](manim-stage/plugins.md#quick-start) |
 | Find missing images, sounds or fonts before rendering | [Assets](manim-stage/assets.md#quick-start) |
 | Export 4K or a transparent video | [Assets → render presets](manim-stage/assets.md#render-presets) |
