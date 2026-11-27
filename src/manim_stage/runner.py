@@ -101,9 +101,12 @@ def list_scenes(path: Path) -> list[dict[str, Any]]:
     return sorted(found, key=lambda s: s["line"])
 
 
-def _user_frame(tb: Any, scene_file: Path) -> tuple[str | None, int | None]:
-    """Innermost traceback frame in the scene file, else the innermost overall."""
-    frames = traceback.extract_tb(tb)
+def _user_frame(exc: BaseException, scene_file: Path) -> tuple[str | None, int | None]:
+    """Where to point the user: a syntax error's own location, else the innermost
+    traceback frame in the scene file, else the innermost frame overall."""
+    if isinstance(exc, SyntaxError) and exc.filename and exc.lineno:
+        return exc.filename, exc.lineno
+    frames = traceback.extract_tb(exc.__traceback__)
     for fr in reversed(frames):
         if Path(fr.filename).resolve() == scene_file.resolve():
             return fr.filename, fr.lineno
@@ -250,7 +253,7 @@ def _main(argv: list[str] | None = None) -> int:
         )
         return 0
     except BaseException as exc:  # report everything, including SystemExit from scenes
-        file, line = _user_frame(exc.__traceback__, args.file)
+        file, line = _user_frame(exc, args.file)
         send(
             {
                 "type": "error",

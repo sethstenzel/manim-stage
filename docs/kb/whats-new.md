@@ -2,6 +2,11 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-27 — live reload (backlog 1.2)
+
+- **New:** [live reload](manim-stage/preview-service.md#live-reload): `PreviewService.watch()` re-renders when the scene or a dependency is saved (debounced, polling, cross-platform).
+- **Changed:** syntax errors now point at the offending file and line.
+
 ## 2026-11-27 — preview service (backlog 1.1)
 
 - **New:** [Preview service](manim-stage/preview-service.md): background rendering with revisions, cancellation, stale-message discard and typed events.

@@ -29,15 +29,19 @@ import threading
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from ..events import SceneTimeline
 from ..runner import PROTOCOL_VERSION, RunnerProcess, child_env, runner_command
+
+if TYPE_CHECKING:
+    from .watcher import FileWatcher
 
 Listener = Callable[["PreviewMessage"], None]
 
 MESSAGE_TYPES = (
     "scenes",
+    "changed",
     "status",
     "timeline",
     "frame",
@@ -113,6 +117,9 @@ class PreviewService:
         self._idle = threading.Event()
         self._idle.set()
         self._closed = False
+        self._known_deps: list[Path] = []
+        self._last_scene: str | None = None
+        self._watcher: FileWatcher | None = None
 
     # -- subscription ---------------------------------------------------------------
 
@@ -140,9 +147,12 @@ class PreviewService:
 
     @property
     def dependencies(self) -> list[Path]:
-        """The scene file plus every local file the current revision depends on."""
-        cur = self._current
-        return [self.file, *(cur.dependencies if cur else [])]
+        """The scene file plus every local file the scene depends on.
+
+        Kept from the last revision that got as far as a timeline, so a scene that
+        currently fails to import is still watched through its helpers.
+        """
+        return [self.file, *self._known_deps]
 
     def wait_idle(self, timeout: float | None = None) -> bool:
         """Block until no render is running (for headless use and tests)."""
@@ -188,6 +198,7 @@ class PreviewService:
                 raise RuntimeError("PreviewService is closed")
             self._cancel_locked("superseded")
             seq = next(self._seq)
+            self._last_scene = scene
             rev = Revision(seq, scene, settings or self.settings)
             self._current = rev
             self._idle.clear()
@@ -198,7 +209,39 @@ class PreviewService:
         with self._lock:
             self._cancel_locked("cancelled")
 
+    def watch(self, *, debounce: float = 0.3, interval: float = 0.1) -> None:
+        """Re-render the last scene when the scene file or a dependency changes.
+
+        Emits ``changed`` (the files) and then starts a new revision, which cancels
+        the running one. Debounced: a burst of saves gives one re-render.
+        """
+        from .watcher import FileWatcher
+
+        with self._lock:
+            if self._watcher is not None:
+                self._watcher.stop()
+            self._watcher = FileWatcher(
+                lambda: self.dependencies, self._on_files_changed,
+                interval=interval, debounce=debounce,
+            ).start()  # fmt: skip
+
+    def unwatch(self) -> None:
+        with self._lock:
+            if self._watcher is not None:
+                self._watcher.stop()
+                self._watcher = None
+
+    def _on_files_changed(self, files: list[Path]) -> None:
+        with self._lock:
+            if self._closed:
+                return
+            scene = self._last_scene
+            self._emit(PreviewMessage("changed", 0, {"files": [str(f) for f in files]}))
+            if scene is not None:
+                self.render(scene)
+
     def close(self) -> None:
+        self.unwatch()
         with self._lock:
             self._closed = True
             self._cancel_locked("cancelled")
@@ -280,6 +323,7 @@ class PreviewService:
                 rev.revision = m["revision"]
                 rev.timeline = SceneTimeline.from_dict(m["timeline"])
                 rev.dependencies = [Path(p) for p in m.get("dependencies", [])]
+                self._known_deps = list(rev.dependencies)
                 self._emit(
                     PreviewMessage(
                         "timeline",
