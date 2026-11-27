@@ -27,6 +27,7 @@ Newest first. One line per decision; details in the linked ADR or PR.
 
 | Date | Decision | Why | Where |
 |---|---|---|---|
+| 2026-11-27 | AnimatedCode: token = VGroup of glyphs; one MarkupText per line; marker glyph for exact grid; VectorizedPoint anchors; bundled JetBrains Mono; 1-based lines/cols | Fast, exact, OS-independent layout that survives transforms; editor-style coordinates | PR #23 |
 | 2026-11-27 | Voiceover = `self.narration()` on add_sound/add_subcaption/cues; bookmarks are cues `<name>.<mark>`; no TTS in core; manim-voiceover cache importer instead of a runtime dependency | manim-voiceover breaks on 0.30; keep concepts (ADR-0013); draggable bookmarks | PR #22 |
 | 2026-11-27 | Clip edits store the whole clip list per undo step; imports copied into `assets/audio/`; silent clips shown on the timeline | Exact undo; portable project-relative paths (§8); muted clips stay editable | PR #21 |
 | 2026-11-27 | Audio clips = cached processed copies added via `add_sound` in `StageMixin.setup()`; preview mix from timeline sound events; playback via sounddevice | Manim mixes the final audio (spec §2.1); non-destructive (F04); avoids the PySide6-Addons dependency | PR #20 |
@@ -114,8 +115,24 @@ One record per Motion Canvas feature. Status: **Ported** (implemented and tested
 - **Implementation:** `src/manim_stage/voiceover.py`, `scene.py` (`narration`), `capture.py` (narration tagging). Tests: `tests/test_voiceover.py`. KB: `docs/kb/manim-stage/narration.md`.
 
 ### Code block and code animation (MC: `Code` node, token diff)
-- **Status:** Designed (ADR-0008). Backlog 2.5–2.6.
-- **Manim mapping:** `AnimatedCode` (a `VGroup` of token mobjects) beside `manim.Code`; `CodeRange`, `lines()`, `word()`, `find()`; `animate_to()` returns a Manim `Animation`.
+- **Status:** In progress. Layout and ranges are ported (2.5); diff edits are next (2.6).
+- **MC behaviour:**
+  - `Code` renders highlighted code with a monospace grid;
+  - `lines()`, `word()` and `findFirstRange()` address ranges;
+  - `selection` dims everything outside it;
+  - edits tween between versions with a token diff.
+- **Manim mapping:**
+  - `AnimatedCode(VGroup)` holds one `VGroup` of glyphs per Pygments token, so every Manim animation applies to code parts;
+  - one `MarkupText` (Pango) call per line with coloured, bold and italic spans;
+  - a full-block marker glyph pins column 0 and the baseline of each line, so glyphs sit on an exact grid;
+  - two `VectorizedPoint` anchors keep the grid valid after transforms;
+  - ranges are `CodeRange`s, 1-based like editors;
+  - highlighting returns Manim animations (`set_opacity`).
+- **Improvements over MC:**
+  - any Pygments language and style;
+  - a bundled font (JetBrains Mono, OFL), so layout is identical across OSes;
+  - ranges plug into any Manim animation (`code.get(range)`).
+- **Implementation:** `src/manim_stage/code.py`, `src/manim_stage/fonts/`. Tests: `tests/test_code.py`. KB: `docs/kb/manim-stage/animated-code.md`.
 
 ### Signals (MC: `createSignal`, computed, effects)
 - **Status:** Designed (ADR-0013). Backlog 3.1.
