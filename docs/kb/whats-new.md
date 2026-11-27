@@ -2,6 +2,12 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-27 — flow helpers and scene transitions (backlog 3.4)
+
+- **New:** [flow helpers](manim-stage/transitions.md): `all_of`, `sequence` (exact second offsets), `chain`, `delay`, `loop` and `tween`. They are Motion Canvas's names for Manim groups.
+- **New:** in-scene `enter`/`exit` (fade, slide, zoom).
+- **New:** `manim-stage compose lesson.sequence.json` renders scenes and joins them with overlapping fade/slide/wipe transitions. It is frame-exact, with audio placed and cross-faded (schema `sequence.schema.json`).
+
 ## 2026-11-27 — inspector and exposed properties (backlog 3.3, MF.5)
 
 - **New:** [Inspector](manim-stage/inspector.md): the Mobject tree at the playhead (Ctrl+I, or follow the playhead). Click in the viewport to pick an object, which is outlined; the panel shows its class, bounds, colours, opacity, z-index and updaters.

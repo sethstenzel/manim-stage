@@ -67,6 +67,7 @@ def test_runner_messages_match_schema(tmp_path):
         ("editable-property.json", "editable-property.schema.json"),
         ("audio.json", "audio.schema.json"),
         ("properties.json", "properties.schema.json"),
+        ("sequence.json", "sequence.schema.json"),
     ],
 )
 def test_draft_examples_validate(example, schema):

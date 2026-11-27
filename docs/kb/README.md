@@ -31,6 +31,7 @@ A local, offline reference for **every manim-stage feature and how to use it**. 
 | [Export and snapshots](manim-stage/export.md) | Render via `manim render` (quality, format, range, transparency, sections) with progress, cancel and result check; save/copy frames | Available | Cairo | F01, F10 |
 | [Timeline](manim-stage/timeline.md) | Lanes of play/wait/section/sound and group members; Manim categories, rate curves, jump to source | Available | Cairo | F02 |
 | [Named cues (`self.cue`)](manim-stage/cues.md) | Named, adjustable waits for narration; drag on the timeline (hold/ripple, undo); `cues.json`; validate/bake | Available | Both | F03 |
+| [Flow helpers and scene transitions](manim-stage/transitions.md) | `all_of`/`sequence`/`chain`/`delay`/`loop`/`tween`; enter/exit; `manim-stage compose` joins scenes with fade/slide/wipe, frame-exact with audio | Available | Cairo | F09 |
 | [Inspector and exposed properties](manim-stage/inspector.md) | Mobject tree at the playhead; click to pick; `self.expose()` → preview/save/undo/copy-as-Python edits | Available | Cairo | F08 |
 | [Project theme and variables](manim-stage/project.md) | `project.json`: semantic theme colours, fonts, code style; typed `project.var(...)`; Studio Project panel | Available | Both | F07 |
 | [Signals, computed, bindings](manim-stage/signals.md) | `Signal` (a ValueTracker for numbers, lists, arrays, colours), cached `computed`, `bind`/`effect` updaters; cycle/purity diagnostics | Available | Both | F06 |
@@ -75,6 +76,8 @@ A local, offline reference for **every manim-stage feature and how to use it**. 
 | Check what my machine can render (LaTeX, fonts, codecs) | [CLI → doctor](manim-stage/cli.md#commands) |
 | Print a scene's timing without opening the editor | [CLI → timeline](manim-stage/cli.md#quick-start) |
 | Make animations wait for the narration without hand-tuned waits | [Named cues](manim-stage/cues.md#quick-start) |
+| Time animations Motion Canvas-style (sequence, chain, delay, tween) | [Flow helpers](manim-stage/transitions.md#quick-start-flow-helpers) |
+| Join scenes into one video with transitions | [Scene transitions](manim-stage/transitions.md#quick-start-joining-scenes) |
 | See what an object on screen is (class, bounds, colours) | [Inspector](manim-stage/inspector.md#quick-start) |
 | Tweak a colour visually and keep it reproducible | [Inspector → exposed properties](manim-stage/inspector.md#how-it-works) |
 | Change the look of every scene at once (accent colour, fonts) | [Project theme](manim-stage/project.md) |

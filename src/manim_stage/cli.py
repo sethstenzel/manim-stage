@@ -9,6 +9,7 @@ never replaces ``manim render``: exports are plain Manim renders (see ``export``
     manim-stage doctor                     check Manim, Qt, FFmpeg/PyAV, LaTeX, fonts
     manim-stage validate lesson.py [Scene] check named cues (exit 1 on errors)
     manim-stage bake lesson.py [Scene]     write resolved cue times to .manim-stage/cues.json
+    manim-stage compose lesson.sequence.json  render scenes, join them with transitions
     manim-stage cache [--clear]            frame-cache size / clear it
 """
 
@@ -158,6 +159,25 @@ def cmd_bake(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_compose(args: argparse.Namespace) -> int:
+    from .compose import compose, load_spec, render_parts
+
+    parts, opts = load_spec(args.spec)
+    quality = args.quality or opts.get("quality", "high_quality")
+    media = args.spec.resolve().parent / opts.get("media_dir", "media")
+
+    def say(frac: float, msg: str) -> None:
+        print(f"[{frac:5.0%}] {msg}")
+
+    render_parts(parts, quality=quality, media_dir=media, progress=say)
+    r = compose(parts, opts["output"], progress=None)
+    print(
+        f"wrote {r.output}: {r.frames} frames at {r.fps:g} fps ({r.frames / r.fps:.2f} s); "
+        f"scene starts at frames {r.offsets}"
+    )
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="manim-stage", description="Motion Canvas-class authoring for Manim"
@@ -186,6 +206,10 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("file", type=Path)
     p.add_argument("scene", nargs="*", help="scenes to bake (default: every StageScene)")
     p.set_defaults(func=cmd_bake)
+    p = sub.add_parser("compose", help="render scenes and join them with transitions")
+    p.add_argument("spec", type=Path, help="a .sequence.json file (see docs)")
+    p.add_argument("-q", "--quality", default=None, help="Manim quality preset (default: spec's)")
+    p.set_defaults(func=cmd_compose, file=None)
     p = sub.add_parser("cache", help="show or clear the preview frame cache")
     p.add_argument("--clear", action="store_true")
     p.add_argument("--cache-dir", type=Path, default=None)

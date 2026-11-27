@@ -1,0 +1,22 @@
+{
+  "output": "lesson.mp4",
+  "quality": "high_quality",
+  "scenes": [
+    {
+      "file": "intro.py",
+      "scene": "Intro"
+    },
+    {
+      "file": "sort.py",
+      "scene": "BubbleSort",
+      "transition": "fade",
+      "duration": 0.5
+    },
+    {
+      "file": "outro.py",
+      "scene": "Outro",
+      "transition": "slide_left",
+      "duration": 0.6
+    }
+  ]
+}
