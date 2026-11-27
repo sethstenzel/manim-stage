@@ -27,6 +27,8 @@ Newest first. One line per decision; details in the linked ADR or PR.
 
 | Date | Decision | Why | Where |
 |---|---|---|---|
+| 2026-11-27 | PySide6 < 6.12 on Python 3.11 (6.12.0 drops None/True refs per signal on 3.11/Linux → abort); guard test | Found via Linux CI SIGABRT; reproduced in WSL; 6.11.3 and 3.12+ clean | PR #14 |
+| 2026-11-27 | Background → GUI events via a deque drained by a GUI timer; windows delete on close | No cross-thread Qt calls; Qt objects never finalised on runner threads | PR #14 |
 | 2026-11-27 | Timeline lanes by nesting depth with row packing; category colour + text label + rate curve per bar; Event panel; read-only until cues | Shows *what* Manim does, not just when; overlaps visible (spec F02); no colour-only signals (§9) | PR #14 |
 | 2026-11-27 | Classify animations by Manim's own module layout (`manim.animation.creation` → creation, …) and sample rate functions in the runner | Categories stay correct for subclasses and new upstream animations; editor never imports user code | ADR-0011, PR #13 |
 | 2026-11-27 | Editor shell: QMainWindow + custom QPainter widgets; own drawn icons; preview quality = Manim quality presets; preferences in an INI file | Python-only (ADR-0012); Manim vocabulary (ADR-0013); no third-party icon assets | PR #12 |

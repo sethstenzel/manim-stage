@@ -86,6 +86,8 @@ Preferences (theme) are stored in an INI file under the user's config folder (`m
 
 ## Limitations and unsupported cases
 
+- **Qt version:** on Python 3.11 the `studio` extra installs PySide6 < 6.12. PySide6 6.12.0 corrupts reference counts on every signal under Python 3.11 on Linux and crashes the editor; Python 3.12+ is unaffected. `tests/test_qt_sanity.py` guards this.
+
 - No export or snapshots yet (backlog 1.5).
 - OpenGL-renderer scenes are not previewed.
 - Audio does not play during preview yet (M2 audio workspace).

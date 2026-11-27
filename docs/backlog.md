@@ -105,6 +105,8 @@ The editor must cover every Motion Canvas editor capability **and** surface Mani
 
 ## Upstream contributions to propose (spec §12.5)
 
+- PySide6 6.12.0: signal emission loses references to `None`/`True` on CPython 3.11 (Linux); repro in `tests/test_qt_sanity.py`. Report to Qt for Python (PYSIDE bug tracker).
+
 - Manim: `media_dir/texts` SVG cache is not safe for concurrent processes (0-byte file after parallel runs; see docs/benchmarks.md).
 - Manim: public run-loop listener registration (replace private `_use_loop` subclassing).
 - Manim: `evaluate()` early stop after the last requested frame.
