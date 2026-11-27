@@ -46,4 +46,4 @@ jobs:
           enable-cache: true
 
       - run: uv sync --locked
-      - run: uv run pytest
+      - run: uv run python -X faulthandler -m pytest -v -s tests/test_studio_ui.py
