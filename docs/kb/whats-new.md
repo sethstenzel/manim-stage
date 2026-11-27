@@ -2,6 +2,14 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-27 — compatibility suite and third-party-style examples (backlog 4.4)
+
+- **New:** [compatibility suite](reference/compatibility.md):
+  - ten unmodified Manim scenes (geometry, text, graphing, updaters, composition, images, sections, moving camera, zoomed, 3D) are pixel-identical to `manim render` in the Studio preview;
+  - opting into `StageMixin` changes no pixels.
+- **New:** [`examples/third_party/`](../../examples/third_party/): BFS (trace, graph, queue), a damped pendulum (signals, demo parameters, theme) and an HTTP request (sequence diagram plus animated code).
+- **Fixed:** `SequenceDiagram` placed messages wrongly after the diagram was scaled or moved.
+
 ## 2026-11-27 — Text and LaTeX helpers (backlog MF.10)
 
 - **New:** [Text tab](manim-stage/text-latex.md):
