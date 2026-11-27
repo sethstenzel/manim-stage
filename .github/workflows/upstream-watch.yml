@@ -1,0 +1,58 @@
+name: upstream-watch
+
+# Weekly report of upstream changes since the pins in upstreams.json.
+# Keeps a single open issue labelled `upstream-sync` up to date.
+
+on:
+  schedule:
+    - cron: "0 14 * * 1" # Mondays 14:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build report
+        id: report
+        run: |
+          python scripts/upstream_sync.py status --json > status.json
+          python - <<'EOF'
+          import json, os
+          data = json.load(open("status.json"))
+          changed = any(r["new_tags"] or r["commits_watched"] for r in data.values())
+          lines = ["Upstream changes since the pins in `upstreams.json`.",
+                   "Review with the process in `docs/upstream-sync.md` (Claude: `/upstream-sync`).", ""]
+          for name, r in data.items():
+              lines.append(f"## {name} ({r['role']}) — pinned {r['pinned_ref']} (`{r['pinned_commit'][:9]}`)")
+              lines.append(f"- New tags: {', '.join(r['new_tags'][:15]) or 'none'}")
+              lines.append(f"- Commits since pin: {r['commits_total']} total, {len(r['commits_watched'])} on watched paths")
+              for c in r["commits_watched"][:40]:
+                  lines.append(f"  - {c}")
+              lines.append("")
+          open("body.md", "w").write("\n".join(lines))
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"changed={'true' if changed else 'false'}\n")
+          EOF
+
+      - name: Create or update issue
+        if: steps.report.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh label create upstream-sync --color 0E8A16 --description "Upstream changes to review" 2>/dev/null || true
+          num=$(gh issue list --label upstream-sync --state open --json number --jq '.[0].number')
+          if [ -n "$num" ]; then
+            gh issue edit "$num" --body-file body.md
+          else
+            gh issue create --title "Upstream changes to review" --label upstream-sync --body-file body.md
+          fi

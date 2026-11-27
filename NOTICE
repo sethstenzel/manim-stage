@@ -1,0 +1,14 @@
+manim-stage builds on and is inspired by the following projects.
+
+Manim Community Edition
+  https://github.com/ManimCommunity/manim
+  Copyright (c) 2018 3Blue1Brown LLC; Copyright (c) 2024 the Manim Community Developers
+  MIT License. Used as a runtime dependency. Any code adapted from Manim must
+  keep its copyright notice and be listed here with the source file and commit.
+
+Motion Canvas
+  https://github.com/motion-canvas/motion-canvas
+  Copyright (c) 2022 motion-canvas
+  MIT License. Used as a behavior/UX reference only. No source code or UI assets
+  are copied. If that ever changes, the copied files, their source commit and
+  the MIT notice must be recorded here first.

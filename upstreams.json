@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "upstreams": {
+    "manim": {
+      "repo": "https://github.com/ManimCommunity/manim",
+      "branch": "main",
+      "role": "dependency",
+      "license": "MIT",
+      "notes": "Engine, scene model, renderer. Consumed as a pip dependency. Never vendored or forked.",
+      "pinned": {
+        "ref": "v0.22.1",
+        "commit": "16ea443e2a5f1d79db0a721161411ce916d6e733"
+      },
+      "watch_paths": [
+        "manim/scene/",
+        "manim/renderer/",
+        "manim/animation/",
+        "manim/mobject/text/code_mobject.py",
+        "manim/mobject/value_tracker.py",
+        "manim/utils/caching.py",
+        "manim/_config/",
+        "manim/cli/",
+        "manim/plugins/"
+      ]
+    },
+    "motion-canvas": {
+      "repo": "https://github.com/motion-canvas/motion-canvas",
+      "branch": "main",
+      "role": "reference",
+      "license": "MIT",
+      "notes": "Behavior/UX reference only. Do not copy source or UI assets (spec section 2.9).",
+      "pinned": {
+        "ref": "v3.17.2",
+        "commit": "e735a995aa738ca682feb4204a39ee7db7b5d279"
+      },
+      "watch_paths": [
+        "packages/docs/docs/",
+        "packages/core/src/flow/",
+        "packages/core/src/signals/",
+        "packages/core/src/scenes/",
+        "packages/core/src/media/",
+        "packages/core/src/plugin/",
+        "packages/core/src/meta/",
+        "packages/2d/src/lib/code/",
+        "packages/ui/src/"
+      ]
+    }
+  }
+}

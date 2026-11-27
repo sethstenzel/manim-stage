@@ -1,0 +1,25 @@
+# Local upstream checkouts managed by scripts/upstream_sync.py
+.upstream/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# Manim output
+media/
+
+# Node (future editor)
+node_modules/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.claude/settings.local.json
