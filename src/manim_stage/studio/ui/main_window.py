@@ -80,6 +80,9 @@ class MainWindow(QMainWindow):
         workers: int = 1,
     ) -> None:
         super().__init__()
+        # Destroy the C++ window on close, in the GUI thread. Otherwise Python's cyclic GC
+        # may finalise it later on a runner thread, which aborts Qt.
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.service = service
         self.workers = max(1, workers)
         self.settings_store = studio_settings()

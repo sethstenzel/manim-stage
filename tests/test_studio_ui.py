@@ -15,14 +15,26 @@ from manim_stage.studio.app import create_window  # noqa: E402
 TIMEOUT = 120_000
 
 
+def dispose(win):
+    """Close and destroy a window in the GUI thread, then collect Python cycles here
+    (not later on some runner thread, where finalising Qt objects aborts)."""
+    import gc
+
+    from PySide6.QtCore import QCoreApplication, QEvent
+
+    win.close()
+    QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+    QCoreApplication.processEvents()
+    gc.collect()
+
+
 @pytest.fixture
 def window(qtbot, tmp_path):
     win, svc = create_window(SCENES / "timing.py", "MixedRunTimes", workers=1,
                              cache_dir=tmp_path / "cache", watch=False)  # fmt: skip
-    qtbot.addWidget(win)
     win.show()
     yield win
-    win.close()
+    dispose(win)
 
 
 def wait_done(qtbot, win, scene):
@@ -139,7 +151,6 @@ def test_timeline_shows_events_and_selection_drives_event_panel(qtbot, tmp_path)
     win, _ = create_window(
         SCENES / "timing.py", "Lesson", workers=1, cache_dir=tmp_path / "c", watch=False
     )
-    qtbot.addWidget(win)
     win.show()
     wait_done(qtbot, win, "Lesson")
     canvas = win.timeline.canvas
@@ -181,7 +192,7 @@ def test_timeline_shows_events_and_selection_drives_event_panel(qtbot, tmp_path)
         timeout=TIMEOUT,
     )
     assert canvas.selected == fade.id
-    win.close()
+    dispose(win)
 
 
 def test_click_on_ruler_seeks(qtbot, window):
