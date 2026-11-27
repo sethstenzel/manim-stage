@@ -63,7 +63,14 @@ class StageMixin:
     def _stage_resolver(self) -> CueResolver:
         if self._stage_resolver_obj is None:
             override = os.environ.get("MANIM_STAGE_CUES")
-            path = Path(override) if override else sidecar_path(inspect.getfile(type(self)))
+            if override:
+                path = Path(override)
+            else:
+                try:
+                    anchor = Path(inspect.getfile(type(self)))
+                except (OSError, TypeError):  # defined in a notebook / `python -c`
+                    anchor = Path.cwd() / "__scene__.py"
+                path = sidecar_path(anchor)
             self._stage_resolver_obj = CueResolver(
                 type(self).__name__, float(config.frame_rate), load(path)
             )
