@@ -40,6 +40,10 @@ __all__ = [
 
 
 def __getattr__(name: str) -> Any:
+    if name == "project":
+        import importlib
+
+        return importlib.import_module("manim_stage.project")
     if name in _LAZY:
         import importlib
 

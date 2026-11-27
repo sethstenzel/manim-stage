@@ -2,6 +2,13 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-27 — project theme and variables (backlog 3.2)
+
+- **New:** [`project.theme()` and `project.var()`](manim-stage/project.md), stored in `.manim-stage/project.json` and read by preview and `manim render` alike.
+- **New:** StageScene applies the theme's background and Text font. AnimatedCode takes the theme's code style and font.
+- **New:** a Studio **Project** panel with colour pickers, fonts, code style and typed editors for the variables a scene reads. Writes are validated, atomic and undoable.
+- **Changed:** the runner reports the project variables a scene read. The `project.json` schema is implemented (v1).
+
 ## 2026-11-27 — signals on ValueTracker (backlog 3.1)
 
 - **New:** [`Signal`](manim-stage/signals.md) is a `ValueTracker` holding a number, list, array or colour, so `.animate.set_value` interpolates every component.

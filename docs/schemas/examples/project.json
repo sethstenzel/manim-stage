@@ -3,8 +3,43 @@
   "version": 1,
   "studio_version": "0.0.1.dev0",
   "manim_build": "0.22.1+g8c258a0082dc760d9a93671bbdfaca3cc53a6f91",
-  "settings": {"frame_rate": 30, "pixel_width": 1920, "pixel_height": 1080, "seed": 0},
-  "scenes": [{"file": "lessons/bubble_sort.py", "class": "BubbleSortLesson"}],
-  "assets": ["audio/narration.wav"],
-  "cues_file": ".manim-stage/cues.json"
+  "settings": {
+    "frame_rate": 30,
+    "pixel_width": 1920,
+    "pixel_height": 1080,
+    "seed": 0
+  },
+  "scenes": [
+    {
+      "file": "lessons/bubble_sort.py",
+      "class": "BubbleSortLesson"
+    }
+  ],
+  "assets": [
+    "audio/narration.wav"
+  ],
+  "cues_file": ".manim-stage/cues.json",
+  "theme": {
+    "colors": {
+      "accent": "#FF8A5C",
+      "primary": "#58C4DD",
+      "background": "#101418"
+    },
+    "font": "Inter",
+    "code_style": "dracula"
+  },
+  "variables": {
+    "speed": {
+      "type": "number",
+      "value": 1.5,
+      "default": 1.0,
+      "min": 0.25,
+      "max": 4,
+      "description": "animation speed"
+    },
+    "show_indices": {
+      "type": "boolean",
+      "value": true
+    }
+  }
 }

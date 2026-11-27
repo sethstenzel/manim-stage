@@ -221,6 +221,14 @@ class StageMixin:
 
     def setup(self) -> None:  # Manim hook, called before construct()
         super().setup()  # type: ignore[misc]
+        from . import project
+
+        try:
+            anchor = Path(inspect.getfile(type(self)))
+        except (OSError, TypeError):
+            anchor = None
+        self.stage_project = project.current(anchor)
+        self._stage_restore_theme = project.apply_theme(self, self.stage_project.theme)
         self._stage_add_audio_clips()
 
     def _stage_add_audio_clips(self) -> None:
@@ -277,6 +285,9 @@ class StageMixin:
         from .signals import dispose_all
 
         dispose_all(self)  # effects and bindings end with the scene
+        restore = getattr(self, "_stage_restore_theme", None)
+        if restore:
+            restore()
         for name in self.stage_orphan_cues():
             log.warning(
                 "cue %r in %s is in the sidecar but no longer reached (orphan)",

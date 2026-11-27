@@ -89,7 +89,7 @@ The editor must cover every Motion Canvas editor capability **and** surface Mani
 | # | Item | Status | Notes |
 |---|---|---|---|
 | 3.1 | Derived values on `ValueTracker` (F06 in Manim terms, ADR-0013): derived trackers, bound updaters, dependency tracking, cycle detection, disposal | ☑ | F06 |
-| 3.2 | Project config / variables / themes (`project.json` settings, `stage.theme`) resolved identically in CLI and Studio | ☐ | F07 |
+| 3.2 | Project config / variables / themes (`project.json` settings, `stage.theme`) resolved identically in CLI and Studio | ☑ | F07 |
 | 3.3 | `expose()` editable properties + inspector editing, sidecar persistence, undo/redo, copy-as-Python | ☐ | F08 |
 | 3.4 | Transitions + choreography helpers; multi-scene sequence with cross-scene transitions | ☐ | F09 |
 | 3.5 | Asset manager + validator; render presets; range export; export metadata inspection | ☐ | F10 |
