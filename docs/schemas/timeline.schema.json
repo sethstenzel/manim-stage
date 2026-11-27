@@ -4,31 +4,84 @@
   "title": "manim-stage SceneTimeline v1",
   "description": "Events of one scene run (spec §8 SceneEvent; ADR-0005). Produced by manim_stage.capture.capture / SceneTimeline.to_dict(). Status: implemented.",
   "type": "object",
-  "required": ["schema", "version", "scene", "frame_rate", "duration_frames", "events"],
+  "required": [
+    "schema",
+    "version",
+    "scene",
+    "frame_rate",
+    "duration_frames",
+    "events"
+  ],
   "additionalProperties": false,
   "properties": {
-    "schema": {"const": "manim_stage.timeline"},
-    "version": {"const": 1},
-    "scene": {"type": "string", "minLength": 1},
-    "frame_rate": {"type": "number", "exclusiveMinimum": 0},
-    "duration_frames": {"type": "integer", "minimum": 0},
-    "source_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
-    "warnings": {"type": "array", "items": {"type": "string"}},
-    "events": {"type": "array", "items": {"$ref": "#/$defs/SceneEvent"}}
+    "schema": {
+      "const": "manim_stage.timeline"
+    },
+    "version": {
+      "const": 1
+    },
+    "scene": {
+      "type": "string",
+      "minLength": 1
+    },
+    "frame_rate": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "duration_frames": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "source_sha256": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/SceneEvent"
+      }
+    }
   },
   "$defs": {
     "SourceRef": {
       "type": "object",
-      "required": ["path", "line"],
+      "required": [
+        "path",
+        "line"
+      ],
       "additionalProperties": false,
       "properties": {
-        "path": {"type": "string", "minLength": 1},
-        "line": {"type": "integer", "minimum": 1}
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "line": {
+          "type": "integer",
+          "minimum": 1
+        }
       }
     },
     "SceneEvent": {
       "type": "object",
-      "required": ["id", "kind", "scene", "start_frame", "end_frame", "track", "label"],
+      "required": [
+        "id",
+        "kind",
+        "scene",
+        "start_frame",
+        "end_frame",
+        "track",
+        "label"
+      ],
       "additionalProperties": false,
       "properties": {
         "id": {
@@ -36,15 +89,150 @@
           "type": "string",
           "pattern": "^[^:]+:(play|wait|animation|section|sound|caption):.+#[0-9]+(/[0-9]+)*$"
         },
-        "kind": {"enum": ["play", "wait", "animation", "section", "sound", "caption"]},
-        "scene": {"type": "string"},
-        "start_frame": {"type": "integer", "minimum": 0, "description": "inclusive"},
-        "end_frame": {"type": "integer", "minimum": 0, "description": "exclusive; == start_frame for zero-length markers"},
-        "track": {"type": "string", "pattern": "^(main(/[0-9]+)?|sections|audio|captions)$"},
-        "label": {"type": "string"},
-        "source": {"oneOf": [{"$ref": "#/$defs/SourceRef"}, {"type": "null"}]},
-        "parent_id": {"type": ["string", "null"]},
-        "meta": {"type": "object"}
+        "kind": {
+          "enum": [
+            "play",
+            "wait",
+            "animation",
+            "section",
+            "sound",
+            "caption"
+          ]
+        },
+        "scene": {
+          "type": "string"
+        },
+        "start_frame": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "inclusive"
+        },
+        "end_frame": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "exclusive; == start_frame for zero-length markers"
+        },
+        "track": {
+          "type": "string",
+          "pattern": "^(main(/[0-9]+)?|sections|audio|captions)$"
+        },
+        "label": {
+          "type": "string"
+        },
+        "source": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/SourceRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "parent_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "meta": {
+          "type": "object",
+          "description": "Kind-specific details. play/wait: play_index, run_time, frozen, skipped; play also animations (AnimationInfo per top-level animation). animation: animation (AnimationInfo). section: type, skip_animations. sound: file, start_seconds, duration_seconds, gain.",
+          "properties": {
+            "animations": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/AnimationInfo"
+              }
+            },
+            "animation": {
+              "$ref": "#/$defs/AnimationInfo"
+            }
+          }
+        }
+      }
+    },
+    "AnimationInfo": {
+      "type": "object",
+      "description": "manim_stage.catalog.animation_info (backlog MF.2). Category keys follow Manim's manim.animation.* modules.",
+      "required": [
+        "class",
+        "module",
+        "category",
+        "run_time"
+      ],
+      "properties": {
+        "class": {
+          "type": "string",
+          "description": "Animation class name; '.animate' for mobject.animate builds"
+        },
+        "module": {
+          "type": "string"
+        },
+        "category": {
+          "enum": [
+            "creation",
+            "fading",
+            "transform",
+            "indication",
+            "movement",
+            "rotation",
+            "growing",
+            "numbers",
+            "changing",
+            "composition",
+            "speedmodifier",
+            "updaters",
+            "specialized",
+            "animation",
+            "animate",
+            "wait",
+            "custom"
+          ]
+        },
+        "run_time": {
+          "type": "number",
+          "minimum": 0
+        },
+        "methods": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": ".animate method chain"
+        },
+        "rate_func": {
+          "type": "string"
+        },
+        "rate_func_builtin": {
+          "type": "boolean",
+          "description": "defined in manim.utils.rate_functions"
+        },
+        "rate_curve": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "description": "rate_func(t) at evenly spaced t in [0, 1]"
+        },
+        "lag_ratio": {
+          "type": "number"
+        },
+        "mobject": {
+          "type": "string",
+          "description": "class of the animated Mobject"
+        },
+        "mobject_name": {
+          "type": "string",
+          "description": "Mobject.name when set explicitly"
+        },
+        "introducer": {
+          "type": "boolean"
+        },
+        "remover": {
+          "type": "boolean"
+        }
       }
     }
   }

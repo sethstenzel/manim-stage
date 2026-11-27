@@ -27,6 +27,7 @@ Newest first. One line per decision; details in the linked ADR or PR.
 
 | Date | Decision | Why | Where |
 |---|---|---|---|
+| 2026-11-27 | Classify animations by Manim's own module layout (`manim.animation.creation` → creation, …) and sample rate functions in the runner | Categories stay correct for subclasses and new upstream animations; editor never imports user code | ADR-0011, PR #13 |
 | 2026-11-27 | Editor shell: QMainWindow + custom QPainter widgets; own drawn icons; preview quality = Manim quality presets; preferences in an INI file | Python-only (ADR-0012); Manim vocabulary (ADR-0013); no third-party icon assets | PR #12 |
 | 2026-11-27 | Live reload by polling `stat()` of the scene + dependencies (no watchdog dependency), 0.3 s debounce | Small watched set; identical behaviour on all OSes; handles atomic-rename saves | PR #11 |
 | 2026-11-27 | Revision key includes every local module/asset the scene opened (audit hook, PEP 578); service drops messages from superseded revisions | MC's Vite HMR knows the module graph; Manim scenes need an equivalent so edits to helpers invalidate cached frames | ADR-0010, PR #10 |
@@ -49,8 +50,8 @@ One record per Motion Canvas feature. Status: **Ported** (implemented and tested
 - **Status:** In progress. Data ported (M0); UI in M1 (backlog 1.4, MF.3).
 - **MC behaviour:** one fast pass over the scene computes durations, slide and time-event positions; the timeline shows scenes, slides, time events and audio.
 - **Manim mapping:** `Manager.evaluate(capture_timeline=True)` gives play/wait/section/sound entries; a run-loop listener (`_compat.py`) records frame-exact play ranges; nested `AnimationGroup`/`LaggedStart` child spans are computed from `rate_func`, `lag_ratio` and run times.
-- **Improvements over MC:** per-animation and nested tracks; frame-integer time model (no float drift); stable event IDs `scene:kind:path:line#occurrence`.
-- **Implementation:** `src/manim_stage/capture.py`, `events.py`, `_compat.py`. Tests: `tests/test_capture.py`. KB: `docs/kb/manim-stage/event-capture.md`.
+- **Improvements over MC:** per-animation and nested tracks; frame-integer time model (no float drift); stable event IDs `scene:kind:path:line#occurrence`; each event knows its Manim animation class, category (from Manim's `manim.animation.*` module layout), `.animate` method chain, rate function and its sampled curve, lag ratio and target Mobject (MF.2), so the timeline can show *what* happens, not just *when*.
+- **Implementation:** `src/manim_stage/capture.py`, `events.py`, `_compat.py`, `catalog.py`. Tests: `tests/test_capture.py`, `tests/test_catalog.py`. KB: `docs/kb/manim-stage/event-capture.md`.
 
 ### Seeking / preview (MC: replay the scene in the browser to any frame)
 - **Status:** Ported for cached frames (P1). P3 live scrubbing not feasible (no Manim state snapshot).

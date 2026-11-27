@@ -2,6 +2,11 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-27 — animation metadata (backlog MF.2)
+
+- **New:** timeline events describe each animation in Manim's terms: class, category (Manim's animation module), `.animate` method chain, run time, rate function name and sampled curve, lag ratio, animated Mobject. See [event capture → animation metadata](manim-stage/event-capture.md#animation-metadata).
+- **New:** `manim_stage.catalog` (first part of the Manim feature catalog, ADR-0011).
+
 ## 2026-11-27 — Studio editor shell (backlog 1.3)
 
 - **New:** [Studio editor](manim-stage/studio-editor.md) (PySide6): scene picker, viewport with zoom, play/pause/step/speed/loop/range, scrub bar with render progress, live reload, errors with jump-to-source, dark/light themes, keyboard shortcuts.
