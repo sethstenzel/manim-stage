@@ -2,6 +2,13 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-26 — data contracts (backlog 0.8)
+
+- **New:** [Data formats and the time model](reference/data-formats.md); JSON Schemas in `docs/schemas/`.
+  - Timeline and runner messages are validated against real runner output.
+  - Draft schemas for cues, project manifest and editable properties.
+  - Project paths reject traversal.
+
 ## 2026-11-26 — regression baseline (backlog 0.7)
 
 - **New:** [Regression tests and golden frames](workflow/regression-tests.md).

@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/sethstenzel/manim-stage/docs/schemas/timeline.schema.json",
+  "title": "manim-stage SceneTimeline v1",
+  "description": "Events of one scene run (spec §8 SceneEvent; ADR-0005). Produced by manim_stage.capture.capture / SceneTimeline.to_dict(). Status: implemented.",
+  "type": "object",
+  "required": ["schema", "version", "scene", "frame_rate", "duration_frames", "events"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {"const": "manim_stage.timeline"},
+    "version": {"const": 1},
+    "scene": {"type": "string", "minLength": 1},
+    "frame_rate": {"type": "number", "exclusiveMinimum": 0},
+    "duration_frames": {"type": "integer", "minimum": 0},
+    "source_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+    "warnings": {"type": "array", "items": {"type": "string"}},
+    "events": {"type": "array", "items": {"$ref": "#/$defs/SceneEvent"}}
+  },
+  "$defs": {
+    "SourceRef": {
+      "type": "object",
+      "required": ["path", "line"],
+      "additionalProperties": false,
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "line": {"type": "integer", "minimum": 1}
+      }
+    },
+    "SceneEvent": {
+      "type": "object",
+      "required": ["id", "kind", "scene", "start_frame", "end_frame", "track", "label"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "scene:kind:path:line#occurrence, children append /index",
+          "type": "string",
+          "pattern": "^[^:]+:(play|wait|animation|section|sound|caption):.+#[0-9]+(/[0-9]+)*$"
+        },
+        "kind": {"enum": ["play", "wait", "animation", "section", "sound", "caption"]},
+        "scene": {"type": "string"},
+        "start_frame": {"type": "integer", "minimum": 0, "description": "inclusive"},
+        "end_frame": {"type": "integer", "minimum": 0, "description": "exclusive; == start_frame for zero-length markers"},
+        "track": {"type": "string", "pattern": "^(main(/[0-9]+)?|sections|audio|captions)$"},
+        "label": {"type": "string"},
+        "source": {"oneOf": [{"$ref": "#/$defs/SourceRef"}, {"type": "null"}]},
+        "parent_id": {"type": ["string", "null"]},
+        "meta": {"type": "object"}
+      }
+    }
+  }
+}
