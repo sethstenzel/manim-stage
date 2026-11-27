@@ -229,6 +229,12 @@ class PreviewService:
                 debounce=debounce,
             ).start()
 
+    def acknowledge(self, paths: list[Path]) -> None:
+        """Files the caller changed and already re-rendered for: don't re-render again."""
+        with self._lock:
+            if self._watcher is not None:
+                self._watcher.acknowledge(paths)
+
     def unwatch(self) -> None:
         with self._lock:
             if self._watcher is not None:

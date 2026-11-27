@@ -27,6 +27,7 @@ Newest first. One line per decision; details in the linked ADR or PR.
 
 | Date | Decision | Why | Where |
 |---|---|---|---|
+| 2026-11-27 | Cue drag: hold (bounded by next cue's wait) vs ripple (Shift); undo via QUndoStack; atomic write + immediate render + watcher acknowledge; new sidecars at 60 fps | Prevent negative waits in the UI as well as the resolver; exact at 15/30/60 fps | PR #19 |
 | 2026-11-27 | `cue()` is a mixin method issuing `Scene.wait`; name-based cue IDs; sidecar read by plain `manim render`; negative waits are errors | Manim terms (ADR-0013); headless parity (ADR-0006); MC's silent clamping/dropping avoided | PR #18 |
 | 2026-11-27 | M1 gate passed; live reload reuses the last render settings; requested scene renders before discovery finishes | Gate evidence in `docs/m1-gate-report.md`; the reload bug was found by the latency benchmark | PR #17 |
 | 2026-11-27 | Export = visible `manim render` command; range via `-n` snapped to whole calls; PyAV result check | Manim stays the renderer (spec §2.1); reproducible headlessly (§13); no lossy re-cut | PR #15 |
@@ -67,7 +68,7 @@ One record per Motion Canvas feature. Status: **Ported** (implemented and tested
 - **Implementation:** `runner.py`, `framecache.py`. Tests: `test_runner.py`, `test_parity.py`. KB: `frame-cache.md`, `runner.md`.
 
 ### Time events / `waitUntil` (MC: named, draggable waits)
-- **Status:** Ported: API, sidecar, validate, bake and timeline lane (2.1). Dragging with ripple and undo is next (2.2).
+- **Status:** Ported (2.1 API/sidecar/CLI; 2.2 timeline dragging).
 - **MC behaviour:** `yield* waitUntil("event")` pauses the scene until the event's time. Times are absolute (scene-relative), live in the scene's `.meta` file, and are dragged on the timeline. An event without a stored time waits 0. Negative waits are clamped in the editor only.
 - **Manim mapping:**
   - `self.cue("name", at=, after=, description=)` on `StageScene`, or on any Manim scene via `StageMixin` (`MovingCameraScene`, `ThreeDScene`, …). It issues a plain `Scene.wait` for the remaining frames.
@@ -82,7 +83,14 @@ One record per Motion Canvas feature. Status: **Ported** (implemented and tested
   - `validate`/`bake` CLI;
   - plain `manim render` reads the sidecar (headless reproducibility);
   - name-based IDs, so moving the call keeps the timing.
-- **Implementation:** `src/manim_stage/cues.py` (store, resolver, Manim-free), `scene.py` (`StageMixin`, `StageScene`), `capture.py` (`cue` events, wait attribution), `cuetools.py` + `cli.py` (`validate`, `bake`), and the timeline Cues lane. Tests: `tests/test_cues.py`. KB: `docs/kb/manim-stage/cues.md`.
+- **Editing (2.2):** MC drags time events and ripples later ones in its timeline. Ported with explicit modes and constraints:
+  - **hold** (default): bounded by the next cue's wait, so no negative waits are possible;
+  - **ripple:** Shift;
+  - a live preview of shifted animations;
+  - every edit is a `QUndoStack` command that rewrites the sidecar atomically and re-renders, with the watcher echo suppressed;
+  - keyboard nudge and an exact-time field for accessibility;
+  - the planning rules are a Qt-free `plan_move` with unit tests.
+- **Implementation:** `src/manim_stage/cues.py` (store, resolver, Manim-free), `studio/cue_edit.py` (drag planning, undoable edits), `scene.py` (`StageMixin`, `StageScene`), `capture.py` (`cue` events, wait attribution), `cuetools.py` + `cli.py` (`validate`, `bake`), and the timeline Cues lane. Tests: `tests/test_cues.py`. KB: `docs/kb/manim-stage/cues.md`.
 
 ### Code block and code animation (MC: `Code` node, token diff)
 - **Status:** Designed (ADR-0008). Backlog 2.5–2.6.

@@ -247,3 +247,98 @@ def test_snapshot_and_copy_frame(qtbot, window, tmp_path):
     window.save_snapshot(str(out), quality="low_quality")
     qtbot.waitUntil(lambda: bool(window.last_snapshot_message), timeout=TIMEOUT)
     assert out.is_file() and "Saved frame 10" in window.last_snapshot_message
+
+
+def _drag(widget, start, end, *, shift=False):
+    from PySide6.QtCore import QEvent, QPointF
+    from PySide6.QtGui import QMouseEvent
+    from PySide6.QtWidgets import QApplication
+
+    mods = Qt.KeyboardModifier.ShiftModifier if shift else Qt.KeyboardModifier.NoModifier
+    left = Qt.MouseButton.LeftButton
+
+    def send(kind, pos, button, buttons):
+        p = QPointF(pos)
+        ev = QMouseEvent(kind, p, widget.mapToGlobal(p), button, buttons, mods)
+        QApplication.sendEvent(widget, ev)
+
+    send(QEvent.Type.MouseButtonPress, start, left, left)
+    for i in range(1, 6):
+        send(QEvent.Type.MouseMove, start + (end - start) * (i / 5), Qt.MouseButton.NoButton, left)
+    send(QEvent.Type.MouseButtonRelease, end, left, Qt.MouseButton.NoButton)
+
+
+def test_drag_cue_saves_sidecar_rerenders_and_undoes(qtbot, tmp_path):
+    from PySide6.QtCore import QPointF
+
+    from manim_stage import cues as cs
+
+    proj = tmp_path / "proj"
+    (proj / ".manim-stage").mkdir(parents=True)
+    scene = proj / "lesson.py"
+    scene.write_text((SCENES / "cues.py").read_text(encoding="utf-8"), encoding="utf-8")
+    side = proj / ".manim-stage" / "cues.json"
+    win, _ = create_window(scene, "Narrated", workers=1, cache_dir=tmp_path / "c", watch=True)
+    win.show()
+    wait_done(qtbot, win, "Narrated")
+    canvas = win.timeline.canvas
+    fps = win.playback.fps
+
+    def cue(name):
+        return next(
+            b for b in canvas.layout_.by_id.values() if b.kind == "cue" and b.meta["name"] == name
+        )
+
+    def rect(name):
+        return next(r for b, r, _ in canvas.box_rects() if b.id == cue(name).id)
+
+    def rerendered(after_seq):
+        return lambda: win.shown_state[0] > after_seq and win.shown_state[2] == "done"
+
+    # drag "intro" (target 2.0 s) 1 s later, in hold mode
+    seq = win.shown_state[0]
+    r = rect("intro")
+    start = r.center()
+    end = start + QPointF(fps * canvas.ppf, 0)
+    _drag(canvas, start, end)
+    assert cs.load(side).target_seconds("Narrated", "intro") == pytest.approx(3.0, abs=1 / fps)
+    qtbot.waitUntil(rerendered(seq), timeout=TIMEOUT)
+    assert cue("intro").start == pytest.approx(3 * fps, abs=1)
+    assert cue("intro").meta["overridden"] is True
+    swap_after_hold = cue("swap").start
+
+    # undo → override removed → back to 2.0 s
+    seq = win.shown_state[0]
+    win.act_undo.trigger()
+    assert cs.load(side).target_seconds("Narrated", "intro") is None
+    qtbot.waitUntil(rerendered(seq), timeout=TIMEOUT)
+    assert cue("intro").start == 2 * fps
+
+    # redo
+    seq = win.shown_state[0]
+    win.act_redo.trigger()
+    qtbot.waitUntil(rerendered(seq), timeout=TIMEOUT)
+    assert cue("intro").start == pytest.approx(3 * fps, abs=1)
+    assert cue("swap").start == swap_after_hold
+
+    # keyboard nudge of the selected cue (+1 frame)
+    canvas.select(cue("intro").id)
+    canvas.setFocus()
+    before = cue("intro").start
+    seq = win.shown_state[0]
+    qtbot.keyClick(
+        canvas,
+        Qt.Key.Key_Right,
+        Qt.KeyboardModifier.AltModifier | Qt.KeyboardModifier.ShiftModifier,
+    )
+    qtbot.waitUntil(rerendered(seq), timeout=TIMEOUT)
+    assert cue("intro").start == before + 1
+
+    # Event panel: reset to default
+    canvas.select(cue("intro").id)
+    assert win.event_panel.cue_row.isVisibleTo(win.event_panel)
+    seq = win.shown_state[0]
+    win.event_panel.cue_reset.click()
+    qtbot.waitUntil(rerendered(seq), timeout=TIMEOUT)
+    assert cue("intro").start == 2 * fps and not cue("intro").meta["overridden"]
+    dispose(win)

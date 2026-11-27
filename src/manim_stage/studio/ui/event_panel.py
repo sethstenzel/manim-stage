@@ -15,6 +15,7 @@ from PySide6.QtCore import QPointF, QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QPainter, QPen, QPolygonF
 from PySide6.QtWidgets import (
     QApplication,
+    QDoubleSpinBox,
     QHBoxLayout,
     QLabel,
     QPushButton,
@@ -73,6 +74,8 @@ class RateCurveView(QWidget):
 class EventPanel(QWidget):
     seekRequested = Signal(int)
     sourceRequested = Signal(object)  # EventBox
+    cueResetRequested = Signal(str)
+    cueTimeRequested = Signal(str, float)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -95,10 +98,35 @@ class EventPanel(QWidget):
         self.open.setAccessibleName("Open the event's source line in the code editor")
         row.addWidget(self.go)
         row.addWidget(self.open)
+        self.cue_row = QWidget()
+        crow = QHBoxLayout(self.cue_row)
+        crow.setContentsMargins(0, 0, 0, 0)
+        self.cue_time = QDoubleSpinBox()
+        self.cue_time.setAccessibleName("Cue time in seconds")
+        self.cue_time.setDecimals(3)
+        self.cue_time.setSuffix(" s")
+        self.cue_time.setRange(0, 86400)
+        self.cue_set = QPushButton("Set time")
+        self.cue_set.setAccessibleName("Move the cue to this time")
+        self.cue_reset = QPushButton("Reset to default")
+        self.cue_reset.setAccessibleName("Remove the cue's override")
+        for w in (self.cue_time, self.cue_set, self.cue_reset):
+            crow.addWidget(w)
+        self.cue_row.setVisible(False)
+        self.cue_set.clicked.connect(
+            lambda: (
+                self.box
+                and self.cueTimeRequested.emit(self.box.meta["name"], self.cue_time.value())
+            )
+        )
+        self.cue_reset.clicked.connect(
+            lambda: self.box and self.cueResetRequested.emit(self.box.meta["name"])
+        )
         lay.addWidget(self.title)
         lay.addWidget(self.details)
         lay.addWidget(self.curve)
         lay.addLayout(row)
+        lay.addWidget(self.cue_row)
         lay.addStretch(1)
         self.box: EventBox | None = None
         self.fps = 15.0
@@ -111,6 +139,11 @@ class EventPanel(QWidget):
         if fps:
             self.fps = fps
         self.go.setEnabled(box is not None)
+        is_cue = box is not None and box.kind == "cue"
+        self.cue_row.setVisible(is_cue)
+        if is_cue:
+            self.cue_time.setValue(box.start / (fps or self.fps or 15.0))
+            self.cue_reset.setEnabled(bool(box.meta.get("overridden")))
         self.open.setEnabled(bool(box and box.source))
         if box is None:
             self.title.setText("Select an event on the timeline.")

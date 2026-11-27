@@ -83,6 +83,14 @@ class FileWatcher:
             return changed
         return None
 
+    def acknowledge(self, paths: list[Path]) -> None:
+        """Treat the current content of ``paths`` as already handled (e.g. the editor
+        wrote them itself and re-rendered), so they don't trigger another change."""
+        for p in paths:
+            p = Path(p)
+            self._known[p] = _signature(p)
+            self._pending.discard(p)
+
     def _run(self) -> None:
         while not self._stop.wait(self.interval):
             try:

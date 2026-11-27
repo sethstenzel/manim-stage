@@ -49,6 +49,7 @@ assert [ln.key for ln in layout.lanes] == ["sections", "main", "level1"]
 
 | Lane | Shows |
 |---|---|
+| Cues | `self.cue(...)` flags of a [StageScene](cues.md). Drag to retime (Shift ripples). |
 | Sections | `next_section` flags with their names. A section with `skip_animations=True` is marked "(skipped)". A dashed line runs down through all lanes. |
 | Animations | One bar per `play` or `wait` call |
 | Level 1, 2, … | Members of animation groups, one lane per nesting depth. Members that overlap in time (as in `AnimationGroup`) get extra rows, so nothing is hidden. A `LaggedStart` reads as a staircase. |
@@ -83,12 +84,14 @@ assert [ln.key for ln in layout.lanes] == ["sections", "main", "level1"]
 | Ctrl+Enter | Open the selected event's source line |
 | + / − | Zoom in / out |
 | F | Fit the whole scene |
+| Alt+Shift+← / → | Nudge the selected cue one frame (add Ctrl to ripple) |
+| Esc | Cancel a cue drag |
 
 The editor-wide shortcuts (Space, ←/→, Home/End, I/O, …) keep working; see [Studio editor → shortcuts](studio-editor.md#keyboard-shortcuts).
 
 ## Limitations and unsupported cases
 
-- Editing timing by dragging comes with cues (M2, backlog 2.2); the timeline is read-only until then. Python stays the source of truth (spec F02).
+- Only **cues** are editable on the timeline ([named cues → editing](cues.md#editing-cues-in-the-studio)). Other events reflect your Python code, which stays the source of truth for logical order (spec F02).
 - Audio clips have no waveform yet (M2 audio workspace).
 - Spans of members of custom `Animation` subclasses with non-standard `interpolate` timing may be approximate (see [event capture](event-capture.md)).
 - Updaters and `ValueTracker` changes are not separate tracks yet (MF.5).

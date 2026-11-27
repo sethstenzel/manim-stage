@@ -13,13 +13,14 @@ renderer, sections.
 
 from __future__ import annotations
 
+import os
 import threading
 import time
 from collections import deque
 from pathlib import Path
 
 from PySide6.QtCore import QSettings, Qt, QTimer
-from PySide6.QtGui import QAction, QGuiApplication, QImage, QKeySequence
+from PySide6.QtGui import QAction, QGuiApplication, QImage, QKeySequence, QUndoCommand, QUndoStack
 from PySide6.QtWidgets import (
     QApplication,
     QComboBox,
@@ -34,7 +35,9 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from ... import cues as cue_store
 from ...export import snapshot
+from ..cue_edit import CueEdit, edit_for_plan, edit_reset, plan_move
 from ..playback import Playback
 from ..service import PreviewMessage, PreviewService, RenderSettings
 from ..timeline_model import resolve_source
@@ -52,6 +55,22 @@ from .viewport import Viewport
 def studio_settings() -> QSettings:
     """User preferences (theme, …) in an INI file; tests redirect it with QSettings.setPath."""
     return QSettings(QSettings.Format.IniFormat, QSettings.Scope.UserScope, "manim-stage", "studio")
+
+
+class _CueCommand(QUndoCommand):
+    """One cue edit on the undo stack; redo/undo write the sidecar and re-render."""
+
+    def __init__(self, window: MainWindow, edit: CueEdit) -> None:
+        super().__init__(edit.label)
+        self.window, self.edit = window, edit
+
+    def redo(self) -> None:
+        self.edit.do(self.window.cue_sidecar())
+        self.window._cue_written(self.edit.label)
+
+    def undo(self) -> None:
+        self.edit.undo(self.window.cue_sidecar())
+        self.window._cue_written(f"Undo: {self.edit.label}")
 
 
 class MainWindow(QMainWindow):
@@ -138,6 +157,9 @@ class MainWindow(QMainWindow):
         tc.sourceRequested.connect(self.open_event_source)
         self.event_panel.seekRequested.connect(self.seek)
         self.event_panel.sourceRequested.connect(self.open_event_source)
+        tc.cueMoved.connect(self.apply_cue_plan)
+        self.event_panel.cueResetRequested.connect(self.reset_cue)
+        self.event_panel.cueTimeRequested.connect(self.set_cue_time)
 
         self.timer = QTimer(self)
         self.timer.setTimerType(Qt.TimerType.PreciseTimer)
@@ -184,6 +206,14 @@ class MainWindow(QMainWindow):
         self.act_cancel.setToolTip("Cancel rendering (Esc)")
         self.act_cancel.triggered.connect(self.service.cancel)
         tb.addAction(self.act_cancel)
+        tb.addSeparator()
+        self.undo_stack = QUndoStack(self)
+        self.act_undo = self.undo_stack.createUndoAction(self, "Undo")
+        self.act_undo.setShortcut(QKeySequence.StandardKey.Undo)
+        self.act_redo = self.undo_stack.createRedoAction(self, "Redo")
+        self.act_redo.setShortcuts([QKeySequence("Ctrl+Shift+Z"), QKeySequence("Ctrl+Y")])
+        tb.addAction(self.act_undo)
+        tb.addAction(self.act_redo)
         tb.addSeparator()
         self.act_export = QAction("Export…", self)
         self.act_export.setShortcut(QKeySequence("Ctrl+E"))
@@ -502,6 +532,46 @@ class MainWindow(QMainWindow):
             kind, text = self._snapshot_results.popleft()
             self.status_label.setText(("⚠ " if kind == "error" else "") + text)
             self.last_snapshot_message = text
+
+    # -- cue editing (undoable) --------------------------------------------------------
+
+    def cue_sidecar(self) -> Path:
+        override = os.environ.get("MANIM_STAGE_CUES")
+        return Path(override) if override else cue_store.sidecar_path(self.service.file)
+
+    def _push_cue_edit(self, edit: CueEdit) -> None:
+        try:
+            self.undo_stack.push(_CueCommand(self, edit))
+        except (cue_store.CueError, OSError) as e:
+            self.status_label.setText(f"⚠ Could not save cues: {e}")
+
+    def _cue_written(self, label: str) -> None:
+        """After a sidecar write: suppress the watcher's echo and re-render now."""
+        self.service.acknowledge([self.cue_sidecar()])
+        self.status_label.setText(f"{label} — saved to {self.cue_sidecar().name}; re-rendering…")
+        self.render()
+
+    def apply_cue_plan(self, plan) -> None:
+        scene = self.current_scene()
+        if not scene:
+            return
+        if plan.clamped:
+            self.status_label.setText(f"Cue {plan.name!r}: {plan.clamped}")
+        self._push_cue_edit(edit_for_plan(self.cue_sidecar(), scene, plan, self.playback.fps))
+
+    def reset_cue(self, name: str) -> None:
+        scene = self.current_scene()
+        if scene:
+            self._push_cue_edit(edit_reset(self.cue_sidecar(), scene, name))
+
+    def set_cue_time(self, name: str, seconds: float) -> None:
+        scene = self.current_scene()
+        if not scene:
+            return
+        frame = round(seconds * self.playback.fps)
+        plan = plan_move(self.timeline.canvas.cue_infos(), name, frame, ripple=False)
+        if plan.delta or plan.clamped:
+            self.apply_cue_plan(plan)
 
     def toggle_theme(self) -> None:
         app = QApplication.instance()
