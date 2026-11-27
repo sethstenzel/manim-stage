@@ -103,6 +103,13 @@ def list_scenes(path: Path) -> list[dict[str, Any]]:
     return sorted(found, key=lambda s: s["line"])
 
 
+def _used_variables() -> list[dict[str, Any]]:
+    """Project variables the scene read (``manim_stage.project.var``), for the Studio."""
+    from .project import USED
+
+    return [{"name": n, **var.to_dict()} for n, var in sorted(USED.items())]
+
+
 def _user_frame(exc: BaseException, scene_file: Path) -> tuple[str | None, int | None]:
     """Where to point the user: a syntax error's own location, else the innermost
     traceback frame in the scene file, else the innermost frame overall."""
@@ -219,6 +226,7 @@ def _main(argv: list[str] | None = None) -> int:
                     "revision": revision,
                     "timeline": timeline.to_dict(),
                     "dependencies": [str(f) for f in deps],
+                    "variables": _used_variables(),
                 }
             )
 

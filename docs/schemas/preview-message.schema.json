@@ -140,6 +140,12 @@
           "items": {
             "type": "string"
           }
+        },
+        "variables": {
+          "type": "array",
+          "items": {
+            "$ref": "project.schema.json#/$defs/UsedVariable"
+          }
         }
       },
       "required": [

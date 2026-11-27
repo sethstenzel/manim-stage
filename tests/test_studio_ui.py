@@ -430,3 +430,41 @@ def test_audio_clip_add_drag_trim_mute_undo(qtbot, tmp_path, test_sound):
     c = audio.load(side).scenes["Voiced"][0]
     assert c.start == 0.5 and not c.mute
     dispose(win)
+
+
+def test_project_panel_edits_theme_and_variables_with_undo(qtbot, tmp_path):
+    import shutil
+
+    from manim_stage import project as pj
+
+    proj = tmp_path / "proj"
+    shutil.copytree(SCENES / "themed", proj)
+    (proj / ".manim-stage").mkdir()
+    win, _ = create_window(
+        proj / "scene_a.py", "SceneA", workers=1, cache_dir=tmp_path / "c", watch=True
+    )
+    win.show()
+    wait_done(qtbot, win, "SceneA")
+    panel = win.project_panel
+    assert "accent" in panel.color_buttons and "size" in panel.var_editors
+    rev0 = win.service.current.revision
+    panel.color_buttons["accent"].set_value("#00ff00")
+    panel.var_editors["size"][0].setValue(2.0)
+    assert panel.has_changes()
+    seq = win.shown_state[0]
+    panel.apply_btn.click()
+    qtbot.waitUntil(
+        lambda: win.shown_state[0] > seq and win.shown_state[2] == "done", timeout=TIMEOUT
+    )
+    saved = pj.load(proj / ".manim-stage" / "project.json")
+    assert saved.theme.accent == "#00ff00" and saved.variables["size"].value == 2.0
+    assert win.service.current.revision != rev0
+    seq = win.shown_state[0]
+    win.act_undo.trigger()
+    qtbot.waitUntil(
+        lambda: win.shown_state[0] > seq and win.shown_state[2] == "done", timeout=TIMEOUT
+    )
+    assert (
+        pj.load(proj / ".manim-stage" / "project.json").theme.accent == pj.DEFAULT_COLORS["accent"]
+    )
+    dispose(win)

@@ -27,6 +27,7 @@ Newest first. One line per decision; details in the linked ADR or PR.
 
 | Date | Decision | Why | Where |
 |---|---|---|---|
+| 2026-11-27 | Theme + typed variables in `project.json`; `var()` read = opt-in to editing; StageScene applies background/font and restores; runner reports used variables | F07 in Manim terms; deterministic across CLI/Studio; no source edits to restyle | PR #27 |
 | 2026-11-27 | `Signal` is a `ValueTracker` (values flattened into points); `computed` lazy+cached with tracking stack; `bind`/`effect` change-only updaters disposed at scene end | Manim concept kept (ADR-0013); `.animate` works for free; no per-frame recompute | PR #26 |
 | 2026-11-27 | M2 gate passed. AnimatedCode: ligatures off, all uncached lines in one Pango call, no system-font scan; `run_capture` cwd = scene folder | Exact glyph↔char mapping; a cold Pango call costs ~3.4 s on Windows; relative assets behave like `manim` | PR #25 |
 | 2026-11-27 | Code diff = patience lines → token LCS + moved lines + overrides + ambiguity warnings; `CodeEdit` interpolates raw arrays; line-glyph cache | MC behaviour plus explicit control; deterministic and fast enough for many edits | PR #24 |
@@ -210,9 +211,21 @@ One record per Motion Canvas feature. Status: **Ported** (implemented and tested
   - each change is an `AudioEdit` (whole clip list before/after) on the shared undo stack.
 - **Implementation:** `src/manim_stage/audio.py`, `studio/audio_edit.py`, `scene.py` (`setup` clips), `capture.py` (clip tagging), `studio/audio_player.py`, UI waveforms in `studio/ui/timeline.py`. Tests: `tests/test_audio.py`, `tests/test_studio_ui.py`. KB: `docs/kb/manim-stage/audio.md`.
 
-### Project variables (MC: `variables`)
-- **Status:** Designed (ADR-0013). Backlog 3.2.
-- **Manim mapping:** `stage.variables` + project theme layered on `ManimConfig`.
+### Project variables and theme (MC: `variables`, project settings)
+- **Status:** Ported (3.2).
+- **MC behaviour:** a project passes untyped variables to scenes (`useScene().variables`); the editor has project settings but no typed variable UI.
+- **Manim mapping:**
+  - `.manim-stage/project.json` holds a theme (semantic colours whose defaults are Manim's colour constants, Text font, code font and style) and typed variables;
+  - scenes call `project.theme()` / `project.var(name, default, min=, max=, options=)`, which is the explicit opt-in;
+  - StageScene applies the background (`camera.background_color`) and font (`Text.set_default`) and restores them at `tear_down`;
+  - AnimatedCode takes its code style and font from the theme;
+  - the runner reports the variables a scene read, and the Studio's Project panel edits them, with undo.
+- **Improvements over MC:**
+  - typed and validated values, with failures naming the variable;
+  - a theme layer;
+  - one file for CLI, Studio and CI;
+  - a tracked dependency, so edits invalidate the cache.
+- **Implementation:** `src/manim_stage/project.py`, `scene.py`, `code.py`, `runner.py`, `studio/ui/project_panel.py`. Tests: `tests/test_project.py` (F07 acceptance: two scenes recolour on one accent change), `tests/test_studio_ui.py`. KB: `docs/kb/manim-stage/project.md`.
 
 ### Inspector (MC: read-only node inspector)
 - **Status:** Not started. Backlog MF.5, 3.3.

@@ -1,48 +1,206 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/sethstenzel/manim-stage/docs/schemas/project.schema.json",
-  "title": "manim-stage project manifest v1 (draft)",
-  "description": "`.manim-stage/project.json` (spec §8 ProjectManifest). Status: DRAFT, not implemented (M1). All paths are project-relative POSIX paths; absolute paths and '..' segments are rejected (path traversal protection). No secrets.",
+  "title": "manim-stage project file v1",
+  "description": "`.manim-stage/project.json` (spec §8 ProjectManifest, F07): theme, variables, settings. Status: implemented (manim_stage.project). All paths are project-relative POSIX paths; absolute paths and '..' segments are rejected (path traversal protection). No secrets.",
   "type": "object",
-  "required": ["schema", "version", "settings", "scenes"],
+  "required": [
+    "schema",
+    "version"
+  ],
   "additionalProperties": false,
   "properties": {
-    "schema": {"const": "manim_stage.project"},
-    "version": {"const": 1},
-    "studio_version": {"type": "string"},
-    "manim_build": {"type": "string", "description": "manim_stage._compat.manim_build_id() when last saved"},
+    "schema": {
+      "const": "manim_stage.project"
+    },
+    "version": {
+      "const": 1
+    },
+    "studio_version": {
+      "type": "string"
+    },
+    "manim_build": {
+      "type": "string",
+      "description": "manim_stage._compat.manim_build_id() when last saved"
+    },
     "settings": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "frame_rate": {"type": "number", "exclusiveMinimum": 0, "default": 30},
-        "pixel_width": {"type": "integer", "minimum": 16, "default": 1920},
-        "pixel_height": {"type": "integer", "minimum": 16, "default": 1080},
-        "preview_scale": {"type": "number", "exclusiveMinimum": 0, "maximum": 1, "default": 0.5},
-        "seed": {"type": "integer", "default": 0, "description": "enforced for determinism (spec §2.5)"},
-        "renderer": {"enum": ["cairo", "opengl"], "default": "cairo"}
+        "frame_rate": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "default": 30
+        },
+        "pixel_width": {
+          "type": "integer",
+          "minimum": 16,
+          "default": 1920
+        },
+        "pixel_height": {
+          "type": "integer",
+          "minimum": 16,
+          "default": 1080
+        },
+        "preview_scale": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1,
+          "default": 0.5
+        },
+        "seed": {
+          "type": "integer",
+          "default": 0,
+          "description": "enforced for determinism (spec §2.5)"
+        },
+        "renderer": {
+          "enum": [
+            "cairo",
+            "opengl"
+          ],
+          "default": "cairo"
+        }
       }
     },
     "scenes": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["file", "class"],
+        "required": [
+          "file",
+          "class"
+        ],
         "additionalProperties": false,
         "properties": {
-          "file": {"$ref": "#/$defs/RelPath"},
-          "class": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"}
+          "file": {
+            "$ref": "#/$defs/RelPath"
+          },
+          "class": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+          }
         }
       }
     },
-    "assets": {"type": "array", "items": {"$ref": "#/$defs/RelPath"}},
-    "cues_file": {"$ref": "#/$defs/RelPath", "default": ".manim-stage/cues.json"}
+    "assets": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/RelPath"
+      }
+    },
+    "cues_file": {
+      "$ref": "#/$defs/RelPath",
+      "default": ".manim-stage/cues.json"
+    },
+    "theme": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "colors": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$"
+          }
+        },
+        "font": {
+          "type": "string"
+        },
+        "code_font": {
+          "type": "string"
+        },
+        "code_style": {
+          "type": "string"
+        }
+      }
+    },
+    "variables": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/Variable"
+      }
+    }
   },
   "$defs": {
     "RelPath": {
       "type": "string",
       "minLength": 1,
       "pattern": "^(?![A-Za-z]:)(?!/)(?!.*(^|/)\\.\\.(/|$))[^\\\\]+$"
+    },
+    "Variable": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "enum": [
+            "number",
+            "integer",
+            "boolean",
+            "string",
+            "color",
+            "enum"
+          ]
+        },
+        "value": {},
+        "default": {},
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        },
+        "options": {
+          "type": "array"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "UsedVariable": {
+      "type": "object",
+      "required": [
+        "name",
+        "type"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "number",
+            "integer",
+            "boolean",
+            "string",
+            "color",
+            "enum"
+          ]
+        },
+        "value": {},
+        "default": {},
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        },
+        "options": {
+          "type": "array"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
     }
   }
 }

@@ -7,7 +7,7 @@ JSON Schema 2020-12. Every document carries `schema` + `version` (or `v` for pro
 | [timeline.schema.json](timeline.schema.json) | `SceneEvent` (+ timeline wrapper) | **Implemented** | `manim_stage.capture` → editor |
 | [runner-message.schema.json](runner-message.schema.json) | `PreviewMessage` (runner half) | **Implemented** | `python -m manim_stage.runner` stdout |
 | [cues.schema.json](cues.schema.json) | `Cue` | Implemented (`manim_stage.cues`) | `.manim-stage/cues.json` |
-| [project.schema.json](project.schema.json) | `ProjectManifest` | Draft (M1) | `.manim-stage/project.json` |
+| [project.schema.json](project.schema.json) | `ProjectManifest` | Implemented (`manim_stage.project`: theme, variables) (M1) | `.manim-stage/project.json` |
 | [editable-property.schema.json](editable-property.schema.json) | `EditableProperty` | Draft (M3) | inspector |
 
 `tests/test_schemas.py` validates real runner output and the [examples](examples/) against these schemas.

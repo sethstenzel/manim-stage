@@ -37,6 +37,7 @@ from PySide6.QtWidgets import (
 
 from ... import audio as audio_core
 from ... import cues as cue_store
+from ... import project as project_core
 from ...export import snapshot
 from .. import audio_edit
 from ..audio_player import AudioPlayer
@@ -48,6 +49,7 @@ from .bridge import ServiceBridge
 from .event_panel import EventPanel
 from .export_dialog import ExportDialog
 from .log_panel import LogPanel, open_in_editor
+from .project_panel import ProjectPanel
 from .quality import manim_qualities, quality_label
 from .theme import apply_theme, is_dark
 from .timeline import TimelineView
@@ -137,6 +139,12 @@ class MainWindow(QMainWindow):
         self.log_dock.setWidget(self.log)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.log_dock)
         self.tabifyDockWidget(self.event_dock, self.log_dock)
+        self.project_panel = ProjectPanel()
+        self.project_dock = QDockWidget("Project", self)
+        self.project_dock.setObjectName("project_dock")
+        self.project_dock.setWidget(self.project_panel)
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.project_dock)
+        self.tabifyDockWidget(self.log_dock, self.project_dock)
         self.event_dock.raise_()
         self.resizeDocks([self.event_dock], [340], Qt.Orientation.Horizontal)
 
@@ -172,6 +180,9 @@ class MainWindow(QMainWindow):
         tc.clipDragged.connect(self.drag_clip)
         self.event_panel.clipChangeRequested.connect(self.change_clip)
         self.event_panel.clipRemoveRequested.connect(self.remove_clip)
+        self.project_panel.applyRequested.connect(
+            lambda edit: self.undo_stack.push(_SidecarCommand(self, edit, self.project_path))
+        )
         self.event_panel.cueResetRequested.connect(self.reset_cue)
         self.event_panel.cueTimeRequested.connect(self.set_cue_time)
 
@@ -381,6 +392,7 @@ class MainWindow(QMainWindow):
 
     def _on_timeline(self, msg: PreviewMessage) -> None:
         tl = msg.data["timeline"]
+        self.project_panel.set_project(self.project_path(), msg.data.get("variables", []))
         self._prepare_audio(msg.seq, tl)
         self.timeline.set_timeline(self._with_silent_clips(tl))
         sel = self.timeline.canvas.selected
@@ -643,9 +655,14 @@ class MainWindow(QMainWindow):
         except (cue_store.CueError, OSError) as e:
             self.status_label.setText(f"⚠ Could not save cues: {e}")
 
+    def project_path(self) -> Path:
+        return project_core.project_file(self.service.file)
+
     def _sidecar_written(self, path: Path, label: str) -> None:
         """After a sidecar write: suppress the watcher's echo and re-render now."""
         self.service.acknowledge([path])
+        if path == self.project_path():
+            self.project_panel.reload()
         self.status_label.setText(f"{label} — saved to {path.name}; re-rendering…")
         self.render()
 

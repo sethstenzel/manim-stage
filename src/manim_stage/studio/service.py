@@ -343,6 +343,7 @@ class PreviewService:
                             "revision": rev.revision,
                             "timeline": m["timeline"],
                             "dependencies": m.get("dependencies", []),
+                            "variables": m.get("variables", []),
                         },
                     )
                 )

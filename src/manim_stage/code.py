@@ -141,7 +141,9 @@ class CodeRange:
 class AnimatedCode(VGroup):
     """Syntax-highlighted code whose tokens are individual mobjects.
 
-    ``AnimatedCode(source, language="python", style="monokai", font_size=24)``
+    ``AnimatedCode(source, language="python", style=None, font_size=24)``: ``style`` and
+    ``font`` default to the project theme (``code_style``/``code_font``), else Monokai
+    and the bundled JetBrains Mono.
 
     Submobjects: the tokens (``VGroup`` of glyphs each), in reading order, then two
     invisible anchor points (grid origin and one cell step) used to keep layout
@@ -153,14 +155,20 @@ class AnimatedCode(VGroup):
         source: str,
         language: str = "python",
         *,
-        style: str = "monokai",
-        font: str = DEFAULT_FONT,
+        style: str | None = None,
+        font: str | None = None,
         font_size: float = 24,
         line_spacing: float = 1.5,
         tab_width: int = 4,
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
+        if style is None or font is None:  # project theme, else the built-in defaults
+            from . import project
+
+            th = project.theme()
+            style = style or th.code_style or "monokai"
+            font = font or th.code_font or DEFAULT_FONT
         if font == DEFAULT_FONT:
             register_bundled_fonts()
         self.language, self.style, self.font = language, style, font

@@ -76,6 +76,12 @@
             "type": "string"
           },
           "description": "absolute paths of local files the scene imported or opened; their content is part of the revision"
+        },
+        "variables": {
+          "type": "array",
+          "items": {
+            "$ref": "project.schema.json#/$defs/UsedVariable"
+          }
         }
       },
       "required": [
