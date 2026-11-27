@@ -78,6 +78,42 @@ Groups nest recursively (`track="main/1"`, `"main/2"`, …). A test checks these
 - A play with **one** group shows that group's members directly under the play.
 - A play with **several** animations shows each of them, which also covers different `run_time`s in one `play`.
 
+### Animation metadata
+
+Every `play` event lists its top-level animations in `meta["animations"]`, and every `animation` event carries `meta["animation"]`. Each entry describes the animation in Manim's terms:
+
+| Key | Example | Meaning |
+|---|---|---|
+| `class` | `FadeIn`, `.animate` | Animation class (`.animate` for `mobject.animate…` builds) |
+| `category` | `fading` | Manim's animation module: `creation`, `fading`, `transform`, `indication`, `movement`, `rotation`, `growing`, `numbers`, `changing`, `composition`, `speedmodifier`, `updaters`, `specialized`; plus `animate`, `wait`, `custom` (your own `Animation` subclass) |
+| `methods` | `["shift", "scale"]` | The `.animate` method chain |
+| `run_time` | `1.0` | Seconds |
+| `rate_func` | `smooth` | Rate function name; `rate_func_builtin` says whether it comes from `manim.rate_functions` |
+| `rate_curve` | 33 numbers | `rate_func(t)` sampled at t = 0, 1/32, …, 1. The timeline draws it, including custom rate functions |
+| `lag_ratio` | `0.05` | For groups such as `LaggedStart` |
+| `mobject`, `mobject_name` | `Square`, `pivot` | Class of the animated Mobject, and its `name` if you set one |
+| `introducer`, `remover` | `true` | The animation adds / removes its Mobject |
+
+A subclass of a Manim animation gets its parent's category (`class MyFade(FadeIn)` is `fading`).
+
+```python
+from manim import *
+from manim_stage.capture import capture
+
+class Meta(Scene):
+    def construct(self):
+        sq = Square(name="pivot")
+        self.play(sq.animate.shift(UP).scale(2), run_time=0.5)
+        self.play(FadeOut(sq, rate_func=rate_functions.there_and_back), run_time=0.5)
+
+with tempconfig({"frame_rate": 10, "dry_run": True}):
+    tl = capture(Meta)
+a, b = (e.meta["animations"][0] for e in tl.events if e.kind == "play")
+print(a["class"], a["methods"], a["mobject_name"])     # .animate ['shift', 'scale'] pivot
+print(b["category"], b["rate_func"], max(b["rate_curve"]))  # fading there_and_back 1.0
+assert a["methods"] == ["shift", "scale"] and b["category"] == "fading"
+```
+
 ## Options
 
 | Argument | Default | Meaning |

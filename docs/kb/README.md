@@ -52,6 +52,7 @@ A local, offline reference for **every manim-stage feature and how to use it**. 
 | I want to… | Go to |
 |---|---|
 | Get the timing of every `play`/`wait` in a scene | [Event capture](manim-stage/event-capture.md) |
+| Know which Manim animation, rate function and Mobject an event is | [Event capture → animation metadata](manim-stage/event-capture.md#animation-metadata) |
 | See when each member of a `LaggedStart` runs | [Event capture → nested animations](manim-stage/event-capture.md#nested-animations) |
 | Run a scene safely in the background and get errors with line numbers | [Scene runner](manim-stage/runner.md) |
 | Preview a scene while I edit it | [Studio editor](manim-stage/studio-editor.md#quick-start) |

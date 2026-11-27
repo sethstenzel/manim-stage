@@ -12,7 +12,7 @@ import contextlib
 import inspect
 import math
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import cache
 from typing import Any
 
@@ -173,6 +173,8 @@ class AnimationSpan:
     start: int
     end: int
     children: tuple[AnimationSpan, ...]
+    info: dict[str, Any] = field(default_factory=dict, compare=False)
+    """:func:`manim_stage.catalog.animation_info` of the animation."""
 
 
 def animation_label(animation: Any) -> str:
@@ -211,7 +213,11 @@ def _spans(animation: Any, alphas: Any, begun: Any) -> AnimationSpan:
             else:
                 child_alpha = child_begun.astype(float)
             children.append(_spans(child, child_alpha, child_begun))
-    return AnimationSpan(animation_label(animation), start, end, tuple(children))
+    from .catalog import animation_info
+
+    return AnimationSpan(
+        animation_label(animation), start, end, tuple(children), animation_info(animation)
+    )
 
 
 def animation_spans(play: PlayRecord, frame_rate: float) -> tuple[AnimationSpan, ...]:

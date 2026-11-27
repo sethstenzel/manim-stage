@@ -8,6 +8,7 @@ from collections.abc import Callable, Sequence
 from typing import Any
 
 from . import _compat
+from .catalog import animation_info
 from .events import SceneEvent, SceneTimeline, SourceRef
 
 _TOL = 1e-9
@@ -65,6 +66,7 @@ def _child_events(
             label=span.label,
             source=source,
             parent_id=parent_id,
+            meta={"animation": span.info} if span.info else {},
         )
     ]
     for i, child in enumerate(span.children):
@@ -133,6 +135,11 @@ def capture(
                         "run_time": play.run_time,
                         "frozen": play.frozen,
                         "skipped": entry.get("skipped", False),
+                        **(
+                            {"animations": [animation_info(a) for a in play.animations]}
+                            if kind == "play"
+                            else {}
+                        ),
                     },
                 )
             )
