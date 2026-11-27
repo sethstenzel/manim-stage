@@ -26,9 +26,9 @@ def window(qtbot, tmp_path):
 
 
 def wait_done(qtbot, win, scene):
-    def ready():
-        cur = win.service.current
-        assert cur is not None and cur.scene == scene and cur.state in ("done", "error")
+    def ready():  # the GUI thread has handled the final status (not just the service)
+        st = win.shown_state
+        assert st is not None and st[1] == scene and st[2] in ("done", "error")
 
     qtbot.waitUntil(ready, timeout=TIMEOUT)
 

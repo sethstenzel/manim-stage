@@ -75,6 +75,7 @@ class MainWindow(QMainWindow):
         self.scenes: list[dict] = []
         self.requested_scene = scene
         self.notice = ""
+        self.shown_state: tuple[int, str, str] | None = None  # last status the GUI handled
 
         # widgets
         self.viewport = Viewport()
@@ -265,6 +266,7 @@ class MainWindow(QMainWindow):
 
     def _on_status(self, msg: PreviewMessage) -> None:
         state = msg.data["state"]
+        self.shown_state = (msg.seq, msg.data["scene"], state)
         if state == "running":
             self.viewport.placeholder = "Rendering the first frames…"
             self.status_label.setText(f"Rendering {msg.data['scene']}…")
