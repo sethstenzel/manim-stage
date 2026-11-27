@@ -3,6 +3,7 @@
 A local, offline reference for **every manim-stage feature and how to use it**. It also covers the Manim features we build on, and the Motion Canvas behaviour we mirror. It works without a network connection, and its examples are tested.
 
 - **New this update:** [whats-new.md](whats-new.md)
+- **How Motion Canvas features were ported (decisions, implementation, process):** [`PORTING.md`](../../PORTING.md)
 - **Writing or updating a page:** [_template.md](_template.md) and the rules at the bottom of this page.
 
 **Status legend:**

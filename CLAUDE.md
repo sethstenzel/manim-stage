@@ -24,6 +24,7 @@
 - `docs/capability-audit.md` — Existing/Partial/Missing per requirement (spec §3)
 - `docs/architecture-decisions.md` — ADRs
 - `docs/backlog.md` — implementation backlog
+- `PORTING.md` — running log of how Motion Canvas features are ported into Manim: decisions, implementations, processes. **Update it in every PR that ports, designs or changes such a feature.**
 - `docs/kb/` — local knowledge base of every feature and its use. **Every feature PR and every upstream sync must update it** (pages + `whats-new.md`); KB examples are smoke-tested.
 
 ## Dev commands

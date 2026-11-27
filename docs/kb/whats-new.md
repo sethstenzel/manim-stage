@@ -7,6 +7,7 @@ Newest first. One entry per feature PR or upstream sync. Each entry lists what i
 - **Decided:** the Studio editor is written in Python (PySide6), with no web server (ADR-0010, ADR-0012).
 - **Decided:** Manim terminology everywhere. See the new [terminology table](reference/motion-canvas-equivalents.md#terminology-motion-canvas--manim-adr-0013) (ADR-0013).
 - **Planned:** the editor surfaces every Manim feature through an introspected catalog (ADR-0011, backlog MF track).
+- **New:** [`PORTING.md`](../../PORTING.md), a running record of how each Motion Canvas feature is ported into Manim.
 
 ## 2026-11-26 — M0 gate: deterministic replay (backlog 0.9)
 
