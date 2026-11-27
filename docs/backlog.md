@@ -17,7 +17,7 @@ Feature IDs refer to `spec.md` §5. ADRs are in `architecture-decisions.md`.
 | 0.7 | **Regression baseline:** golden-frame tests for representative unmodified scenes with Studio disabled; confirm CLI output byte/pixel-identical with manim-stage installed. | ☐ | spec §10.1 |
 | 0.8 | `docs/schemas/` v1 JSON Schemas: `ProjectManifest`, `SceneEvent`, `Cue`, `PreviewMessage`, `EditableProperty`; time model doc (frame index, half-open ranges, 48 kHz audio mapping). | ☐ | spec §8 |
 | 0.9 | M0 gate report: measurements, unsupported scene classes, go/no-go on deterministic replay | ☐ | spec §11 gate |
-| 0.10 | **Local knowledge base, first version** (`docs/kb/`, see "Knowledge base" below): structure, page template, index, example smoke-test harness, first pages for what exists (event capture, runner, upstream sync) | ☐ | requested by owner 2026-11-26 |
+| 0.10 | **Local knowledge base, first version** (`docs/kb/`, see "Knowledge base" below): structure, page template, index, example smoke-test harness, first pages for what exists (event capture, runner, upstream sync) | ☑ | requested by owner 2026-11-26. `docs/kb/` with 8 pages; `tests/test_kb_examples.py` runs every example and checks links; PR template enforces updates. |
 
 ## Knowledge base (continuous, requested by owner)
 
