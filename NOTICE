@@ -12,3 +12,10 @@ Motion Canvas
   MIT License. Used as a behavior/UX reference only. No source code or UI assets
   are copied. If that ever changes, the copied files, their source commit and
   the MIT notice must be recorded here first.
+
+Qt for Python (PySide6)
+  https://wiki.qt.io/Qt_for_Python
+  Copyright (c) The Qt Company Ltd. LGPLv3 (GPLv2/GPLv3 also offered).
+  Optional runtime dependency of the Studio editor (`manim-stage[studio]`),
+  installed unmodified from PyPI and loaded dynamically. Users may replace it
+  with their own build. No Qt source is included in this repository.

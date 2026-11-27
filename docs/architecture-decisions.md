@@ -46,7 +46,7 @@ Record of decisions required by the spec (§3, §12.9). Status: Proposed → Acc
 
 ## ADR-0004 — Runner: fresh child process per revision, JSON-lines protocol
 
-- **Status:** Proposed
+- **Status:** Accepted (owner, 2026-11-27)
 - **Context:**
   - Manim keeps process-global state: `set_default` class mutation, an SVG cache keyed without file content, a `ConvertToOpenGL` metaclass bound at class creation, and eagerly loaded plugins.
   - The OpenGL rerun path doesn't re-import user modules.
@@ -60,7 +60,7 @@ Record of decisions required by the spec (§3, §12.9). Status: Proposed → Acc
 
 ## ADR-0005 — Scene events: ingest Manim's timeline, own the schema and IDs
 
-- **Status:** Proposed
+- **Status:** Accepted (owner, 2026-11-27)
 - **Decision:**
   - Our public contract is `SceneEvent` (spec §8), versioned by us.
   - On MAIN it is populated from `Manager.evaluate(capture_timeline=True)` plus one private-listener shim (in `_compat`) for nested `AnimationGroup`/`LaggedStart` child ranges.
@@ -74,7 +74,7 @@ Record of decisions required by the spec (§3, §12.9). Status: Proposed → Acc
 
 ## ADR-0006 — Cue API and semantics
 
-- **Status:** Proposed
+- **Status:** Accepted (owner, 2026-11-27)
 - **Context:** `Scene.wait_until(stop_condition, max_time)` already exists, so the spec's `self.wait_until("name")` would overload it. Motion Canvas stores absolute scene-relative cue times. Its weak edges: silent drops, negative waits clamped only in the editor, non-atomic writes.
 - **Decision:**
   - API: `self.cue("explain_swap", at=None, after=None, description=None)` on `StageScene`. It waits until the cue time; with no override it uses `at=` (absolute seconds from scene start) or `after=` (duration from the call), and with neither it waits 0.
@@ -87,7 +87,7 @@ Record of decisions required by the spec (§3, §12.9). Status: Proposed → Acc
 
 ## ADR-0007 — Seek: own frame store fed by `Manager.evaluate`
 
-- **Status:** Proposed
+- **Status:** Accepted (owner, 2026-11-27)
 - **Decision:**
   - **P1:** the runner evaluates the scene once with `on_frame`, writing preview-resolution frames into a content-addressed, LRU-bounded disk cache keyed by (scene revision, frame index, resolution). The editor scrubs cached frames.
   - Partial movie files are not used for preview.
@@ -105,7 +105,7 @@ Record of decisions required by the spec (§3, §12.9). Status: Proposed → Acc
 
 ## ADR-0008 — Code animation engine
 
-- **Status:** Proposed
+- **Status:** Accepted (owner, 2026-11-27)
 - **Decision:**
   - New `AnimatedCode` mobject (does not subclass `Code` internals; `manim.Code` untouched).
   - Tokens come from Pygments lexers and styles (keeping bold/italic).
@@ -118,9 +118,58 @@ Record of decisions required by the spec (§3, §12.9). Status: Proposed → Acc
 
 ## ADR-0009 — Packaging and entry points
 
-- **Status:** Proposed
+- **Status:** Accepted (owner, 2026-11-27)
 - **Decision:**
   - Distribution `manim-stage`, import `manim_stage`, console script `manim-stage` (`manim-stage studio lesson.py Scene`, `manim-stage bake`, `manim-stage validate`). Manim's CLI has no subcommand plugin hook.
   - Editor-extension entry-point group `manim_stage.plugins` with a version handshake.
-  - Optional extras: `[voiceover]`, `[treesitter]`, `[dev]`.
-  - Editor: React + TypeScript, pinned lockfile, prebuilt assets shipped inside the wheel so end users need no Node.
+  - Optional extras: `[studio]`, `[voiceover]`, `[treesitter]`.
+  - Editor: Python + PySide6 in the `studio` extra (ADR-0012 supersedes the React/TS plan).
+
+## ADR-0010 — Studio core: in-process Python service, no network listener by default
+
+- **Status:** Accepted (2026-11-27). Supersedes the first draft of this ADR (aiohttp WebSocket server), after the owner's direction that the editor is implemented in Python as one cohesive application.
+- **Context:** spec §4 asks for a preview service between runner and editor, and §2.8 for 127.0.0.1 binding with CSRF/origin protection. With a Python editor in the same process, a network service adds attack surface for no benefit.
+- **Decision:**
+  - `manim_stage.studio.service.PreviewService`: a pure-Python, GUI-independent controller (threads + queues, no Qt imports). It owns runner child processes (ADR-0004), revisions, cancellation, file watching and the frame cache, and publishes typed `PreviewMessage` events (spec §8) to subscribers. Unit-tested headless.
+  - The editor subscribes in-process. **No socket is opened by default**, so the §2.8 trust boundary is just "loading a scene executes local Python"; documented in the KB.
+  - Revisions are monotonically increasing integers per scene. A new revision cancels (kills) the previous runner; messages tagged with an older revision are dropped.
+  - **Dependency-aware revision:** the runner reports the user modules it imported (outside site-packages/stdlib) and assets Manim loaded (sounds, images, SVGs); the service watches all of them and the cache key includes their content hashes.
+  - If a network transport is ever added (e.g. F12 web playback, remote control), it must bind 127.0.0.1, check Host/Origin and require a session token; it is a separate ADR.
+
+## ADR-0011 — Manim feature coverage via an introspected catalog
+
+- **Status:** Accepted (2026-11-27)
+- **Context:** owner requirement: the editor surfaces all Manim features intelligently, including features added by future upstream syncs. Hand-maintained lists go stale.
+- **Decision:**
+  - `manim_stage.catalog` introspects the installed Manim: public `Mobject`/`Animation` subclasses, `rate_functions`, colour constants, `Scene` subclasses (camera types), `ManimConfig` options, installed plugins. Each entry: name, module, category (from Manim's module layout: `animation.creation`, `mobject.geometry`, …), signature, first doc paragraph, renderer support, KB link.
+  - Categories are derived from module paths, with a small override table for curated grouping. A test asserts every name in `manim.__all__` maps to a category or an explicit ignore list, so a sync that adds a public feature fails until it is classified (and the KB updated).
+  - The editor consumes the catalog (library panel, timeline colouring, inspector, config panel). Nothing in the editor hardcodes Manim class lists.
+
+## ADR-0012 — Editor stack: Python + Qt (PySide6)
+
+- **Status:** Accepted (2026-11-27). Supersedes the first draft (React/TypeScript). Owner direction: implement the best of Motion Canvas **in Python, including the editor**, as one cohesive application.
+- **Decision:**
+  - Desktop editor written in Python with **PySide6** (Qt for Python, LGPLv3, used as an unmodified dynamic dependency; noted in `NOTICE`). Cross-platform (Windows/Linux/macOS), no Node or browser required. Spec F01's "browser-based (preferred)" is a preference; Python-only wins on cohesion.
+  - Shipped in the optional `studio` extra: `pip install manim-stage[studio]`. Headless features (cues, `AnimatedCode`, `bake`) don't need Qt.
+  - Layering: `studio.service` (no Qt) ← `studio.models` (Qt models/adapters) ← `studio.widgets` (viewport, timeline, panels). Widgets never render scenes; they display runner frames (spec §4: the editor is not a second renderer).
+  - Timeline and viewport are custom `QWidget`/`QPainter` widgets. Accessibility: accessible names on every control, full keyboard navigation, non-colour signals, honours system text scaling.
+  - Tests: `pytest` with `QT_QPA_PLATFORM=offscreen` on all CI OSes; widget logic kept in plain-Python helpers where possible.
+  - No Motion Canvas UI code or assets; layout ideas described in our own words only.
+
+## ADR-0013 — Port Motion Canvas concepts into Manim's model
+
+- **Status:** Accepted (2026-11-27). Owner direction: keep Manim's abstractions, terminology and methodology; port the best Motion Canvas concepts so they fit Manim, keeping those concepts available as APIs.
+- **Decision:**
+  - Manim's model is the foundation: `Scene`/`construct`, `Mobject` families, `Animation` + `play`/`wait`, `run_time`/`rate_func`/`lag_ratio`, `ValueTracker` + updaters, sections, `config`, renderer, camera. Nothing replaces these.
+  - Each useful Motion Canvas concept is **ported as a real, documented Python API** in `manim_stage`, built on those Manim primitives, named in `snake_case` Python style, and interoperable with plain Manim:
+    - time events / `waitUntil` → `self.cue("name", ...)`: a named, editable `wait` (ADR-0006);
+    - signals / `createSignal` / computed → `Signal` (a `ValueTracker` subclass, so `.animate`, `get_value`, updaters still work) and `computed(...)` returning a derived read-only `Signal`; `effect(...)` registers an updater;
+    - `all` / `sequence` / `chain` / `delay` / `loop` → `all_of`, `sequence`, `chain`, `delay`, `loop` helpers that return `AnimationGroup` / `LaggedStart` / `Succession` / `Wait`-based animations;
+    - `tween(duration, fn)` → `tween(run_time, fn)` returning an `Animation` (driven by `rate_func`);
+    - code ranges, `lines()`, `word()`, `findFirstRange` → `AnimatedCode` with `CodeRange`, `lines()`, `word()`, `find()`;
+    - references / `makeRef` → ordinary Python attributes (no port needed; documented);
+    - project variables `useScene().variables` → `stage.variables` read from the project sidecar, layered on `config`;
+    - scene transitions (`slideTransition`, `fadeTransition`, `zoomInTransition`) → `slide_transition`, `fade_transition`, `zoom_transition`, built as Manim `Animation`s;
+    - nodes / layout (flexbox) → Mobject families plus Manim's `arrange`/`next_to`; a flex-style `Layout` helper only if needed (M3).
+  - The editor uses Manim's words in the UI (Mobject, Animation, Section, rate_func, …).
+  - Every ported concept has a KB page with the MC concept it comes from, the Manim primitive it is built on, and a tested example. The mapping table lives in `docs/kb/reference/motion-canvas-equivalents.md`.
