@@ -27,6 +27,7 @@ Newest first. One line per decision; details in the linked ADR or PR.
 
 | Date | Decision | Why | Where |
 |---|---|---|---|
+| 2026-11-27 | Clip edits store the whole clip list per undo step; imports copied into `assets/audio/`; silent clips shown on the timeline | Exact undo; portable project-relative paths (§8); muted clips stay editable | PR #21 |
 | 2026-11-27 | Audio clips = cached processed copies added via `add_sound` in `StageMixin.setup()`; preview mix from timeline sound events; playback via sounddevice | Manim mixes the final audio (spec §2.1); non-destructive (F04); avoids the PySide6-Addons dependency | PR #20 |
 | 2026-11-27 | Cue drag: hold (bounded by next cue's wait) vs ripple (Shift); undo via QUndoStack; atomic write + immediate render + watcher acknowledge; new sidecars at 60 fps | Prevent negative waits in the UI as well as the resolver; exact at 15/30/60 fps | PR #19 |
 | 2026-11-27 | `cue()` is a mixin method issuing `Scene.wait`; name-based cue IDs; sidecar read by plain `manim render`; negative waits are errors | Manim terms (ADR-0013); headless parity (ADR-0006); MC's silent clamping/dropping avoided | PR #18 |
@@ -124,7 +125,7 @@ One record per Motion Canvas feature. Status: **Ported** (implemented and tested
 - **Implementation:** `src/manim_stage/cli.py`, `doctor.py`. Tests: `tests/test_cli.py`; CI `package` job. KB: `docs/kb/manim-stage/cli.md`.
 
 ### Audio (MC: one audio track with offset)
-- **Status:** In progress. 2.3a ported (clips, processing, waveforms, synced preview); 2.3b editing UI and 2.4 voiceover adapter next.
+- **Status:** Ported (2.3a core, 2.3b editing). The voiceover adapter (2.4) is next.
 - **MC behaviour:** a project has one audio file with an offset. The editor shows its waveform under the timeline and plays it with the preview; the renderer muxes it into the video.
 - **Manim mapping:**
   - Manim already mixes any number of `add_sound` calls.
@@ -137,7 +138,13 @@ One record per Motion Canvas feature. Status: **Ported** (implemented and tested
 - **Choices:**
   - `sounddevice` (MIT, small) for playback instead of QtMultimedia, which ships in the large PySide6-Addons wheel;
   - PyAV decoding (already a Manim dependency).
-- **Implementation:** `src/manim_stage/audio.py`, `scene.py` (`setup` clips), `capture.py` (clip tagging), `studio/audio_player.py`, UI waveforms in `studio/ui/timeline.py`. Tests: `tests/test_audio.py`, `tests/test_studio_ui.py`. KB: `docs/kb/manim-stage/audio.md`.
+- **Editing (2.3b):**
+  - imports are copied into `assets/audio/`, so paths stay portable;
+  - drag to move, edge-drag to trim (the audio stays anchored in time);
+  - an Event-panel property editor;
+  - muted and not-soloed clips are injected into the timeline as silent events, so they stay editable;
+  - each change is an `AudioEdit` (whole clip list before/after) on the shared undo stack.
+- **Implementation:** `src/manim_stage/audio.py`, `studio/audio_edit.py`, `scene.py` (`setup` clips), `capture.py` (clip tagging), `studio/audio_player.py`, UI waveforms in `studio/ui/timeline.py`. Tests: `tests/test_audio.py`, `tests/test_studio_ui.py`. KB: `docs/kb/manim-stage/audio.md`.
 
 ### Project variables (MC: `variables`)
 - **Status:** Designed (ADR-0013). Backlog 3.2.

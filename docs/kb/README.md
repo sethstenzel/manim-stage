@@ -31,7 +31,7 @@ A local, offline reference for **every manim-stage feature and how to use it**. 
 | [Export and snapshots](manim-stage/export.md) | Render via `manim render` (quality, format, range, transparency, sections) with progress, cancel and result check; save/copy frames | Available | Cairo | F01, F10 |
 | [Timeline](manim-stage/timeline.md) | Lanes of play/wait/section/sound and group members; Manim categories, rate curves, jump to source | Available | Cairo | F02 |
 | [Named cues (`self.cue`)](manim-stage/cues.md) | Named, adjustable waits for narration; drag on the timeline (hold/ripple, undo); `cues.json`; validate/bake | Available | Both | F03 |
-| [Audio workspace](manim-stage/audio.md) | Audio clips (start, trim, gain, fades, mute/solo) in `audio.json`; waveforms; preview playback = render mix | Partial (editing UI, voiceover: Planned) | Both | F04 |
+| [Audio workspace](manim-stage/audio.md) | Import, drag, trim, gain, fade, mute/solo audio clips (undoable); waveforms; preview playback = render mix | Available (voiceover adapter: Planned) | Both | F04 |
 | `AnimatedCode` | Token-level code-diff animations | Planned (M2) | — | F05 |
 
 ### Manim features we build on (pinned `main@8c258a0`)

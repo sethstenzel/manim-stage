@@ -370,3 +370,63 @@ def test_audio_lane_gets_waveforms_and_a_mix(qtbot, tmp_path, test_sound):
     assert not win.transport.btn_audio.isEnabled()
     assert win.audio.duration == pytest.approx(win.playback.total / win.playback.fps, abs=0.05)
     dispose(win)
+
+
+def test_audio_clip_add_drag_trim_mute_undo(qtbot, tmp_path, test_sound):
+    import shutil
+
+    from PySide6.QtCore import QPointF
+
+    from manim_stage import audio
+
+    proj = tmp_path / "p"
+    (proj / ".manim-stage").mkdir(parents=True)
+    shutil.copy(SCENES / "audio_scene.py", proj / "lesson.py")
+    win, _ = create_window(
+        proj / "lesson.py", "Voiced", workers=1, cache_dir=tmp_path / "c", watch=True
+    )
+    win.show()
+    wait_done(qtbot, win, "Voiced")
+    canvas = win.timeline.canvas
+    side = proj / ".manim-stage" / "audio.json"
+
+    def rerendered(after):
+        return lambda: win.shown_state[0] > after and win.shown_state[2] == "done"
+
+    def clip_box():
+        return next((b for b in canvas.layout_.by_id.values() if b.meta.get("clip")), None)
+
+    # add a clip at 0.5 s (file is outside the project → copied in)
+    seq = win.shown_state[0]
+    win.add_audio(str(test_sound), start=0.5)
+    qtbot.waitUntil(rerendered(seq), timeout=TIMEOUT)
+    assert (proj / "assets" / "audio" / test_sound.name).exists()
+    box = clip_box()
+    assert box is not None and box.start == int(0.5 * win.playback.fps)  # sounds start at floor
+
+    # drag the body 1 s later
+    rect = next(r for b, r, _ in canvas.box_rects() if b.id == box.id)
+    seq = win.shown_state[0]
+    _drag(canvas, rect.center(), rect.center() + QPointF(win.playback.fps * canvas.ppf, 0))
+    qtbot.waitUntil(rerendered(seq), timeout=TIMEOUT)
+    assert audio.load(side).scenes["Voiced"][0].start == pytest.approx(1.5, abs=0.07)
+
+    # mute in the Event panel: the clip stays on the timeline, but silent
+    canvas.select(clip_box().id)
+    assert win.event_panel.clip_box.isVisibleTo(win.event_panel)
+    win.event_panel.clip_mute.setChecked(True)
+    seq = win.shown_state[0]
+    win.event_panel.clip_apply.click()
+    qtbot.waitUntil(rerendered(seq), timeout=TIMEOUT)
+    b = clip_box()
+    assert b is not None and b.meta.get("silent") and b.meta["silent_reason"] == "muted"
+    assert not [e for e in win.service.current.timeline.events if e.kind == "sound"]
+
+    # undo twice → unmuted, back at 0.5 s
+    for _ in range(2):
+        seq = win.shown_state[0]
+        win.act_undo.trigger()
+        qtbot.waitUntil(rerendered(seq), timeout=TIMEOUT)
+    c = audio.load(side).scenes["Voiced"][0]
+    assert c.start == 0.5 and not c.mute
+    dispose(win)

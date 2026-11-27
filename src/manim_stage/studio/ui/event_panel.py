@@ -16,7 +16,9 @@ from PySide6.QtCore import QPointF, QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QPainter, QPen, QPolygonF
 from PySide6.QtWidgets import (
     QApplication,
+    QCheckBox,
     QDoubleSpinBox,
+    QFormLayout,
     QHBoxLayout,
     QLabel,
     QPushButton,
@@ -77,6 +79,8 @@ class EventPanel(QWidget):
     sourceRequested = Signal(object)  # EventBox
     cueResetRequested = Signal(str)
     cueTimeRequested = Signal(str, float)
+    clipChangeRequested = Signal(str, object)  # clip id, dict of changes
+    clipRemoveRequested = Signal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -128,6 +132,7 @@ class EventPanel(QWidget):
         lay.addWidget(self.curve)
         lay.addLayout(row)
         lay.addWidget(self.cue_row)
+        lay.addWidget(self._build_clip_editor())
         lay.addStretch(1)
         self.box: EventBox | None = None
         self.fps = 15.0
@@ -135,11 +140,96 @@ class EventPanel(QWidget):
         self.open.clicked.connect(lambda: self.box and self.sourceRequested.emit(self.box))
         self.show_event(None)
 
+    def _build_clip_editor(self) -> QWidget:
+        """Fields for an audio-workspace clip (shown when one is selected)."""
+        self.clip_box = QWidget()
+        form = QFormLayout(self.clip_box)
+        form.setContentsMargins(0, 6, 0, 0)
+
+        def spin(name: str, lo: float, hi: float, suffix: str, step: float = 0.1) -> QDoubleSpinBox:
+            s = QDoubleSpinBox()
+            s.setAccessibleName(name)
+            s.setRange(lo, hi)
+            s.setDecimals(3)
+            s.setSingleStep(step)
+            s.setSuffix(suffix)
+            return s
+
+        self.clip_start = spin("Clip start", -3600, 86400, " s")
+        self.clip_trim_in = spin("Trim in", 0, 86400, " s")
+        self.clip_trim_out = spin("Trim out (0 = end of file)", 0, 86400, " s")
+        self.clip_trim_out.setSpecialValueText("end")
+        self.clip_gain = spin("Gain", -96, 24, " dB", 1.0)
+        self.clip_fade_in = spin("Fade in", 0, 3600, " s")
+        self.clip_fade_out = spin("Fade out", 0, 3600, " s")
+        self.clip_mute = QCheckBox("Mute")
+        self.clip_solo = QCheckBox("Solo")
+        for label, w in (
+            ("Start", self.clip_start),
+            ("Trim in", self.clip_trim_in),
+            ("Trim out", self.clip_trim_out),
+            ("Gain", self.clip_gain),
+            ("Fade in", self.clip_fade_in),
+            ("Fade out", self.clip_fade_out),
+        ):
+            form.addRow(label, w)
+        flags = QHBoxLayout()
+        flags.addWidget(self.clip_mute)
+        flags.addWidget(self.clip_solo)
+        form.addRow("", flags)
+        buttons = QHBoxLayout()
+        self.clip_apply = QPushButton("Apply")
+        self.clip_apply.setAccessibleName("Apply clip changes")
+        self.clip_remove = QPushButton("Remove clip")
+        self.clip_remove.setAccessibleName("Remove this audio clip")
+        buttons.addWidget(self.clip_apply)
+        buttons.addWidget(self.clip_remove)
+        form.addRow("", buttons)
+        self.clip_apply.clicked.connect(self._emit_clip_change)
+        self.clip_remove.clicked.connect(
+            lambda: self.box and self.clipRemoveRequested.emit(self.box.meta["clip"])
+        )
+        self.clip_box.setVisible(False)
+        return self.clip_box
+
+    def clip_changes(self) -> dict:
+        out = self.clip_trim_out.value()
+        return {
+            "start": round(self.clip_start.value(), 4),
+            "trim_in": round(self.clip_trim_in.value(), 4),
+            "trim_out": None if out == 0 else round(out, 4),
+            "gain_db": round(self.clip_gain.value(), 3),
+            "fade_in": round(self.clip_fade_in.value(), 4),
+            "fade_out": round(self.clip_fade_out.value(), 4),
+            "mute": self.clip_mute.isChecked(),
+            "solo": self.clip_solo.isChecked(),
+        }
+
+    def _emit_clip_change(self) -> None:
+        if self.box is not None and self.box.meta.get("clip"):
+            self.clipChangeRequested.emit(self.box.meta["clip"], self.clip_changes())
+
+    def _fill_clip(self, box: EventBox | None) -> None:
+        is_clip = box is not None and bool(box.meta.get("clip"))
+        self.clip_box.setVisible(is_clip)
+        if not is_clip:
+            return
+        cs = box.meta.get("clip_settings", {})
+        self.clip_start.setValue(float(cs.get("start", 0.0)))
+        self.clip_trim_in.setValue(float(cs.get("trim_in", 0.0)))
+        self.clip_trim_out.setValue(float(cs.get("trim_out") or 0.0))
+        self.clip_gain.setValue(float(cs.get("gain_db", 0.0)))
+        self.clip_fade_in.setValue(float(cs.get("fade_in", 0.0)))
+        self.clip_fade_out.setValue(float(cs.get("fade_out", 0.0)))
+        self.clip_mute.setChecked(bool(cs.get("mute")))
+        self.clip_solo.setChecked(bool(cs.get("solo")))
+
     def show_event(self, box: EventBox | None, fps: float | None = None) -> None:
         self.box = box
         if fps:
             self.fps = fps
         self.go.setEnabled(box is not None)
+        self._fill_clip(box)
         is_cue = box is not None and box.kind == "cue"
         self.cue_row.setVisible(is_cue)
         if is_cue:

@@ -105,6 +105,7 @@ class TimelineCanvas(QWidget):
     eventSelected = Signal(object)  # EventBox | None
     sourceRequested = Signal(object)  # EventBox
     cueMoved = Signal(object)  # MovePlan (drop or keyboard nudge)
+    clipDragged = Signal(str, str, float)  # clip id, move|trim_in|trim_out, delta seconds
     viewChanged = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
@@ -125,6 +126,8 @@ class TimelineCanvas(QWidget):
         self._drag_cue: str | None = None
         self.drag_plan: MovePlan | None = None
         self.waveforms: dict[str, Any] = {}  # event id -> peaks (100/s)
+        self._drag_clip: tuple[EventBox, str, float] | None = None  # box, mode, press x
+        self.clip_preview: tuple[str, str, float] | None = None  # id, mode, dx px
         fm = QFontMetrics(self.font())
         self.row_h = max(22, fm.height() + 8)
 
@@ -253,6 +256,8 @@ class TimelineCanvas(QWidget):
             self._paint_box(p, c, box, rect)
         if self.drag_plan is not None:
             self._paint_drag(p, c, self.drag_plan)
+        if self.clip_preview is not None:
+            self._paint_clip_preview(p, c)
         self._paint_playhead(p, c)
         p.end()
 
@@ -349,6 +354,9 @@ class TimelineCanvas(QWidget):
         if cat == "wait":
             hatch = QBrush(QColor(c["muted"]), Qt.BrushStyle.BDiagPattern)
             p.fillRect(rect.adjusted(1, 1, -1, -1), hatch)
+        if box.meta.get("silent"):
+            muted = QBrush(QColor(c["muted"]), Qt.BrushStyle.Dense6Pattern)
+            p.fillRect(rect.adjusted(1, 1, -1, -1), muted)
         if box.kind == "sound" and box.id in self.waveforms:
             self._paint_waveform(p, rect, self.waveforms[box.id])
         anim = box.animation
@@ -356,6 +364,8 @@ class TimelineCanvas(QWidget):
             self._paint_curve(p, rect, anim["rate_curve"])
         if rect.width() > 28:
             label = box.label
+            if box.meta.get("silent"):
+                label = f"{box.label} ({box.meta.get('silent_reason') or 'silent'})"
             if box.kind == "wait":
                 base = f"cue {box.meta['cue']}" if box.meta.get("cue") else "wait"
                 label = f"{base} (frozen)" if box.meta.get("frozen") else base
@@ -451,6 +461,36 @@ class TimelineCanvas(QWidget):
         p.setPen(QColor(c["text"]))
         p.drawText(QPointF(x + 6, RULER_H + STRIP_H + 12), text)
 
+    def _paint_clip_preview(self, p: QPainter, c: dict[str, str]) -> None:
+        cid, mode, dx = self.clip_preview
+        for box, rect, _ in self.box_rects():
+            if box.id != cid:
+                continue
+            r = QRectF(rect)
+            if mode == "move":
+                r.translate(dx, 0)
+            elif mode == "trim_in":
+                r.setLeft(min(r.left() + dx, r.right() - 2))
+            else:
+                r.setRight(max(r.right() + dx, r.left() + 2))
+            p.setBrush(Qt.BrushStyle.NoBrush)
+            p.setPen(QPen(QColor(c["playhead"]), 2, Qt.PenStyle.DashLine))
+            p.drawRoundedRect(r, 3, 3)
+            secs = dx / self.ppf / self.fps if self.fps else 0.0
+            p.setPen(QColor(c["text"]))
+            p.drawText(
+                QPointF(r.left() + 4, r.top() - 3), f"{mode.replace('_', ' ')} {secs:+.2f} s"
+            )
+
+    @staticmethod
+    def _clip_mode(rect: QRectF, x: float) -> str:
+        edge = min(6.0, rect.width() / 4)
+        if x <= rect.left() + edge:
+            return "trim_in"
+        if x >= rect.right() - edge:
+            return "trim_out"
+        return "move"
+
     def cue_infos(self) -> list[CueInfo]:
         if not self.layout_:
             return []
@@ -478,12 +518,20 @@ class TimelineCanvas(QWidget):
             self.select(box.id)
             if box.kind == "cue":
                 self._drag_cue = box.meta["name"]
+            elif box.kind == "sound" and box.meta.get("clip"):
+                rect = next(r for b, r, _ in self.box_rects() if b.id == box.id)
+                self._drag_clip = (box, self._clip_mode(rect, pos.x()), pos.x())
         else:
             self._drag_seek = True
             self.seekRequested.emit(self.frame_of(pos.x()))
 
     def mouseMoveEvent(self, e: QMouseEvent) -> None:  # noqa: N802
         pos = e.position()
+        if self._drag_clip and e.buttons() & Qt.MouseButton.LeftButton:
+            box, mode, x0 = self._drag_clip
+            self.clip_preview = (box.id, mode, pos.x() - x0)
+            self.update()
+            return
         if self._drag_cue and e.buttons() & Qt.MouseButton.LeftButton:
             frame = int((pos.x() - LABEL_W) / self.ppf + self.scroll + 0.5)
             ripple = bool(e.modifiers() & Qt.KeyboardModifier.ShiftModifier)
@@ -495,6 +543,14 @@ class TimelineCanvas(QWidget):
             return
         box = self.box_at(pos) if pos.x() >= LABEL_W else None
         hid = box.id if box else None
+        if box is not None and box.kind == "sound" and box.meta.get("clip"):
+            rect = next(r for b, r, _ in self.box_rects() if b.id == box.id)
+            mode = self._clip_mode(rect, pos.x())
+            self.setCursor(
+                Qt.CursorShape.OpenHandCursor if mode == "move" else Qt.CursorShape.SizeHorCursor
+            )
+        else:
+            self.unsetCursor()
         if hid != self.hover:
             self.hover = hid
             self.update()
@@ -505,6 +561,17 @@ class TimelineCanvas(QWidget):
 
     def mouseReleaseEvent(self, e: QMouseEvent) -> None:  # noqa: N802
         self._drag_seek = False
+        clip, self._drag_clip, preview, self.clip_preview = (
+            self._drag_clip,
+            None,
+            self.clip_preview,
+            None,
+        )
+        if clip is not None and preview is not None:
+            self.update()
+            secs = preview[2] / self.ppf / self.fps if self.fps else 0.0
+            if abs(secs) * self.fps >= 1:  # at least one frame
+                self.clipDragged.emit(clip[0].meta["clip"], clip[1], secs)
         plan, self.drag_plan, self._drag_cue = self.drag_plan, None, None
         if plan is not None:
             self.update()

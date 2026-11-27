@@ -61,6 +61,7 @@ app.exec()
 | L | Toggle loop |
 | Ctrl+R | Re-render |
 | Ctrl+Z / Ctrl+Shift+Z (Ctrl+Y) | Undo / redo cue edits |
+| Ctrl+Shift+A | Add audio… (at the playhead) |
 | Ctrl+E | Export… |
 | Ctrl+Shift+S | Save frame (full quality) |
 | Ctrl+Shift+C | Copy frame (preview) |
