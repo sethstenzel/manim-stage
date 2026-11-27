@@ -2,6 +2,13 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-27 — preview service (backlog 1.1)
+
+- **New:** [Preview service](manim-stage/preview-service.md): background rendering with revisions, cancellation, stale-message discard and typed events.
+- **New:** dependency-aware revisions. Helper modules and assets a scene opens are part of the frame-cache key; editing them invalidates cached frames.
+- **New:** `python -m manim_stage.runner FILE --list` lists scene classes; `RunnerProcess` streams runner messages.
+- **Changed:** Manim's media folder for previews now lives under the cache folder, not in the project.
+
 ## 2026-11-27 — M1 plan
 
 - **Decided:** the Studio editor is written in Python (PySide6), with no web server (ADR-0010, ADR-0012).

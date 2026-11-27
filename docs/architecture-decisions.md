@@ -98,7 +98,7 @@ Record of decisions required by the spec (§3, §12.9). Status: Proposed → Acc
   - Implemented as `manim_stage.framecache.FrameCache` plus `runner --cache-dir`.
   - The timeline is sent before frames.
   - Frames already cached for the revision are not redrawn.
-  - The revision hashes scene file + scene name + settings + Manim build (version + git commit). Imported modules and assets are not hashed yet.
+  - The revision hashes scene file + scene name + settings + Manim build (version + git commit). Since backlog 1.1 it also hashes every local module and asset the scene opened (ADR-0010).
   - **Parallel drawing:** `run_capture(workers=N)` runs N children. Each replays the scene and draws every N-th frame. Needed to meet the 10 s/1080p target (8.0 s with 4 workers vs 17.9 s with 1).
   - Concurrent children must not share Manim's `media_dir` (unlocked Text/SVG caches), so each shard gets its own.
   - Cached frames are pixel-identical to the CLI `png-sequence` render; tested.

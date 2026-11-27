@@ -4,10 +4,14 @@ Protocol (ADR-0004): one JSON object per line on stdout, each with ``"v"`` (prot
 version) and ``"type"``. Everything else the scene or Manim prints goes to stderr.
 
     {"v": 1, "type": "hello", "manim_version": "...", "pid": 123}
-    {"v": 1, "type": "timeline", "revision": "...", "timeline": {...}}
+    {"v": 1, "type": "scenes", "scenes": [{"name": "...", "line": 3, "bases": [...]}]}  # --list
+    {"v": 1, "type": "timeline", "revision": "...", "timeline": {...},
+     "dependencies": ["/abs/helper.py", "/abs/logo.png"]}
     {"v": 1, "type": "frame", "frame": 12, "path": "..."}    # only with --cache-dir
     {"v": 1, "type": "done", "elapsed_s": 0.42, "timings": {...}, "frames_drawn": 0}
 
+The revision hashes the scene file, settings, Manim build and the content of every
+local file the scene imported or opened (``dependencies``, see :mod:`manim_stage.deps`).
 The timeline is sent before any frame is drawn, so an editor can show the scene's
 structure while frames are still being cached. Frames already in the cache for this
 revision are not drawn again.
@@ -68,6 +72,35 @@ def load_scene_class(path: Path, scene: str) -> type:
         raise RunnerError(f"{path.name} has no scene class {scene!r}") from None
 
 
+def list_scenes(path: Path) -> list[dict[str, Any]]:
+    """Scene classes defined in ``path`` (not imported into it), in source order."""
+    import inspect
+
+    from manim import Scene
+
+    path = path.resolve()
+    if str(path.parent) not in sys.path:
+        sys.path.insert(0, str(path.parent))
+    name = f"manim_stage_scene_{uuid.uuid4().hex}"
+    spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None or spec.loader is None:
+        raise RunnerError(f"cannot import {path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    found = []
+    for attr, obj in vars(module).items():
+        if not (isinstance(obj, type) and issubclass(obj, Scene) and obj.__module__ == name):
+            continue
+        try:
+            line = inspect.getsourcelines(obj)[1]
+        except (OSError, TypeError):
+            line = 0
+        bases = [c.__name__ for c in obj.__mro__[1:] if c.__module__.startswith("manim.")]
+        found.append({"name": attr, "line": line, "bases": bases[:3]})
+    return sorted(found, key=lambda s: s["line"])
+
+
 def _user_frame(tb: Any, scene_file: Path) -> tuple[str | None, int | None]:
     """Innermost traceback frame in the scene file, else the innermost overall."""
     frames = traceback.extract_tb(tb)
@@ -80,7 +113,8 @@ def _user_frame(tb: Any, scene_file: Path) -> tuple[str | None, int | None]:
 def _main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m manim_stage.runner")
     parser.add_argument("file", type=Path)
-    parser.add_argument("scene")
+    parser.add_argument("scene", nargs="?")
+    parser.add_argument("--list", action="store_true", help="list scene classes and exit")
     parser.add_argument("--fps", type=float, default=15.0)
     parser.add_argument("--width", type=int, default=854)
     parser.add_argument("--height", type=int, default=480)
@@ -96,6 +130,8 @@ def _main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--shard", default="0/1", help="i/n: draw only frames with index %% n == i")
     args = parser.parse_args(argv)
+    if not args.list and not args.scene:
+        parser.error("scene is required unless --list is given")
     shard, shards = (int(x) for x in args.shard.split("/"))
     if not 0 <= shard < shards:
         parser.error("--shard must be i/n with 0 <= i < n")
@@ -122,6 +158,12 @@ def _main(argv: list[str] | None = None) -> int:
 
         lap("import")
         send({"type": "hello", "manim_version": manim.__version__, "pid": os.getpid()})
+        if args.list:
+            send({"type": "scenes", "scenes": list_scenes(args.file)})
+            lap("total")
+            send({"type": "done", "elapsed_s": timings["total"], "timings": timings,
+                  "frames_drawn": 0})  # fmt: skip
+            return 0
         settings = {
             "frame_rate": args.fps,
             "pixel_width": args.width,
@@ -131,24 +173,45 @@ def _main(argv: list[str] | None = None) -> int:
             "verbosity": "WARNING",
             "seed": args.seed,
         }
-        revision = revision_key(
-            args.file, args.scene, settings, manim_version=_compat.manim_build_id()
-        )
         if args.media_dir:  # does not affect pixels, so not part of the revision
             settings["media_dir"] = str(args.media_dir)
         drawn = 0
         with tempconfig(settings):
-            # Import under the final config: ConvertToOpenGL binds bases at class creation.
-            scene_cls = load_scene_class(args.file, args.scene)
-            from .capture import capture
+            from manim import config
 
-            timeline = capture(scene_cls)
+            from .capture import capture
+            from .deps import DependencyRecorder, content_hashes
             from .determinism import scan_file
 
+            exclude = [config.media_dir] + ([args.cache_dir] if args.cache_dir else [])
+            with DependencyRecorder(exclude=exclude) as rec:
+                # Import under the final config: ConvertToOpenGL binds bases at class creation.
+                scene_cls = load_scene_class(args.file, args.scene)
+                timeline = capture(scene_cls)
+            for ev in timeline.events:
+                if ev.kind == "sound" and ev.meta.get("file"):
+                    rec.add(ev.meta["file"])  # opened by FFmpeg, invisible to the hook
+            scene_file = args.file.resolve()
+            deps = [f for f in rec.files() if f != scene_file]
+            pixel_settings = {k: v for k, v in settings.items() if k != "media_dir"}
+            revision = revision_key(
+                args.file,
+                args.scene,
+                pixel_settings,
+                manim_version=_compat.manim_build_id(),
+                extra=content_hashes(deps, scene_file.parent),
+            )
             if scan := scan_file(args.file):
                 timeline = dataclasses.replace(timeline, warnings=(*timeline.warnings, *scan))
             lap("timeline")
-            send({"type": "timeline", "revision": revision, "timeline": timeline.to_dict()})
+            send(
+                {
+                    "type": "timeline",
+                    "revision": revision,
+                    "timeline": timeline.to_dict(),
+                    "dependencies": [str(f) for f in deps],
+                }
+            )
 
             if args.cache_dir:
                 cache = FrameCache(args.cache_dir, budget_bytes=args.budget_mb * 1024**2)
@@ -255,6 +318,125 @@ def _parse(stdout: str, stderr: str, returncode: int) -> RunResult:
     )
 
 
+def runner_command(
+    file: str | os.PathLike[str],
+    scene: str | None,
+    *,
+    fps: float = 15.0,
+    width: int = 854,
+    height: int = 480,
+    seed: int = 0,
+    cache_dir: str | os.PathLike[str] | None = None,
+    budget_mb: int = 2048,
+    media_dir: str | os.PathLike[str] | None = None,
+    shard: tuple[int, int] = (0, 1),
+    list_scenes: bool = False,
+    python: str = sys.executable,
+) -> list[str]:
+    """Argument vector for one runner child (see the module docstring)."""
+    cmd = [python, "-m", "manim_stage.runner", str(file)]
+    if list_scenes:
+        return [*cmd, "--list"]
+    assert scene
+    cmd += [scene, "--fps", str(fps), "--width", str(width), "--height", str(height),
+            "--seed", str(seed), "--shard", f"{shard[0]}/{shard[1]}"]  # fmt: skip
+    if cache_dir is not None:
+        cmd += ["--cache-dir", str(cache_dir), "--budget-mb", str(budget_mb)]
+    if media_dir is not None:
+        cmd += ["--media-dir", str(media_dir)]
+    return cmd
+
+
+def child_env() -> dict[str, str]:
+    return {**os.environ, "PYTHONIOENCODING": "utf-8", "PYTHONUNBUFFERED": "1"}
+
+
+class RunnerProcess:
+    """One runner child whose messages are streamed to callbacks as they arrive.
+
+    Callbacks run on reader threads. ``on_exit(returncode)`` runs once, after stdout
+    and stderr are fully read. :meth:`kill` ends the child and anything it spawned
+    (LaTeX, FFmpeg).
+    """
+
+    def __init__(
+        self,
+        cmd: list[str],
+        *,
+        on_message: Any,
+        on_stderr: Any = None,
+        on_exit: Any = None,
+        cwd: str | os.PathLike[str] | None = None,
+    ) -> None:
+        import threading
+
+        self._on_message, self._on_stderr, self._on_exit = on_message, on_stderr, on_exit
+        kw: dict[str, Any] = {}
+        if os.name == "nt":
+            kw["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
+        else:
+            kw["start_new_session"] = True
+        self.proc = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.DEVNULL,
+            text=True, encoding="utf-8", errors="replace", env=child_env(), cwd=cwd, **kw,
+        )  # fmt: skip
+        self.killed = False
+        self._threads = [
+            threading.Thread(target=self._read_stdout, daemon=True),
+            threading.Thread(target=self._read_stderr, daemon=True),
+        ]
+        for t in self._threads:
+            t.start()
+        threading.Thread(target=self._wait, daemon=True).start()
+
+    @property
+    def pid(self) -> int:
+        return self.proc.pid
+
+    def _read_stdout(self) -> None:
+        assert self.proc.stdout
+        for raw in self.proc.stdout:
+            try:
+                msg = json.loads(raw)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(msg, dict):
+                self._on_message(msg)
+
+    def _read_stderr(self) -> None:
+        assert self.proc.stderr
+        for line in self.proc.stderr:
+            if self._on_stderr:
+                self._on_stderr(line.rstrip("\r\n"))
+
+    def _wait(self) -> None:
+        code = self.proc.wait()
+        for t in self._threads:
+            t.join()
+        if self._on_exit:
+            self._on_exit(code)
+
+    def kill(self) -> None:
+        if self.proc.poll() is not None:
+            return
+        self.killed = True
+        if os.name == "nt":
+            subprocess.run(
+                ["taskkill", "/F", "/T", "/PID", str(self.proc.pid)],
+                capture_output=True, check=False,
+            )  # fmt: skip
+        else:
+            import signal
+
+            with contextlib.suppress(ProcessLookupError, PermissionError):
+                os.killpg(self.proc.pid, signal.SIGKILL)
+        with contextlib.suppress(Exception):
+            self.proc.kill()
+
+    def wait(self, timeout: float | None = None) -> int:
+        return self.proc.wait(timeout)
+
+
 def run_capture(
     file: str | os.PathLike[str],
     scene: str,
@@ -277,23 +459,22 @@ def run_capture(
     """
     from concurrent.futures import ThreadPoolExecutor
 
-    base = [python, "-m", "manim_stage.runner", str(file), scene, "--fps", str(fps),
-            "--width", str(width), "--height", str(height), "--seed", str(seed)]  # fmt: skip
     if cache_dir is None:
         workers = 1
-    else:
-        base += ["--cache-dir", str(cache_dir), "--budget-mb", str(budget_mb)]
-    env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
 
     def one(shard: int) -> RunResult:
-        cmd = [*base, "--shard", f"{shard}/{workers}"]
-        if workers > 1:
-            # Manim writes Text/SVG caches into media_dir without locking; concurrent
-            # runners sharing it can read each other's half-written files.
-            cmd += ["--media-dir", str(Path(cache_dir) / ".media" / f"shard-{shard}")]
+        # Manim writes Text/SVG caches into media_dir without locking; concurrent
+        # runners sharing it can read each other's half-written files.
+        media = Path(cache_dir) / ".media" / f"shard-{shard}" if workers > 1 else None
+        cmd = runner_command(
+            file, scene, fps=fps, width=width, height=height, seed=seed,
+            cache_dir=cache_dir, budget_mb=budget_mb, media_dir=media,
+            shard=(shard, workers), python=python,
+        )  # fmt: skip
         proc = subprocess.run(
-            cmd, capture_output=True, text=True, encoding="utf-8", timeout=timeout, env=env
-        )
+            cmd, capture_output=True, text=True, encoding="utf-8", timeout=timeout,
+            env=child_env(),
+        )  # fmt: skip
         return _parse(proc.stdout, proc.stderr, proc.returncode)
 
     if workers == 1:

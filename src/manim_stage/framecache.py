@@ -1,9 +1,9 @@
 """Bounded on-disk cache of preview frames (ADR-0007, spec §9).
 
 Layout: ``<root>/<revision>/<frame:06d>.png``. A *revision* identifies everything that
-determines the pixels: scene file bytes, scene name, render settings and Manim version.
-Imported helper modules and assets are **not** hashed yet; callers that know about
-them pass ``extra`` to :func:`revision_key`.
+determines the pixels: scene file bytes, scene name, render settings, Manim version,
+and (passed as ``extra`` by the runner) the content of every local module and asset the
+scene used (:mod:`manim_stage.deps`).
 
 LRU: reads touch a frame's mtime; :meth:`FrameCache.trim` deletes least recently
 used frames until the cache fits ``budget_bytes``. Writes are atomic, so a reader never
