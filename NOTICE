@@ -13,6 +13,11 @@ Motion Canvas
   are copied. If that ever changes, the copied files, their source commit and
   the MIT notice must be recorded here first.
 
+python-sounddevice and PortAudio
+  https://github.com/spatialaudio/python-sounddevice, https://www.portaudio.com
+  MIT License (sounddevice), MIT-style license (PortAudio). Optional runtime
+  dependency of the Studio editor for preview audio playback.
+
 Qt for Python (PySide6)
   https://wiki.qt.io/Qt_for_Python
   Copyright (c) The Qt Company Ltd. LGPLv3 (GPLv2/GPLv3 also offered).

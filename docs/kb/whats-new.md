@@ -2,6 +2,15 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-27 — audio workspace, part 1 (backlog 2.3a)
+
+- **New:** [audio clips](manim-stage/audio.md) in `.manim-stage/audio.json`, covering:
+  - start, trim, gain, fades, mute and solo;
+  - rendered as non-destructive processed copies through Manim's `add_sound`, in both preview and plain `manim render`.
+- **New:** waveforms on the Audio lane; the Event panel shows clip details.
+- **New:** preview audio, synced to the playhead, with a speaker toggle in the transport. It uses `sounddevice`, is silent without an output device, and `MANIM_STAGE_NO_AUDIO=1` turns it off.
+- **New:** `manim_stage.audio`: decode, process, mix and peaks, plus `docs/schemas/audio.schema.json`.
+
 ## 2026-11-27 — cue editing on the timeline (backlog 2.2)
 
 - **New:** drag cue flags on the timeline. Hold mode bounds the drag by the next cue's wait; Shift ripples every later cue. A live preview shows where cues land and which animations shift.

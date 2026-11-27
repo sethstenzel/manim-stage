@@ -27,6 +27,7 @@ dependencies = ["manim"]
 studio = [
     "PySide6-Essentials>=6.8,<6.12; python_version < '3.12'",
     "PySide6-Essentials>=6.8; python_version >= '3.12'",
+    "sounddevice>=0.5",  # preview audio (PortAudio); the editor stays silent without it
 ]
 
 [project.scripts]
@@ -43,6 +44,7 @@ dev = [
     "PySide6-Essentials>=6.8,<6.12; python_version < '3.12'",
     "PySide6-Essentials>=6.8; python_version >= '3.12'",
     "ruff>=0.8",
+    "sounddevice>=0.5",
 ]
 
 [tool.uv.sources]

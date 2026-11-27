@@ -83,6 +83,30 @@ def _child_events(
     return events
 
 
+def _clip_events(scene: Any, scene_name: str, events: list[SceneEvent]) -> list[SceneEvent]:
+    """Tag the sounds that audio-workspace clips produced (by processed file path)."""
+    clips = {c["processed"]: c for c in getattr(scene, "stage_audio_clips", []) or []}
+    if not clips:
+        return events
+    out = []
+    for e in events:
+        clip = clips.get(str(e.meta.get("file"))) if e.kind == "sound" else None
+        if clip is None:
+            out.append(e)
+            continue
+        settings = {k: v for k, v in clip.items() if k not in ("id", "processed", "label")}
+        out.append(
+            dataclasses.replace(
+                e,
+                id=f"{scene_name}:sound:clip:{clip['id']}#0",
+                label=clip["label"],
+                source=None,
+                meta={**e.meta, "clip": clip["id"], "clip_settings": settings},
+            )
+        )
+    return out
+
+
 def _cue_events(
     scene: Any, scene_name: str, events: list[SceneEvent]
 ) -> tuple[list[SceneEvent], list[str]]:
@@ -272,6 +296,7 @@ def capture(
         else:
             warnings.append(f"Ignored unknown Manim timeline entry kind {kind!r}.")
 
+    events = _clip_events(scene, scene_name, events)
     events, cue_warnings = _cue_events(scene, scene_name, events)
     warnings += cue_warnings
 

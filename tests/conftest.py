@@ -9,6 +9,7 @@ import pytest
 
 # Qt tests run headless everywhere (CI has no display).
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+os.environ.setdefault("MANIM_STAGE_NO_AUDIO", "1")  # never play through real speakers
 
 TESTS = Path(__file__).parent
 SCENES = TESTS / "scenes"
