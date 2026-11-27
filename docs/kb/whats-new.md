@@ -2,6 +2,12 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-26 — M0 gate: deterministic replay (backlog 0.9)
+
+- **Runner always seeds randomness** (`--seed`, default 0, part of the revision). Seeded `random`/`numpy.random` scenes now replay identically across workers.
+- **New:** determinism warnings for wall-clock reads, OS entropy and import-time randomness. See [Scene runner → determinism warnings](manim-stage/runner.md#determinism-warnings).
+- **M0 gate report:** `docs/m0-gate-report.md`. The verdict is GO for M1 on Cairo.
+
 ## 2026-11-26 — data contracts (backlog 0.8)
 
 - **New:** [Data formats and the time model](reference/data-formats.md); JSON Schemas in `docs/schemas/`.
