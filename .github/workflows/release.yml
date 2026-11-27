@@ -1,0 +1,97 @@
+name: release
+
+# Runs when a version tag (v0.1.0, …) is pushed. Builds the sdist and wheel, checks the
+# wheel, smoke-installs it on Windows, Linux and macOS with the pinned Manim, then
+# attaches the files to a GitHub Release.
+#
+# Not published to PyPI yet: manim-stage needs a Manim commit that isn't on PyPI
+# (ADR-0003), and PyPI metadata can't pin a git commit. Publish to PyPI once Manim
+# 0.30 is released; see docs/release.md.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - name: Tag matches the package version
+        run: |
+          VERSION=$(uv run --no-project python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+          test "v${VERSION}" = "${GITHUB_REF_NAME}" || { echo "tag ${GITHUB_REF_NAME} != v${VERSION}"; exit 1; }
+      - run: uv build
+      - run: uv run --no-project python scripts/check_wheel.py dist/*.whl
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  smoke:
+    needs: build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    env:
+      QT_QPA_PLATFORM: offscreen
+      PYTHONIOENCODING: utf8
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - name: System libraries (Linux)
+        if: runner.os == 'Linux'
+        run: >-
+          sudo apt-get update && sudo apt-get install -y libcairo2-dev libpango1.0-dev pkg-config
+          libegl1 libgl1 libxkbcommon0 libfontconfig1 libdbus-1-3 libglib2.0-0
+      - name: System libraries (macOS)
+        if: runner.os == 'macOS'
+        run: brew install cairo pango pkg-config
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - name: Install the wheel with the pinned Manim
+        run: |
+          COMMIT=$(uv run --no-project python -c "import json; print(json.load(open('upstreams.json'))['upstreams']['manim']['pinned']['commit'])")
+          uv venv clean-env --python 3.12
+          uv pip install --python clean-env "$(ls dist/*.whl)[studio]" "manim @ git+https://github.com/ManimCommunity/manim@${COMMIT}"
+      - name: Smoke test
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then BIN=clean-env/Scripts; else BIN=clean-env/bin; fi
+          "$BIN/manim-stage" --version
+          "$BIN/manim-stage" doctor
+          "$BIN/manim-stage" timeline tests/scenes/golden.py Shapes
+          "$BIN/python" -c "from manim_stage.studio.ui.main_window import MainWindow"
+
+  github-release:
+    needs: smoke
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - name: Create the release with the wheel and sdist
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" dist/* \
+            --title "manim-stage ${GITHUB_REF_NAME}" \
+            --notes-file <(sed -n "/^## \[${GITHUB_REF_NAME#v}\]/,/^## \[/p" CHANGELOG.md | sed '$d')

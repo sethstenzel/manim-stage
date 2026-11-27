@@ -51,6 +51,22 @@ uv run python benchmarks/profile_frames.py 1920 1080 30   # draw vs PNG cost per
 - A persistent warm worker pool, to avoid re-import per revision. This conflicts with ADR-0004's fresh-process rule, so a pool would need per-revision fork/spawn hygiene.
 - Draw visible-range frames first (seek-priority ordering).
 
+## Performance pass (M4, 2026-11-27): encode frames off the drawing thread
+
+- **Change:** each preview runner now PNG-encodes and writes frames on two worker threads, so encoding overlaps Cairo drawing the next frame. zlib and PIL release the GIL. Frames are copied first, because Manim may reuse its pixel buffer, and a bounded queue keeps memory flat. Pixels are unchanged; the parity and compatibility suites pass.
+- **Same machine and scene as above.** Raw results: `benchmarks/results-2026-11-27-before-encode-threads-win11.json`, `benchmarks/results-2026-11-27-encode-threads-win11.json`.
+
+| Case | Workers | All frames cached (cold), before | After | Change |
+|---|---|---|---|---|
+| 720p30 | 1 | 11.0 s | 8.2 s | −25% |
+| 1080p30 | 1 | 19.5 s | **12.5 s** | −36% |
+| 1080p30 | 4 | 7.9 s | 7.2 s | −9% |
+| 1080p30 | 8 | 7.2 s | 7.6 s | ≈ (CPU-bound: 8 runners × 3 threads on 16 logical CPUs) |
+
+- **Seek latency is unchanged** (9–10 ms median, server side).
+- **Spec §9's "≤ 10 s first usable preview, 10 s 1080p scene"** now holds with 4 workers (7.2 s). With one worker it improved from 19.5 s to 12.5 s.
+- **Not done:** a warm runner pool, which would save about 1.2 s of `import manim` per child. Spawning a child per revision keeps scene code isolated (ADR-0004), and reusing children would need a safe reset of Manim's global state.
+
 ## Studio editor latency (M1 gate, 2026-11-27)
 
 `benchmarks/studio_latency.py` drives the real editor window (offscreen Qt) on the 10 s reference scene with 4 workers. Same machine as above (Windows 11, 16 logical CPUs). Raw results: `benchmarks/results-2026-11-27-studio-*-win11.json`.

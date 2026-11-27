@@ -4,7 +4,9 @@ Motion Canvas–class authoring for [Manim Community Edition](https://github.com
 
 ![Studio editor](docs/kb/img/timeline-dark.png)
 
-> **Status:** M1 Studio, M2 teaching workflow and M3 composition/customisation are complete ([M1](docs/m1-gate-report.md), [M2](docs/m2-gate-report.md), [M3](docs/m3-gate-report.md) gate reports). Examples: [narrated bubble sort](examples/bubble_sort/), [themed lesson series](examples/lesson_series/). Next: M4 (plugin SDK, educational helpers, polish).
+> **Status: 0.1.0.** All four milestones are complete ([M1](docs/m1-gate-report.md), [M2](docs/m2-gate-report.md), [M3](docs/m3-gate-report.md), [M4](docs/m4-gate-report.md) gate reports; [CHANGELOG](CHANGELOG.md)).
+> - Examples: [narrated bubble sort](examples/bubble_sort/), [themed lesson series](examples/lesson_series/), [algorithm gallery](examples/algorithms/), [third-party-style examples](examples/third_party/).
+> - Coming from plain Manim or Motion Canvas? Read the [migration guide](docs/migration-guide.md). To install a release, see [docs/release.md](docs/release.md).
 >
 > - Spec: [`spec.md`](spec.md)
 > - Knowledge base: [`docs/kb/`](docs/kb/README.md)
