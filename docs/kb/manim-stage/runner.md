@@ -72,9 +72,37 @@ Anything the scene or Manim prints goes to **stderr**, so stdout carries only th
 | `cache_dir` | `--cache-dir` | none | Cache every frame here; see [frame cache](frame-cache.md) |
 | `budget_mb` | `--budget-mb` | 2048 | Frame cache size limit |
 | `workers` | `--shard i/n` | 1 | Split frame drawing across *n* children |
+| `seed` | `--seed` | 0 | Random seed. Always set, so replays and workers draw identical frames. Part of the revision. |
 | — | `--media-dir` | Manim default (`./media`) | Manim's media folder (text/SVG caches); set per worker automatically |
 | `timeout` | — | 300 s | Kill the child after this long |
 | `python` | — | current interpreter | Interpreter for the child |
+
+## Determinism warnings
+
+The runner scans the scene file and adds warnings to `timeline.warnings` for code that cannot be replayed identically:
+- wall-clock reads (`time.time`, `datetime.now`, …);
+- OS entropy (`os.urandom`, `uuid.uuid4`, `secrets`, unseeded `default_rng()`);
+- `random`/`numpy.random` calls at module level, which run before Manim seeds.
+
+```python
+from pathlib import Path
+
+from manim_stage.determinism import scan_file
+
+Path("clocky.py").write_text('''
+import time
+from manim import *
+
+class Clocky(Scene):
+    def construct(self):
+        self.play(FadeIn(Dot([time.time() % 2, 0, 0])), run_time=0.2)
+''')
+print(scan_file("clocky.py"))
+# ['clocky.py:7: time.time() reads the wall clock; replays may differ.']
+assert "time.time()" in scan_file("clocky.py")[0]
+```
+
+The scan covers the scene file only, not imported modules. The supported and unsupported scene classes are listed in `docs/m0-gate-report.md`.
 
 ## Limitations and unsupported cases
 

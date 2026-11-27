@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import dataclasses
 import importlib.util
 import json
 import os
@@ -90,6 +91,9 @@ def _main(argv: list[str] | None = None) -> int:
         type=Path,
         help="Manim media dir (text/SVG caches); must not be shared by concurrent runners",
     )
+    parser.add_argument(
+        "--seed", type=int, default=0, help="random seed (Manim's --seed); keeps replays identical"
+    )
     parser.add_argument("--shard", default="0/1", help="i/n: draw only frames with index %% n == i")
     args = parser.parse_args(argv)
     shard, shards = (int(x) for x in args.shard.split("/"))
@@ -125,6 +129,7 @@ def _main(argv: list[str] | None = None) -> int:
             "progress_bar": "none",
             "disable_caching": True,
             "verbosity": "WARNING",
+            "seed": args.seed,
         }
         revision = revision_key(
             args.file, args.scene, settings, manim_version=_compat.manim_build_id()
@@ -138,6 +143,10 @@ def _main(argv: list[str] | None = None) -> int:
             from .capture import capture
 
             timeline = capture(scene_cls)
+            from .determinism import scan_file
+
+            if scan := scan_file(args.file):
+                timeline = dataclasses.replace(timeline, warnings=(*timeline.warnings, *scan))
             lap("timeline")
             send({"type": "timeline", "revision": revision, "timeline": timeline.to_dict()})
 
@@ -256,6 +265,7 @@ def run_capture(
     cache_dir: str | os.PathLike[str] | None = None,
     budget_mb: int = 2048,
     workers: int = 1,
+    seed: int = 0,
     timeout: float | None = 300,
     python: str = sys.executable,
 ) -> RunResult:
@@ -268,7 +278,7 @@ def run_capture(
     from concurrent.futures import ThreadPoolExecutor
 
     base = [python, "-m", "manim_stage.runner", str(file), scene, "--fps", str(fps),
-            "--width", str(width), "--height", str(height)]  # fmt: skip
+            "--width", str(width), "--height", str(height), "--seed", str(seed)]  # fmt: skip
     if cache_dir is None:
         workers = 1
     else:

@@ -16,7 +16,7 @@ Feature IDs refer to `spec.md` §5. ADRs are in `architecture-decisions.md`.
 | 0.6 | **Executable proof — frame cache seek:** `evaluate(on_frame)` → bounded disk cache. Measure first-preview latency and seek latency on a reference 10 s scene (spec §9). Golden test: cached frame == CLI render frame. | ☑ | ADR-0007. `docs/benchmarks.md`: 1080p 10 s scene cached in 8.0 s with 4 workers (17.9 s with 1); seek 8.5 ms median; frames pixel-identical to CLI. |
 | 0.7 | **Regression baseline:** golden-frame tests for representative unmodified scenes with Studio disabled; confirm CLI output byte/pixel-identical with manim-stage installed. | ☑ | spec §10.1. `tests/test_regression.py`: byte-identical CLI output with manim-stage imported; golden frames for 3 scenes pass on Win/Linux/macOS (tolerance 0.1% pixels >24). |
 | 0.8 | `docs/schemas/` v1 JSON Schemas: `ProjectManifest`, `SceneEvent`, `Cue`, `PreviewMessage`, `EditableProperty`; time model doc (frame index, half-open ranges, 48 kHz audio mapping). | ☑ | spec §8. Implemented: timeline, runner messages (validated against real output). Draft: cues, project, editable property. |
-| 0.9 | M0 gate report: measurements, unsupported scene classes, go/no-go on deterministic replay | ☐ | spec §11 gate |
+| 0.9 | M0 gate report: measurements, unsupported scene classes, go/no-go on deterministic replay | ☑ | spec §11 gate. `docs/m0-gate-report.md`: GO for M1 (Cairo). Seeds enforced; determinism warnings; supported/unsupported scene classes. |
 | 0.10 | **Local knowledge base, first version** (`docs/kb/`, see "Knowledge base" below): structure, page template, index, example smoke-test harness, first pages for what exists (event capture, runner, upstream sync) | ☑ | requested by owner 2026-11-26. `docs/kb/` with 8 pages; `tests/test_kb_examples.py` runs every example and checks links; PR template enforces updates. |
 
 ## Knowledge base (continuous, requested by owner)
@@ -47,7 +47,7 @@ A local, offline knowledge base in `docs/kb/` covering **every feature and how t
 
 | # | Item | Notes |
 |---|---|---|
-| 1.1 | Preview service: 127.0.0.1, host/origin checks, CSRF token, versioned WebSocket protocol, revision discard, cancel/restart | F01, spec §2.8 |
+| 1.1 | Preview service: 127.0.0.1, host/origin checks, CSRF token, versioned WebSocket protocol, revision discard, cancel/restart; dependency-aware revisions (hash imported modules/assets) | F01, spec §2.8; gate-report risk 2 |
 | 1.2 | File watcher (debounce 200–500 ms) → new runner revision; traceback with file/line | F01 |
 | 1.3 | Editor shell (React/TS): scene picker, viewport, play/pause/step/speed, timecode, zoom/fit, dark/light, keyboard shortcuts, accessibility | F01 |
 | 1.4 | Timeline UI: ruler (s/frames), zoom, range, play/wait/section/sound tracks, nested children, jump-to-source | F02 |
