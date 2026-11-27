@@ -27,6 +27,7 @@ Newest first. One line per decision; details in the linked ADR or PR.
 
 | Date | Decision | Why | Where |
 |---|---|---|---|
+| 2026-11-27 | `cue()` is a mixin method issuing `Scene.wait`; name-based cue IDs; sidecar read by plain `manim render`; negative waits are errors | Manim terms (ADR-0013); headless parity (ADR-0006); MC's silent clamping/dropping avoided | PR #18 |
 | 2026-11-27 | M1 gate passed; live reload reuses the last render settings; requested scene renders before discovery finishes | Gate evidence in `docs/m1-gate-report.md`; the reload bug was found by the latency benchmark | PR #17 |
 | 2026-11-27 | Export = visible `manim render` command; range via `-n` snapped to whole calls; PyAV result check | Manim stays the renderer (spec §2.1); reproducible headlessly (§13); no lossy re-cut | PR #15 |
 | 2026-11-27 | PySide6 < 6.12 on Python 3.11 (6.12.0 drops None/True refs per signal on 3.11/Linux → abort); guard test | Found via Linux CI SIGABRT; reproduced in WSL; 6.11.3 and 3.12+ clean | PR #14 |
@@ -66,9 +67,22 @@ One record per Motion Canvas feature. Status: **Ported** (implemented and tested
 - **Implementation:** `runner.py`, `framecache.py`. Tests: `test_runner.py`, `test_parity.py`. KB: `frame-cache.md`, `runner.md`.
 
 ### Time events / `waitUntil` (MC: named, draggable waits)
-- **Status:** Designed (ADR-0006, ADR-0013). Backlog 2.1–2.2.
-- **Manim mapping:** `self.cue("name", at=, after=)`, a named `wait`; overrides in `.manim-stage/cues.json` as absolute frames.
-- **Improvements over MC:** validation (negative waits, duplicates, order), orphan tombstones, atomic writes, undo, headless `bake`.
+- **Status:** Ported: API, sidecar, validate, bake and timeline lane (2.1). Dragging with ripple and undo is next (2.2).
+- **MC behaviour:** `yield* waitUntil("event")` pauses the scene until the event's time. Times are absolute (scene-relative), live in the scene's `.meta` file, and are dragged on the timeline. An event without a stored time waits 0. Negative waits are clamped in the editor only.
+- **Manim mapping:**
+  - `self.cue("name", at=, after=, description=)` on `StageScene`, or on any Manim scene via `StageMixin` (`MovingCameraScene`, `ThreeDScene`, …). It issues a plain `Scene.wait` for the remaining frames.
+  - `at=` means absolute seconds, `after=` is relative like `wait()`, and neither makes a marker.
+  - Overrides are in `.manim-stage/cues.json` as absolute frames at a stated frame rate, rescaled to the render rate.
+- **Improvements over MC:**
+  - explicit defaults (`at`/`after`) in code;
+  - errors with file:line for negative waits, whether the default or the override is at fault (MC only clamps in the UI);
+  - duplicates and invalid names are errors;
+  - orphaned overrides warn and are kept as tombstones (MC drops them silently);
+  - atomic writes with a backup and corruption fallback;
+  - `validate`/`bake` CLI;
+  - plain `manim render` reads the sidecar (headless reproducibility);
+  - name-based IDs, so moving the call keeps the timing.
+- **Implementation:** `src/manim_stage/cues.py` (store, resolver, Manim-free), `scene.py` (`StageMixin`, `StageScene`), `capture.py` (`cue` events, wait attribution), `cuetools.py` + `cli.py` (`validate`, `bake`), and the timeline Cues lane. Tests: `tests/test_cues.py`. KB: `docs/kb/manim-stage/cues.md`.
 
 ### Code block and code animation (MC: `Code` node, token diff)
 - **Status:** Designed (ADR-0008). Backlog 2.5–2.6.

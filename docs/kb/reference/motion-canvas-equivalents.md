@@ -32,7 +32,7 @@ Motion Canvas concepts are ported into Manim's model. They stay available under 
 | `yield* tween(...)` | `self.play(...)`; `tween(run_time, fn)` | `Animation` | Planned (M3) |
 | `all(...)` / `sequence(...)` / `chain(...)` / `delay` / `loop` | `all_of`, `sequence`, `chain`, `delay`, `loop` | `AnimationGroup` / `LaggedStart` / `Succession` | Planned (M3) |
 | `waitFor(s)` | unchanged: `self.wait(s)` | `Scene.wait` | Available (Manim) |
-| `waitUntil("name")`, time events | `self.cue("name", at=, after=)` | `Scene.wait` | Planned (M2) |
+| `waitUntil("name")`, time events | [`self.cue("name", at=, after=)`](../manim-stage/cues.md) | `Scene.wait` | Available (drag on timeline: Planned 2.2) |
 | Timing functions / easing | unchanged: `rate_func` | `manim.rate_functions` | Available (Manim) |
 | `createSignal`, computed, effects | `Signal`, `computed`, `effect` | `ValueTracker`, updaters | Planned (M3) |
 | Project variables | `stage.variables`, project theme | `config` | Planned (M3) |

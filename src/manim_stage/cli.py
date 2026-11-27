@@ -7,6 +7,8 @@ never replaces ``manim render``: exports are plain Manim renders (see ``export``
     manim-stage scenes lesson.py           list Scene classes
     manim-stage timeline lesson.py Scene   print the scene's events (text or --json)
     manim-stage doctor                     check Manim, Qt, FFmpeg/PyAV, LaTeX, fonts
+    manim-stage validate lesson.py [Scene] check named cues (exit 1 on errors)
+    manim-stage bake lesson.py [Scene]     write resolved cue times to .manim-stage/cues.json
     manim-stage cache [--clear]            frame-cache size / clear it
 """
 
@@ -134,6 +136,28 @@ def cmd_cache(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_validate(args: argparse.Namespace) -> int:
+    from .cuetools import collect, format_report
+
+    reports = collect(args.file, args.scene or None)
+    print(format_report(reports))
+    return 1 if any(r.error for r in reports) else 0
+
+
+def cmd_bake(args: argparse.Namespace) -> int:
+    from .cues import CueError
+    from .cuetools import bake, format_report
+
+    try:
+        path, reports = bake(args.file, args.scene or None)
+    except CueError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
+    print(format_report(reports))
+    print(f"wrote {path}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="manim-stage", description="Motion Canvas-class authoring for Manim"
@@ -154,6 +178,14 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("doctor", help="check the environment (Manim, Qt, FFmpeg, LaTeX, fonts)")
     p.add_argument("--json", action="store_true")
     p.set_defaults(func=cmd_doctor)
+    p = sub.add_parser("validate", help="check the named cues of StageScenes (exit 1 on errors)")
+    p.add_argument("file", type=Path)
+    p.add_argument("scene", nargs="*", help="scenes to check (default: every StageScene)")
+    p.set_defaults(func=cmd_validate)
+    p = sub.add_parser("bake", help="write resolved cue times into .manim-stage/cues.json")
+    p.add_argument("file", type=Path)
+    p.add_argument("scene", nargs="*", help="scenes to bake (default: every StageScene)")
+    p.set_defaults(func=cmd_bake)
     p = sub.add_parser("cache", help="show or clear the preview frame cache")
     p.add_argument("--clear", action="store_true")
     p.add_argument("--cache-dir", type=Path, default=None)

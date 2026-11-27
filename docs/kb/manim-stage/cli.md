@@ -49,6 +49,8 @@ assert main(["timeline", "cli_demo.py", "Hello"]) == 0
 | `scenes FILE [--json]` | Lists the `Scene` subclasses defined in the file, in source order, with their line and nearest Manim base (`Scene`, `MovingCameraScene`, `ThreeDScene`, …). Imports the file in a child process. |
 | `timeline FILE SCENE [--fps N] [--json]` | Shows the [event capture](event-capture.md) as a table, with nesting, times and source lines. `--json` prints the [timeline schema](../reference/data-formats.md) document. Doesn't draw frames. |
 | `doctor [--json]` | Checks Python, the Manim build and required APIs, Cairo, Pango fonts (`Text`), LaTeX + dvisvgm (`Tex`/`MathTex`), FFmpeg/PyAV encoders for each export format, PySide6, and installed Manim plugins. Exits 1 if something essential fails. |
+| `validate FILE [SCENE…]` | Checks the [named cues](cues.md) of every StageScene (or the ones named): each cue's reach time, default, target and override; errors (duplicates, negative waits) and orphaned overrides. Exits 1 on errors. |
+| `bake FILE [SCENE…]` | Writes every resolved cue target into `.manim-stage/cues.json` and marks orphans as tombstones. Writes nothing if any scene fails. |
 | `cache [--clear] [--cache-dir DIR]` | Shows the preview frame cache's size, or empties it. |
 
 `--version` prints the manim-stage version.
@@ -60,7 +62,6 @@ assert main(["timeline", "cli_demo.py", "Hello"]) == 0
 ## Limitations and unsupported cases
 
 - `scenes` and `timeline` execute the file's Python, like `manim render` does. Use trusted files only.
-- `bake` and `validate` for narration cues arrive with M2 (backlog 2.1).
 
 ## Related
 

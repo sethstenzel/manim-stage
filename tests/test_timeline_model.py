@@ -68,3 +68,11 @@ def test_resolve_source(tmp_path):
     assert resolve_source(str(scene), scene) == scene
     assert resolve_source("missing.py", scene) == scene
     assert isinstance(resolve_source("x", Path(scene)), Path)
+
+
+def test_cues_get_their_own_lane():
+    tl = capture_scene("Narrated", 15, file=Path(__file__).parent / "scenes" / "cues.py")
+    lay = build_layout(tl.to_dict())
+    cues = next(ln for ln in lay.lanes if ln.key == "cues")
+    assert [b.label for row in cues.rows for b in row] == ["intro", "swap", "marker"]
+    assert all(b.is_marker and b.category == "cue" for row in cues.rows for b in row)

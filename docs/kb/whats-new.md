@@ -2,6 +2,17 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-27 — named cues (backlog 2.1)
+
+- **New:** [`self.cue(name, at=, after=, description=)`](manim-stage/cues.md) on `StageScene`, or any scene via `StageMixin`. It is Motion Canvas's `waitUntil`, built on Manim's `wait`.
+- **New:** the `.manim-stage/cues.json` sidecar:
+  - targets in absolute frames, rescaled across frame rates;
+  - atomic writes with a `.bak` copy, and corruption fallback;
+  - read by both the preview and plain `manim render`.
+- **New:** `manim-stage validate` and `manim-stage bake`.
+- **New:** a Cues lane on the timeline. Cue waits point at the user's line. Errors for negative waits, duplicates and bad names; warnings for orphaned overrides.
+- **Changed:** `manim-stage scenes` and the runner's scene list report `stage` for StageScene classes.
+
 ## 2026-11-27 — M1 gate passed
 
 - **Report:** `docs/m1-gate-report.md`. Unmodified Manim scenes are authorable in the Studio, and exports are unchanged (end-to-end journey test).

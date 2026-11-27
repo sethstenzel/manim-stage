@@ -98,7 +98,8 @@ def list_scenes(path: Path) -> list[dict[str, Any]]:
         except (OSError, TypeError):
             line = 0
         bases = [c.__name__ for c in obj.__mro__[1:] if c.__module__.startswith("manim.")]
-        found.append({"name": attr, "line": line, "bases": bases[:3]})
+        stage = any(c.__module__ == "manim_stage.scene" for c in obj.__mro__)
+        found.append({"name": attr, "line": line, "bases": bases[:3], "stage": stage})
     return sorted(found, key=lambda s: s["line"])
 
 

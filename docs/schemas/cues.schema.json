@@ -1,27 +1,47 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/sethstenzel/manim-stage/docs/schemas/cues.schema.json",
-  "title": "manim-stage cues sidecar v1 (draft)",
-  "description": "`.manim-stage/cues.json`: per-scene absolute cue targets edited on the timeline (spec §8 Cue, F03; ADR-0006). Status: DRAFT, not implemented (backlog 2.1). Targets are absolute frame indices from scene start at `frame_rate`; the resolver rescales when the render frame rate differs (round to nearest frame).",
+  "title": "manim-stage cues sidecar v1",
+  "description": "`.manim-stage/cues.json`: per-scene absolute cue targets edited on the timeline (spec §8 Cue, F03; ADR-0006). Status: implemented (manim_stage.cues, backlog 2.1). Targets are absolute frame indices from scene start at `frame_rate`; the resolver rescales when the render frame rate differs (round to nearest frame).",
   "type": "object",
-  "required": ["schema", "version", "frame_rate", "scenes"],
+  "required": [
+    "schema",
+    "version",
+    "frame_rate",
+    "scenes"
+  ],
   "additionalProperties": false,
   "properties": {
-    "schema": {"const": "manim_stage.cues"},
-    "version": {"const": 1},
-    "frame_rate": {"type": "number", "exclusiveMinimum": 0},
+    "schema": {
+      "const": "manim_stage.cues"
+    },
+    "version": {
+      "const": 1
+    },
+    "frame_rate": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
     "scenes": {
       "type": "object",
-      "propertyNames": {"pattern": "^[A-Za-z_][A-Za-z0-9_]*$"},
+      "propertyNames": {
+        "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+      },
       "additionalProperties": {
         "type": "object",
-        "required": ["cues"],
+        "required": [
+          "cues"
+        ],
         "additionalProperties": false,
         "properties": {
           "cues": {
             "type": "object",
-            "propertyNames": {"pattern": "^[A-Za-z0-9_.-]{1,64}$"},
-            "additionalProperties": {"$ref": "#/$defs/Cue"}
+            "propertyNames": {
+              "pattern": "^[A-Za-z0-9_.-]{1,64}$"
+            },
+            "additionalProperties": {
+              "$ref": "#/$defs/Cue"
+            }
           }
         }
       }
@@ -30,14 +50,35 @@
   "$defs": {
     "Cue": {
       "type": "object",
-      "required": ["target_frame"],
+      "required": [
+        "target_frame"
+      ],
       "additionalProperties": false,
       "properties": {
-        "target_frame": {"type": "integer", "minimum": 0, "description": "absolute, from scene start"},
-        "description": {"type": "string"},
-        "audio_segment": {"type": ["string", "null"], "description": "related narration clip/segment id"},
-        "tombstone": {"type": "boolean", "default": false, "description": "cue no longer found in source; kept until dismissed"},
-        "updated": {"type": "string", "format": "date-time"}
+        "target_frame": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "absolute, from scene start"
+        },
+        "description": {
+          "type": "string"
+        },
+        "audio_segment": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "related narration clip/segment id"
+        },
+        "tombstone": {
+          "type": "boolean",
+          "default": false,
+          "description": "cue no longer found in source; kept until dismissed"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time"
+        }
       }
     }
   }

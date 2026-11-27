@@ -85,9 +85,9 @@
       "additionalProperties": false,
       "properties": {
         "id": {
-          "description": "scene:kind:path:line#occurrence, children append /index",
+          "description": "scene:kind:path:line#occurrence (cues: scene:cue:name#0), children append /index",
           "type": "string",
-          "pattern": "^[^:]+:(play|wait|animation|section|sound|caption):.+#[0-9]+(/[0-9]+)*$"
+          "pattern": "^[^:]+:(play|wait|animation|section|sound|caption|cue):.+#[0-9]+(/[0-9]+)*$"
         },
         "kind": {
           "enum": [
@@ -96,7 +96,8 @@
             "animation",
             "section",
             "sound",
-            "caption"
+            "caption",
+            "cue"
           ]
         },
         "scene": {
@@ -114,7 +115,7 @@
         },
         "track": {
           "type": "string",
-          "pattern": "^(main(/[0-9]+)?|sections|audio|captions)$"
+          "pattern": "^(main(/[0-9]+)?|sections|audio|captions|cues)$"
         },
         "label": {
           "type": "string"
@@ -137,7 +138,7 @@
         },
         "meta": {
           "type": "object",
-          "description": "Kind-specific details. play/wait: play_index, run_time, frozen, skipped; play also animations (AnimationInfo per top-level animation). animation: animation (AnimationInfo). section: type, skip_animations. sound: file, start_seconds, duration_seconds, gain.",
+          "description": "Kind-specific details. play/wait: play_index, run_time, frozen, skipped; play also animations (AnimationInfo per top-level animation). animation: animation (AnimationInfo). section: type, skip_animations. sound: file, start_seconds, duration_seconds, gain. cue: name, description, call_frame, default_frame, target_frame, overridden, wait_frames, play_index; a wait issued by a cue has meta.cue = name.",
           "properties": {
             "animations": {
               "type": "array",

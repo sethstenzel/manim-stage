@@ -30,7 +30,7 @@ A local, offline reference for **every manim-stage feature and how to use it**. 
 | [Command line](manim-stage/cli.md) | `manim-stage studio / scenes / timeline / doctor / cache` | Available | — | F01 |
 | [Export and snapshots](manim-stage/export.md) | Render via `manim render` (quality, format, range, transparency, sections) with progress, cancel and result check; save/copy frames | Available | Cairo | F01, F10 |
 | [Timeline](manim-stage/timeline.md) | Lanes of play/wait/section/sound and group members; Manim categories, rate curves, jump to source | Available | Cairo | F02 |
-| Named cues (`self.cue`) | Narration-aligned timing with editable sidecar | Planned (M2) | — | F03 |
+| [Named cues (`self.cue`)](manim-stage/cues.md) | Named, adjustable waits for narration; `cues.json` sidecar; validate/bake | Available (drag: Planned 2.2) | Both | F03 |
 | Audio workspace | Waveforms, offset/trim/fade, voiceover adapter | Planned (M2) | — | F04 |
 | `AnimatedCode` | Token-level code-diff animations | Planned (M2) | — | F05 |
 
@@ -64,6 +64,8 @@ A local, offline reference for **every manim-stage feature and how to use it**. 
 | Save a full-quality still of the current frame | [Export → Save frame](manim-stage/export.md#quick-start) |
 | Check what my machine can render (LaTeX, fonts, codecs) | [CLI → doctor](manim-stage/cli.md#commands) |
 | Print a scene's timing without opening the editor | [CLI → timeline](manim-stage/cli.md#quick-start) |
+| Make animations wait for the narration without hand-tuned waits | [Named cues](manim-stage/cues.md#quick-start) |
+| Check or pin my cue timings | [Named cues → command line](manim-stage/cues.md#command-line) |
 | Preview a scene while I edit it | [Studio editor](manim-stage/studio-editor.md#quick-start) |
 | Learn the editor's keyboard shortcuts | [Studio editor → shortcuts](manim-stage/studio-editor.md#keyboard-shortcuts) |
 | Drive previews from code (render, cancel, listen for frames/errors) | [Preview service](manim-stage/preview-service.md) |

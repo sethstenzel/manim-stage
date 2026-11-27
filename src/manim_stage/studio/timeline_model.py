@@ -3,6 +3,7 @@
 Lanes, top to bottom (Manim terms, ADR-0013):
 
 - **Sections** — ``next_section`` markers (zero-length).
+- **Cues** — ``self.cue(...)`` targets of a StageScene (zero-length, draggable in 2.2).
 - **Animations** — one bar per ``play`` / ``wait`` call.
 - **Level 1, 2, …** — members of ``AnimationGroup`` / ``LaggedStart`` / ``Succession``
   (and nested groups), one lane per nesting depth.
@@ -50,7 +51,7 @@ class EventBox:
     def category(self) -> str:
         if self.kind == "wait":
             return "wait"
-        if self.kind in ("section", "sound", "caption"):
+        if self.kind in ("section", "sound", "caption", "cue"):
             return self.kind
         anim = self.animation
         if anim:
@@ -101,6 +102,8 @@ class Layout:
 def lane_key(box: EventBox) -> str:
     if box.kind == "section":
         return "sections"
+    if box.kind == "cue":
+        return "cues"
     if box.kind == "sound":
         return "audio"
     if box.kind == "caption":
@@ -128,7 +131,7 @@ def build_layout(timeline: dict[str, Any]) -> Layout:
             )
         )
     max_depth = max((b.depth for b in boxes), default=0)
-    lanes = [Lane("sections", "Sections"), Lane("main", "Animations")]
+    lanes = [Lane("sections", "Sections"), Lane("cues", "Cues"), Lane("main", "Animations")]
     lanes += [Lane(f"level{d}", f"Level {d}") for d in range(1, max_depth + 1)]
     lanes += [Lane("audio", "Audio"), Lane("captions", "Captions")]
     by_key = {lane.key: lane for lane in lanes}
