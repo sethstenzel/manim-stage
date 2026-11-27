@@ -9,7 +9,7 @@ Feature IDs refer to `spec.md` §5. ADRs are in `architecture-decisions.md`.
 |---|---|---|---|
 | 0.1 | Repo foundation, upstream pins, sync process | ☑ | ADR-0001/0002 |
 | 0.2 | Capability audit, ADRs 0003–0009, backlog | ☑ | this PR |
-| 0.3 | **Owner decision on ADR-0003** (target Manim 0.30/MAIN) | ☐ | blocks 0.4+ |
+| 0.3 | **Owner decision on ADR-0003** (target Manim 0.30/MAIN) | ☑ | accepted 2026-11-26; manim re-pinned to main@8c258a0 |
 | 0.3a | Spike: `Manager.evaluate` timeline + frame parity on Manim main (`spikes/`) | ☑ | frames pixel-identical to CLI; see spikes/README.md |
 | 0.4 | Python package skeleton: `pyproject.toml` (hatchling), `manim_stage/_compat.py`, pytest, ruff, CI matrix (Win/Linux/macOS × py3.11–3.13) against pinned Manim | ☐ | ADR-0009 |
 | 0.5 | **Executable proof — event capture:** runner that evaluates an unmodified scene in a child process, emits JSON-lines `SceneEvent`s with frame indices, nested group children and stable IDs. Tests: `AnimationGroup`, `LaggedStart`, waits, sounds, sections, zero-duration, loops (spec F02 accept). | ☐ | ADR-0004/0005 |

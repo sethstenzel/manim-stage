@@ -8,8 +8,8 @@
       "license": "MIT",
       "notes": "Engine, scene model, renderer. Consumed as a pip dependency. Never vendored or forked.",
       "pinned": {
-        "ref": "v0.22.1",
-        "commit": "16ea443e2a5f1d79db0a721161411ce916d6e733"
+        "ref": "main@8c258a0",
+        "commit": "8c258a0082dc760d9a93671bbdfaca3cc53a6f91"
       },
       "watch_paths": [
         "manim/scene/",

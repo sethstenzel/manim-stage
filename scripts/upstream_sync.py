@@ -14,7 +14,7 @@ Commands:
       Print the diff of watched paths from the pin to REF.
   checkout NAME [REF]
       Check out REF (default: the pinned commit) in .upstream/NAME for reading.
-  bump NAME REF
+  bump NAME REF [--label TEXT]
       Re-pin NAME to REF after the changes up to it have been reviewed.
 
 Standard library only; needs git on PATH.
@@ -99,9 +99,19 @@ def tip(path: Path, up: dict) -> str:
 
 
 def new_tags(path: Path, pin: str) -> list[str]:
-    tags = git(path, "tag", "--contains", pin, "--sort=-creatordate").splitlines()
+    """Tags newer than the pin: descendants of it, plus any tag created after the
+    pinned commit (release commits are sometimes cut off-branch, e.g. manim v0.30.0a1)."""
     pinned = set(git(path, "tag", "--points-at", pin).splitlines())
-    return [t for t in tags if t and t not in pinned]
+    descendants = set(git(path, "tag", "--contains", pin).splitlines())
+    pin_time = int(git(path, "show", "-s", "--format=%ct", pin))
+    out = []
+    refs = git(path, "for-each-ref", "--sort=-creatordate",
+               "--format=%(refname:short) %(creatordate:unix)", "refs/tags")
+    for line in refs.splitlines():
+        name, _, ts = line.rpartition(" ")
+        if name and name not in pinned and (name in descendants or int(ts) > pin_time):
+            out.append(name)
+    return out
 
 
 def commits(path: Path, start: str, end: str, paths: list[str] | None) -> list[str]:
@@ -194,9 +204,10 @@ def cmd_bump(args: argparse.Namespace) -> int:
     ).returncode == 0
     if not ancestor:
         print(f"warning: {args.ref} is not a descendant of the current pin", file=sys.stderr)
-    up["pinned"] = {"ref": args.ref, "commit": sha}
+    label = args.label or args.ref
+    up["pinned"] = {"ref": label, "commit": sha}
     save_config(config)
-    print(f"{args.name}: {old['ref']} ({old['commit'][:9]}) -> {args.ref} ({sha[:9]})")
+    print(f"{args.name}: {old['ref']} ({old['commit'][:9]}) -> {label} ({sha[:9]})")
     if up["role"] == "dependency":
         print("Reminder: update the version constraint in pyproject.toml (once it exists) "
               "and run the full test suite against the new version.")
@@ -234,6 +245,7 @@ def main() -> int:
     p = sub.add_parser("bump")
     p.add_argument("name")
     p.add_argument("ref")
+    p.add_argument("--label", help="name to record instead of REF, e.g. main@<sha>")
     p.set_defaults(func=cmd_bump)
 
     args = parser.parse_args()

@@ -26,7 +26,7 @@ Record of decisions required by the spec (§3, §12.9). Status: Proposed → Acc
 
 ## ADR-0003 — Manim baseline: target the 0.30 line, not 0.22
 
-- **Status:** **Proposed — needs owner approval.**
+- **Status:** Accepted by owner (2026-11-26)
 - **Context:** See [capability audit](capability-audit.md).
   - STABLE 0.22.1 lacks every timeline primitive F01/F02/F04 need. Its float clock depends on cache state and renderer.
   - MAIN (0.30 line, prerelease `v0.30.0a1`) has a deterministic frame clock, timeline capture, `Manager.evaluate` frame drawing and a sample-accurate audio mixer. They are experimental or private, with a large refactor stack still open.
