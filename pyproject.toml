@@ -1,0 +1,49 @@
+[project]
+name = "manim-stage"
+version = "0.0.1.dev0"
+description = "Motion Canvas-class authoring for Manim: local Studio editor, seekable timeline, narration cues, code-diff animations."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE", "NOTICE"]
+authors = [{ name = "Seth Stenzel" }]
+requires-python = ">=3.11"
+classifiers = [
+    "Development Status :: 1 - Planning",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Multimedia :: Video",
+]
+# Manim is pinned to a reviewed upstream commit via [tool.uv.sources] until
+# 0.30.0 is released (ADR-0003). Upstream main still reports version 0.22.1,
+# so capability is checked at runtime in manim_stage._compat, not by version.
+dependencies = ["manim"]
+
+[project.urls]
+repository = "https://github.com/sethstenzel/manim-stage"
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.8"]
+
+[tool.uv.sources]
+# Keep in sync with upstreams.json (scripts/upstream_sync.py bump updates it).
+manim = { git = "https://github.com/ManimCommunity/manim", rev = "8c258a0082dc760d9a93671bbdfaca3cc53a6f91" }
+
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/manim_stage"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = [".upstream", "spikes"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
