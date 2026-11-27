@@ -51,6 +51,7 @@ A local, offline reference for **every manim-stage feature and how to use it**. 
 
 | Page | What |
 |---|---|
+| [Themed multi-scene lesson](tutorials/multi-scene-lesson.md) | Three scenes, one theme, signals, inspector edit, composed with transitions; restyle without code edits |
 | [Narrated bubble sort](tutorials/narrated-bubble-sort.md) | End-to-end lesson: narration, cues, AnimatedCode; re-time to a new take without touching Python |
 
 ### Reference
@@ -85,6 +86,7 @@ A local, offline reference for **every manim-stage feature and how to use it**. 
 | Tweak a colour visually and keep it reproducible | [Inspector → exposed properties](manim-stage/inspector.md#how-it-works) |
 | Change the look of every scene at once (accent colour, fonts) | [Project theme](manim-stage/project.md) |
 | Drive several mobjects from one piece of state | [Signals](manim-stage/signals.md#quick-start) |
+| Build a multi-scene lesson with one look | [Tutorial: themed multi-scene lesson](tutorials/multi-scene-lesson.md) |
 | Build a narrated lesson end to end | [Tutorial: narrated bubble sort](tutorials/narrated-bubble-sort.md) |
 | Animate a code edit | [AnimatedCode → animated edits](manim-stage/animated-code.md#animated-edits) |
 | Show code and highlight lines or words | [AnimatedCode](manim-stage/animated-code.md#quick-start) |

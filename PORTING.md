@@ -27,6 +27,7 @@ Newest first. One line per decision; details in the linked ADR or PR.
 
 | Date | Decision | Why | Where |
 |---|---|---|---|
+| 2026-11-27 | M3 gate passed (themed three-scene lesson; deterministic compose; restyle via project only) | Spec §11 M3 | PR #31 |
 | 2026-11-27 | Asset validation = static scan resolved with Manim's rules + audio clips + fonts; presets map to Manim CLI flags | Fail before rendering; no second path resolver to drift from Manim | PR #30 |
 | 2026-11-27 | Flow helpers return Manim groups (`sequence` in exact seconds); cross-scene transitions composed after `manim render` with overlap semantics | MC vocabulary, Manim objects; Manim renders scenes separately | PR #29 |
 | 2026-11-27 | Inspector = replay-to-frame snapshot of Mobject families; `expose()` opt-in edits saved to `properties.json`, previews via env-redirected temp file (always a cache dependency) | F08 with headless reproduction; no source mutation; correct cache invalidation | PR #28 |

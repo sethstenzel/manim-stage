@@ -1,0 +1,9 @@
+{
+  "output": "lesson.mp4",
+  "quality": "high_quality",
+  "scenes": [
+    {"file": "lesson.py", "scene": "Intro"},
+    {"file": "lesson.py", "scene": "Bars", "transition": "fade", "duration": 0.5},
+    {"file": "lesson.py", "scene": "Outro", "transition": "slide_left", "duration": 0.6}
+  ]
+}
