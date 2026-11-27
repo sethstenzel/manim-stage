@@ -15,14 +15,26 @@ from manim_stage.studio.app import create_window  # noqa: E402
 TIMEOUT = 120_000
 
 
+def dispose(win):
+    """Close and destroy a window in the GUI thread, then collect Python cycles here
+    (not later on some runner thread, where finalising Qt objects aborts)."""
+    import gc
+
+    from PySide6.QtCore import QCoreApplication, QEvent
+
+    win.close()
+    QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+    QCoreApplication.processEvents()
+    gc.collect()
+
+
 @pytest.fixture
 def window(qtbot, tmp_path):
     win, svc = create_window(SCENES / "timing.py", "MixedRunTimes", workers=1,
                              cache_dir=tmp_path / "cache", watch=False)  # fmt: skip
-    qtbot.addWidget(win)
     win.show()
     yield win
-    win.close()
+    dispose(win)
 
 
 def wait_done(qtbot, win, scene):
@@ -133,3 +145,64 @@ def test_every_control_has_an_accessible_name(qtbot, window):
         and not w.objectName().startswith("qt_")  # Qt's own internals
     ]
     assert controls and not [type(w).__name__ for w in controls if not named(w)]
+
+
+def test_timeline_shows_events_and_selection_drives_event_panel(qtbot, tmp_path):
+    win, _ = create_window(
+        SCENES / "timing.py", "Lesson", workers=1, cache_dir=tmp_path / "c", watch=False
+    )
+    win.show()
+    wait_done(qtbot, win, "Lesson")
+    canvas = win.timeline.canvas
+    lay = canvas.layout_
+    assert lay is not None and {ln.key for ln in lay.lanes} >= {"sections", "main", "audio"}
+    # keyboard: focus timeline, next event, Enter seeks to it
+    canvas.setFocus()
+    canvas.playhead = 0
+    qtbot.keyClick(canvas, Qt.Key.Key_Right, Qt.KeyboardModifier.AltModifier)
+    first = lay.by_id[canvas.selected]
+    assert first.start == 0
+    for _ in range(3):
+        qtbot.keyClick(canvas, Qt.Key.Key_Right, Qt.KeyboardModifier.AltModifier)
+    box = lay.by_id[canvas.selected]
+    qtbot.keyClick(canvas, Qt.Key.Key_Return)
+    assert win.playback.frame == min(box.start, win.playback.total - 1)
+    assert win.event_panel.box is box and box.label in win.event_panel.title.text()
+    assert canvas.accessibleDescription()
+    # clicking a bar selects it; the panel shows Manim details
+    fade = next(
+        b
+        for b in lay.by_id.values()
+        if b.kind == "animation" and (b.animation or {}).get("class") == "FadeIn"
+    )
+    rect = next(r for b, r, _ in canvas.box_rects() if b.id == fade.id)
+    qtbot.mouseClick(canvas, Qt.MouseButton.LeftButton, pos=rect.center().toPoint())
+    assert canvas.selected == fade.id
+    assert "fading" in win.event_panel.details.text().lower()
+    assert win.event_panel.curve.isVisibleTo(win.event_panel)
+    # zoom keeps the playhead's frame under the cursor anchor and enables scrolling
+    canvas.zoom(4.0)
+    assert not canvas.fit_mode
+    canvas.fit()
+    assert canvas.fit_mode and canvas.scroll == 0
+    # selection survives a re-render (stable event IDs)
+    win.render()
+    qtbot.waitUntil(
+        lambda: win.shown_state and win.shown_state[0] > 1 and win.shown_state[2] == "done",
+        timeout=TIMEOUT,
+    )
+    assert canvas.selected == fade.id
+    dispose(win)
+
+
+def test_click_on_ruler_seeks(qtbot, window):
+    wait_done(qtbot, window, "MixedRunTimes")
+    canvas = window.timeline.canvas
+    from manim_stage.studio.ui.timeline import LABEL_W
+
+    x = int(canvas.x_of(window.playback.total // 2))
+    qtbot.mouseClick(
+        canvas, Qt.MouseButton.LeftButton, pos=__import__("PySide6.QtCore").QtCore.QPoint(x, 5)
+    )
+    assert abs(window.playback.frame - window.playback.total // 2) <= 1
+    assert x > LABEL_W

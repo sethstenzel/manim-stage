@@ -26,7 +26,8 @@ A local, offline reference for **every manim-stage feature and how to use it**. 
 | [Scene runner](manim-stage/runner.md) | Run a scene in a child process; JSON-lines protocol; errors with file/line | Available | Cairo | F01 |
 | [Preview service](manim-stage/preview-service.md) | Render a scene in the background; revisions, cancel, events, dependency tracking | Available | Cairo | F01, §8 |
 | [Frame cache and preview frames](manim-stage/frame-cache.md) | Cache every frame for scrubbing; parallel drawing | Available | Cairo | F01, §4 P1 |
-| [Studio editor](manim-stage/studio-editor.md) | Python (PySide6) desktop editor: scene picker, viewport, playback, live reload, errors | Partial (timeline, export: Planned) | Cairo | F01 |
+| [Studio editor](manim-stage/studio-editor.md) | Python (PySide6) desktop editor: scene picker, viewport, playback, live reload, errors | Partial (export: Planned) | Cairo | F01 |
+| [Timeline](manim-stage/timeline.md) | Lanes of play/wait/section/sound and group members; Manim categories, rate curves, jump to source | Available | Cairo | F02 |
 | Named cues (`self.cue`) | Narration-aligned timing with editable sidecar | Planned (M2) | — | F03 |
 | Audio workspace | Waveforms, offset/trim/fade, voiceover adapter | Planned (M2) | — | F04 |
 | `AnimatedCode` | Token-level code-diff animations | Planned (M2) | — | F05 |
@@ -55,6 +56,8 @@ A local, offline reference for **every manim-stage feature and how to use it**. 
 | Know which Manim animation, rate function and Mobject an event is | [Event capture → animation metadata](manim-stage/event-capture.md#animation-metadata) |
 | See when each member of a `LaggedStart` runs | [Event capture → nested animations](manim-stage/event-capture.md#nested-animations) |
 | Run a scene safely in the background and get errors with line numbers | [Scene runner](manim-stage/runner.md) |
+| Find which line produced a moment in the video | [Timeline](manim-stage/timeline.md#quick-start) |
+| See a LaggedStart's staircase and each animation's rate_func | [Timeline → how it works](manim-stage/timeline.md#how-it-works) |
 | Preview a scene while I edit it | [Studio editor](manim-stage/studio-editor.md#quick-start) |
 | Learn the editor's keyboard shortcuts | [Studio editor → shortcuts](manim-stage/studio-editor.md#keyboard-shortcuts) |
 | Drive previews from code (render, cancel, listen for frames/errors) | [Preview service](manim-stage/preview-service.md) |

@@ -221,9 +221,11 @@ class PreviewService:
             if self._watcher is not None:
                 self._watcher.stop()
             self._watcher = FileWatcher(
-                lambda: self.dependencies, self._on_files_changed,
-                interval=interval, debounce=debounce,
-            ).start()  # fmt: skip
+                lambda: self.dependencies,
+                self._on_files_changed,
+                interval=interval,
+                debounce=debounce,
+            ).start()
 
     def unwatch(self) -> None:
         with self._lock:

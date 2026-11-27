@@ -2,6 +2,13 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-27 — timeline (backlog 1.4, MF.3)
+
+- **New:** [Timeline](manim-stage/timeline.md) in the Studio editor: sections, play/wait, nested group members (overlaps get their own rows), audio. It has a seconds/frames ruler with render progress, zoom, scroll, and the in/out range.
+- **New:** Manim-aware bars: category colour and label, `rate_func` curve, hatched waits (frozen marked), skipped sections marked.
+- **New:** Event panel with the animation's class, category, `run_time`, `rate_func` curve, `lag_ratio`, `.animate` chain, Mobject and source; jump to source.
+- **New:** keyboard navigation of events (Alt+←/→, Enter, Ctrl+Enter).
+
 ## 2026-11-27 — animation metadata (backlog MF.2)
 
 - **New:** timeline events describe each animation in Manim's terms: class, category (Manim's animation module), `.animate` method chain, run time, rate function name and sampled curve, lag ratio, animated Mobject. See [event capture → animation metadata](manim-stage/event-capture.md#animation-metadata).

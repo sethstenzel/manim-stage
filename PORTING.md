@@ -27,6 +27,9 @@ Newest first. One line per decision; details in the linked ADR or PR.
 
 | Date | Decision | Why | Where |
 |---|---|---|---|
+| 2026-11-27 | PySide6 < 6.12 on Python 3.11 (6.12.0 drops None/True refs per signal on 3.11/Linux → abort); guard test | Found via Linux CI SIGABRT; reproduced in WSL; 6.11.3 and 3.12+ clean | PR #14 |
+| 2026-11-27 | Background → GUI events via a deque drained by a GUI timer; windows delete on close | No cross-thread Qt calls; Qt objects never finalised on runner threads | PR #14 |
+| 2026-11-27 | Timeline lanes by nesting depth with row packing; category colour + text label + rate curve per bar; Event panel; read-only until cues | Shows *what* Manim does, not just when; overlaps visible (spec F02); no colour-only signals (§9) | PR #14 |
 | 2026-11-27 | Classify animations by Manim's own module layout (`manim.animation.creation` → creation, …) and sample rate functions in the runner | Categories stay correct for subclasses and new upstream animations; editor never imports user code | ADR-0011, PR #13 |
 | 2026-11-27 | Editor shell: QMainWindow + custom QPainter widgets; own drawn icons; preview quality = Manim quality presets; preferences in an INI file | Python-only (ADR-0012); Manim vocabulary (ADR-0013); no third-party icon assets | PR #12 |
 | 2026-11-27 | Live reload by polling `stat()` of the scene + dependencies (no watchdog dependency), 0.3 s debounce | Small watched set; identical behaviour on all OSes; handles atomic-rename saves | PR #11 |
@@ -47,11 +50,12 @@ Newest first. One line per decision; details in the linked ADR or PR.
 One record per Motion Canvas feature. Status: **Ported** (implemented and tested), **In progress**, **Designed** (ADR exists), **Not started**.
 
 ### Timeline (MC: editor timeline built from a non-drawing pass)
-- **Status:** In progress. Data ported (M0); UI in M1 (backlog 1.4, MF.3).
+- **Status:** Ported (data M0; UI 1.4 + MF.3). Editing by drag comes with cues (2.2).
 - **MC behaviour:** one fast pass over the scene computes durations, slide and time-event positions; the timeline shows scenes, slides, time events and audio.
 - **Manim mapping:** `Manager.evaluate(capture_timeline=True)` gives play/wait/section/sound entries; a run-loop listener (`_compat.py`) records frame-exact play ranges; nested `AnimationGroup`/`LaggedStart` child spans are computed from `rate_func`, `lag_ratio` and run times.
 - **Improvements over MC:** per-animation and nested tracks; frame-integer time model (no float drift); stable event IDs `scene:kind:path:line#occurrence`; each event knows its Manim animation class, category (from Manim's `manim.animation.*` module layout), `.animate` method chain, rate function and its sampled curve, lag ratio and target Mobject (MF.2), so the timeline can show *what* happens, not just *when*.
-- **Implementation:** `src/manim_stage/capture.py`, `events.py`, `_compat.py`, `catalog.py`. Tests: `tests/test_capture.py`, `tests/test_catalog.py`. KB: `docs/kb/manim-stage/event-capture.md`.
+- **UI (1.4, MF.3):** MC's timeline track rows become lanes named in Manim terms (Sections, Animations, Level n for group members, Audio, Captions). Overlapping group members are packed into rows (greedy interval partitioning), so `AnimationGroup` members never hide each other. Bars are coloured and labelled by Manim category and draw their sampled `rate_func`. An Event panel explains the selected call in Manim vocabulary. Selection is kept across re-renders via stable IDs. Layout is Qt-free (`timeline_model.py`) and unit-tested.
+- **Implementation:** `src/manim_stage/capture.py`, `events.py`, `_compat.py`, `catalog.py`; UI `studio/timeline_model.py`, `studio/ui/timeline.py`, `studio/ui/event_panel.py`. Tests: `tests/test_capture.py`, `tests/test_catalog.py`, `tests/test_timeline_model.py`, `tests/test_studio_ui.py`. KB: `event-capture.md`, `timeline.md`.
 
 ### Seeking / preview (MC: replay the scene in the browser to any frame)
 - **Status:** Ported for cached frames (P1). P3 live scrubbing not feasible (no Manim state snapshot).

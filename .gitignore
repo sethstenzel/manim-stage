@@ -28,3 +28,4 @@ Thumbs.db
 spikes/frames/
 spikes/*.wav
 spikes/timeline.json
+.venv311/

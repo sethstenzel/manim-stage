@@ -41,8 +41,9 @@ def editor_command(file: str, line: int | None) -> list[str] | None:
 def open_in_editor(file: str, line: int | None) -> None:
     cmd = editor_command(file, line)
     if cmd:
-        subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                         stderr=subprocess.DEVNULL)  # fmt: skip
+        subprocess.Popen(
+            cmd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
     else:
         QDesktopServices.openUrl(QUrl.fromLocalFile(file))
 

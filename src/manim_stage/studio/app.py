@@ -27,9 +27,15 @@ def default_workers() -> int:
     return max(1, min(4, (os.cpu_count() or 2) // 2))
 
 
-def create_window(file: str | Path, scene: str | None = None, *, quality: str = "low_quality",
-                  workers: int | None = None, cache_dir: str | Path | None = None,
-                  watch: bool = True):  # fmt: skip
+def create_window(
+    file: str | Path,
+    scene: str | None = None,
+    *,
+    quality: str = "low_quality",
+    workers: int | None = None,
+    cache_dir: str | Path | None = None,
+    watch: bool = True,
+):
     """Build the main window (QApplication must exist). Returns (window, service)."""
     from PySide6.QtWidgets import QApplication
 
@@ -41,8 +47,7 @@ def create_window(file: str | Path, scene: str | None = None, *, quality: str = 
     dark = studio_settings().value("dark", True, type=bool)
     apply_theme(app, dark)
     service = PreviewService(file, cache_dir=cache_dir or default_cache_dir())
-    window = MainWindow(service, scene=scene, quality=quality,
-                        workers=workers or default_workers())  # fmt: skip
+    window = MainWindow(service, scene=scene, quality=quality, workers=workers or default_workers())
     window.act_theme.setText("Light theme" if dark else "Dark theme")
     window.transport.refresh_icons()
     if watch:
@@ -51,8 +56,9 @@ def create_window(file: str | Path, scene: str | None = None, *, quality: str = 
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="python -m manim_stage.studio",
-                                     description="manim-stage Studio editor")  # fmt: skip
+    parser = argparse.ArgumentParser(
+        prog="python -m manim_stage.studio", description="manim-stage Studio editor"
+    )
     parser.add_argument("file", type=Path, help="Python file with Manim Scene classes")
     parser.add_argument("scene", nargs="?", help="Scene class to open (default: the first)")
     parser.add_argument(
@@ -70,13 +76,17 @@ def main(argv: list[str] | None = None) -> int:
     try:
         from PySide6.QtWidgets import QApplication
     except ImportError:
-        print("The Studio editor needs PySide6: pip install 'manim-stage[studio]'",
-              file=sys.stderr)  # fmt: skip
+        print("The Studio editor needs PySide6: pip install 'manim-stage[studio]'", file=sys.stderr)
         return 2
     app = QApplication.instance() or QApplication(sys.argv[:1])
     app.setApplicationName("manim-stage Studio")
-    window, _ = create_window(args.file, args.scene, quality=args.quality,
-                              workers=args.workers, cache_dir=args.cache_dir,
-                              watch=not args.no_watch)  # fmt: skip
+    window, _ = create_window(
+        args.file,
+        args.scene,
+        quality=args.quality,
+        workers=args.workers,
+        cache_dir=args.cache_dir,
+        watch=not args.no_watch,
+    )
     window.show()
     return app.exec()

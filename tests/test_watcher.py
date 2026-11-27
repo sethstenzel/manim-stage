@@ -20,17 +20,26 @@ def wait_for(pred, timeout=120.0):
     return False
 
 
+class FakeClock:
+    def __init__(self):
+        self.t = 0.0
+
+    def __call__(self):
+        return self.t
+
+
 def test_poll_debounces_a_burst_into_one_change(tmp_path):
     f = tmp_path / "a.py"
     f.write_text("1")
-    w = FileWatcher(lambda: [f], lambda _: None, debounce=0.2)
+    clock = FakeClock()
+    w = FileWatcher(lambda: [f], lambda _: None, debounce=0.2, clock=clock)
     w._snapshot()
     assert w.poll() is None
     for i in range(3):  # a burst of saves
         f.write_text("x" * (i + 2))
         assert w.poll() is None  # still inside the debounce window
-        time.sleep(0.05)
-    time.sleep(0.25)
+        clock.t += 0.05
+    clock.t += 0.25
     assert w.poll() == [f]
     assert w.poll() is None  # reported once
 
@@ -40,14 +49,15 @@ def test_new_paths_are_a_baseline_and_deletion_is_a_change(tmp_path):
     a.write_text("1")
     b.write_text("2")
     watched = [a]
-    w = FileWatcher(lambda: watched, lambda _: None, debounce=0.05)
+    clock = FakeClock()
+    w = FileWatcher(lambda: watched, lambda _: None, debounce=0.05, clock=clock)
     w._snapshot()
     watched.append(b)  # dependency discovered later
-    time.sleep(0.06)
+    clock.t += 0.1
     assert w.poll() is None
     b.unlink()
-    w.poll()
-    time.sleep(0.06)
+    assert w.poll() is None  # change seen, debounce running
+    clock.t += 0.1
     assert w.poll() == [b]
 
 

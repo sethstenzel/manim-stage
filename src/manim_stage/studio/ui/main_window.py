@@ -26,6 +26,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QMainWindow,
     QSizePolicy,
+    QSplitter,
     QToolBar,
     QVBoxLayout,
     QWidget,
@@ -33,14 +34,22 @@ from PySide6.QtWidgets import (
 
 from ..playback import Playback
 from ..service import PreviewMessage, PreviewService, RenderSettings
+from ..timeline_model import resolve_source
 from .bridge import ServiceBridge
+from .event_panel import EventPanel
 from .log_panel import LogPanel, open_in_editor
 from .theme import apply_theme, is_dark
+from .timeline import TimelineView
 from .transport import TransportBar
 from .viewport import Viewport
 
-PREVIEW_QUALITIES = ("low_quality", "medium_quality", "high_quality",
-                     "production_quality", "fourk_quality")  # fmt: skip
+PREVIEW_QUALITIES = (
+    "low_quality",
+    "medium_quality",
+    "high_quality",
+    "production_quality",
+    "fourk_quality",
+)
 
 
 def manim_qualities() -> dict[str, dict]:
@@ -62,9 +71,18 @@ def studio_settings() -> QSettings:
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, service: PreviewService, *, scene: str | None = None,
-                 quality: str = "low_quality", workers: int = 1) -> None:  # fmt: skip
+    def __init__(
+        self,
+        service: PreviewService,
+        *,
+        scene: str | None = None,
+        quality: str = "low_quality",
+        workers: int = 1,
+    ) -> None:
         super().__init__()
+        # Destroy the C++ window on close, in the GUI thread. Otherwise Python's cyclic GC
+        # may finalise it later on a runner thread, which aborts Qt.
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.service = service
         self.workers = max(1, workers)
         self.settings_store = studio_settings()
@@ -80,20 +98,35 @@ class MainWindow(QMainWindow):
         # widgets
         self.viewport = Viewport()
         self.transport = TransportBar()
-        central = QWidget()
-        lay = QVBoxLayout(central)
+        self.timeline = TimelineView()
+        top = QWidget()
+        lay = QVBoxLayout(top)
         lay.setContentsMargins(0, 0, 0, 0)
         lay.setSpacing(0)
         lay.addWidget(self.viewport, 1)
         lay.addWidget(self.transport)
-        self.setCentralWidget(central)
+        self.splitter = QSplitter(Qt.Orientation.Vertical)
+        self.splitter.addWidget(top)
+        self.splitter.addWidget(self.timeline)
+        self.splitter.setStretchFactor(0, 3)
+        self.splitter.setStretchFactor(1, 1)
+        self.splitter.setSizes([480, 260])
+        self.setCentralWidget(self.splitter)
+
+        self.event_panel = EventPanel()
+        self.event_dock = QDockWidget("Event", self)
+        self.event_dock.setObjectName("event_dock")
+        self.event_dock.setWidget(self.event_panel)
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.event_dock)
 
         self.log = LogPanel()
         self.log_dock = QDockWidget("Log", self)
         self.log_dock.setObjectName("log_dock")
         self.log_dock.setWidget(self.log)
-        self.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self.log_dock)
-        self.resizeDocks([self.log_dock], [150], Qt.Orientation.Vertical)
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.log_dock)
+        self.tabifyDockWidget(self.event_dock, self.log_dock)
+        self.event_dock.raise_()
+        self.resizeDocks([self.event_dock], [340], Qt.Orientation.Horizontal)
 
         self._build_toolbar(quality)
         self._build_actions()
@@ -112,6 +145,12 @@ class MainWindow(QMainWindow):
         self.transport.frameEntered.connect(self.seek)
         self.transport.scrub.seek.connect(self.seek)
         self.log.openSource.connect(open_in_editor)
+        tc = self.timeline.canvas
+        tc.seekRequested.connect(self.seek)
+        tc.eventSelected.connect(lambda box: self.event_panel.show_event(box, tc.fps))
+        tc.sourceRequested.connect(self.open_event_source)
+        self.event_panel.seekRequested.connect(self.seek)
+        self.event_panel.sourceRequested.connect(self.open_event_source)
 
         self.timer = QTimer(self)
         self.timer.setTimerType(Qt.TimerType.PreciseTimer)
@@ -218,10 +257,12 @@ class MainWindow(QMainWindow):
 
     def render_settings(self) -> RenderSettings:
         q = self.qualities.get(self.quality_box.currentData() or "low_quality", {})
-        return RenderSettings(fps=float(q.get("frame_rate", 15)),
-                              width=int(q.get("pixel_width", 854)),
-                              height=int(q.get("pixel_height", 480)),
-                              workers=self.workers)  # fmt: skip
+        return RenderSettings(
+            fps=float(q.get("frame_rate", 15)),
+            width=int(q.get("pixel_width", 854)),
+            height=int(q.get("pixel_height", 480)),
+            workers=self.workers,
+        )
 
     def render(self) -> None:
         scene = self.current_scene()
@@ -277,13 +318,19 @@ class MainWindow(QMainWindow):
         elif state == "done":
             cur = self.service.current
             t = cur.timings.get("total", 0.0) if cur else 0.0
-            self.status_label.setText(f"Ready — {len(cur.frames) if cur else 0} frames "
-                                      f"(rendered {cur.frames_drawn if cur else 0}) in {t:.1f} s"
-                                      + (f" · {self.notice}" if self.notice else ""))  # fmt: skip
+            self.status_label.setText(
+                f"Ready — {len(cur.frames) if cur else 0} frames "
+                f"(rendered {cur.frames_drawn if cur else 0}) in {t:.1f} s"
+                + (f" · {self.notice}" if self.notice else "")
+            )
             self.viewport.set_overlay("")
 
     def _on_timeline(self, msg: PreviewMessage) -> None:
         tl = msg.data["timeline"]
+        self.timeline.set_timeline(tl)
+        sel = self.timeline.canvas.selected
+        if sel:  # stable event IDs: keep the selection across re-renders
+            self.timeline.canvas.select(sel)
         kept = self.playback.set_scene(float(tl["frame_rate"]), int(tl["duration_frames"]))
         self.notice = "" if kept else "playhead reset: the scene is shorter now"
         for w in tl.get("warnings", []):
@@ -310,6 +357,7 @@ class MainWindow(QMainWindow):
             self.viewport.placeholder = "No frames: the scene raised an error (see the log)."
         self.status_label.setText("Error — see the log")
         self.log_dock.show()
+        self.log_dock.raise_()
 
     def _on_done(self, msg: PreviewMessage) -> None:
         pass  # status 'done' follows
@@ -332,10 +380,16 @@ class MainWindow(QMainWindow):
     def _sync_transport(self) -> None:
         pb = self.playback
         frames = self._frames()
-        self.transport.show_state(playing=pb.playing, buffering=pb.buffering, frame=pb.frame,
-                                  total=pb.total, timecode=pb.timecode())  # fmt: skip
+        self.transport.show_state(
+            playing=pb.playing,
+            buffering=pb.buffering,
+            frame=pb.frame,
+            total=pb.total,
+            timecode=pb.timecode(),
+        )
         rng = (pb.range.start, pb.range.end) if pb.range else None
         self.transport.scrub.set_state(pb.total, pb.frame, frames, len(frames), rng)
+        self.timeline.set_state(pb.frame, frames, rng)
 
     def _tick(self) -> None:
         if not self.playback.playing:
@@ -346,6 +400,12 @@ class MainWindow(QMainWindow):
             self._show_frame()
         if not self.playback.playing:
             self._sync_transport()
+
+    def open_event_source(self, box) -> None:
+        if box is None or not box.source:
+            return
+        path = resolve_source(str(box.source.get("path", "")), self.service.file)
+        open_in_editor(str(path), int(box.source.get("line") or 1))
 
     def toggle_play(self) -> None:
         self.playback.toggle()

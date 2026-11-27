@@ -36,11 +36,12 @@ class FileWatcher:
         *,
         interval: float = 0.1,
         debounce: float = 0.3,
+        clock: Callable[[], float] = time.monotonic,
     ) -> None:
         """``paths`` is called on every poll, so the watched set can change."""
         if not 0.05 <= debounce <= 5:
             raise ValueError("debounce must be between 0.05 and 5 seconds")
-        self._paths, self._on_change = paths, on_change
+        self._paths, self._on_change, self._clock = paths, on_change, clock
         self.interval, self.debounce = interval, debounce
         self._known: dict[Path, Signature] = {}
         self._pending: set[Path] = set()
@@ -67,7 +68,7 @@ class FileWatcher:
 
     def poll(self) -> list[Path] | None:
         """One polling step; returns the changed files when a debounced change fires."""
-        now = time.monotonic()
+        now = self._clock()
         paths = self._current_paths()
         known = {}
         for p in paths:
