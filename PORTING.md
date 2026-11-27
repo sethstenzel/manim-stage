@@ -27,6 +27,7 @@ Newest first. One line per decision; details in the linked ADR or PR.
 
 | Date | Decision | Why | Where |
 |---|---|---|---|
+| 2026-11-27 | Export = visible `manim render` command; range via `-n` snapped to whole calls; PyAV result check | Manim stays the renderer (spec §2.1); reproducible headlessly (§13); no lossy re-cut | PR #15 |
 | 2026-11-27 | PySide6 < 6.12 on Python 3.11 (6.12.0 drops None/True refs per signal on 3.11/Linux → abort); guard test | Found via Linux CI SIGABRT; reproduced in WSL; 6.11.3 and 3.12+ clean | PR #14 |
 | 2026-11-27 | Background → GUI events via a deque drained by a GUI timer; windows delete on close | No cross-thread Qt calls; Qt objects never finalised on runner threads | PR #14 |
 | 2026-11-27 | Timeline lanes by nesting depth with row packing; category colour + text label + rate curve per bar; Event panel; read-only until cues | Shows *what* Manim does, not just when; overlaps visible (spec F02); no colour-only signals (§9) | PR #14 |
@@ -79,6 +80,18 @@ One record per Motion Canvas feature. Status: **Ported** (implemented and tested
 ### Flow helpers (MC: `all`, `sequence`, `chain`, `delay`, `loop`, `tween`)
 - **Status:** Designed (ADR-0013). Backlog 3.4.
 - **Manim mapping:** `all_of` → `AnimationGroup`, `sequence` → `LaggedStart`, `chain` → `Succession`, `tween(run_time, fn)` → custom `Animation`.
+
+### Rendering / export (MC: Render panel, image sequence or FFmpeg exporter in the browser)
+- **Status:** Ported (1.5).
+- **MC behaviour:** the editor renders the project in the browser tab and saves frames or a video via an exporter plugin; snapshots save the current frame.
+- **Manim mapping:** an export *is* a `manim render` command (quality `-q`, `--format`, `-t`, `--save_sections`, `-n` range, `--media_dir`, `-o`, `--seed`). The Studio builds, shows and runs it, parses Manim's progress bar, and can cancel it. Save frame uses a runner child (`--snapshot-at`).
+- **Improvements over MC:**
+  - headless reproducibility by construction (the shown command *is* the export);
+  - the result is checked with PyAV (size, fps, average fps / variable frame rate, duration, codecs, audio);
+  - exports honour the preview seed;
+  - the snapshot is pixel-identical to the preview at the same quality.
+- **Deviation:** frame-exact range cuts are not offered, because Manim renders whole animations. The range snaps to whole `play`/`wait` calls and the dialog says so.
+- **Implementation:** `src/manim_stage/export.py`, `studio/ui/export_dialog.py`, `runner.py` (`--snapshot-at`). Tests: `tests/test_export.py`, `tests/test_studio_ui.py`. KB: `docs/kb/manim-stage/export.md`.
 
 ### Audio (MC: one audio track with offset)
 - **Status:** Not started. Backlog 2.3–2.4.

@@ -15,14 +15,16 @@ from __future__ import annotations
 
 import threading
 import time
+from collections import deque
 from pathlib import Path
 
 from PySide6.QtCore import QSettings, Qt, QTimer
-from PySide6.QtGui import QAction, QKeySequence
+from PySide6.QtGui import QAction, QGuiApplication, QImage, QKeySequence
 from PySide6.QtWidgets import (
     QApplication,
     QComboBox,
     QDockWidget,
+    QFileDialog,
     QLabel,
     QMainWindow,
     QSizePolicy,
@@ -32,37 +34,19 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from ...export import snapshot
 from ..playback import Playback
 from ..service import PreviewMessage, PreviewService, RenderSettings
 from ..timeline_model import resolve_source
 from .bridge import ServiceBridge
 from .event_panel import EventPanel
+from .export_dialog import ExportDialog
 from .log_panel import LogPanel, open_in_editor
+from .quality import manim_qualities, quality_label
 from .theme import apply_theme, is_dark
 from .timeline import TimelineView
 from .transport import TransportBar
 from .viewport import Viewport
-
-PREVIEW_QUALITIES = (
-    "low_quality",
-    "medium_quality",
-    "high_quality",
-    "production_quality",
-    "fourk_quality",
-)
-
-
-def manim_qualities() -> dict[str, dict]:
-    """Manim's own quality presets (``manim.constants.QUALITIES``), never hardcoded."""
-    from manim.constants import QUALITIES
-
-    return {k: dict(QUALITIES[k]) for k in PREVIEW_QUALITIES if k in QUALITIES}
-
-
-def quality_label(key: str, q: dict) -> str:
-    name = key.replace("_quality", "").replace("fourk", "4K").capitalize()
-    flag = f"  (-q{q['flag']})" if q.get("flag") else ""
-    return f"{name} {q['pixel_height']}p{q['frame_rate']}{flag}"
 
 
 def studio_settings() -> QSettings:
@@ -94,6 +78,9 @@ class MainWindow(QMainWindow):
         self.requested_scene = scene
         self.notice = ""
         self.shown_state: tuple[int, str, str] | None = None  # last status the GUI handled
+        self._snapshot_results: deque[tuple[str, str]] = deque()  # from snapshot threads
+        self.last_snapshot_message = ""
+        self.export_dialog: ExportDialog | None = None
 
         # widgets
         self.viewport = Viewport()
@@ -196,6 +183,19 @@ class MainWindow(QMainWindow):
         self.act_cancel.triggered.connect(self.service.cancel)
         tb.addAction(self.act_cancel)
         tb.addSeparator()
+        self.act_export = QAction("Export…", self)
+        self.act_export.setShortcut(QKeySequence("Ctrl+E"))
+        self.act_export.setToolTip("Render with Manim's CLI: video, GIF or PNGs (Ctrl+E)")
+        self.act_export.triggered.connect(self.open_export)
+        tb.addAction(self.act_export)
+        self.act_snapshot = QAction("Save frame…", self)
+        self.act_snapshot.setShortcut(QKeySequence("Ctrl+Shift+S"))
+        self.act_snapshot.setToolTip(
+            "Render the frame at the playhead in full quality (Ctrl+Shift+S)"
+        )
+        self.act_snapshot.triggered.connect(self.save_snapshot)
+        tb.addAction(self.act_snapshot)
+        tb.addSeparator()
         self.renderer_badge = QLabel(" Renderer: Cairo · preview from cached frames ")
         self.renderer_badge.setAccessibleName("Renderer capabilities")
         self.renderer_badge.setToolTip(
@@ -238,6 +238,7 @@ class MainWindow(QMainWindow):
             "zoom_100": act("Zoom 100%", "Ctrl+1", lambda: self.viewport.set_zoom(1.0)),
             "zoom_in": act("Zoom in", ["Ctrl++", "Ctrl+="], self.viewport.zoom_in),
             "zoom_out": act("Zoom out", "Ctrl+-", self.viewport.zoom_out),
+            "copy_frame": act("Copy frame", "Ctrl+Shift+C", self.copy_frame),
         }
 
     # -- scenes & rendering -----------------------------------------------------------
@@ -392,6 +393,8 @@ class MainWindow(QMainWindow):
         self.timeline.set_state(pb.frame, frames, rng)
 
     def _tick(self) -> None:
+        if self._snapshot_results:
+            self._drain_snapshots()
         if not self.playback.playing:
             return
         before = self.playback.frame
@@ -446,6 +449,57 @@ class MainWindow(QMainWindow):
         self._sync_transport()
 
     # -- theme & lifecycle ------------------------------------------------------------
+
+    # -- export & snapshots -----------------------------------------------------------
+
+    def open_export(self) -> ExportDialog | None:
+        scene = self.current_scene()
+        if not scene:
+            return None
+        cur = self.service.current
+        tl = cur.timeline.to_dict() if cur and cur.timeline and cur.scene == scene else None
+        pb = self.playback
+        rng = (pb.range.start, pb.range.end) if pb.range else None
+        dlg = ExportDialog(self.service.file, scene, tl, rng, pb.fps, self)
+        dlg.show()
+        self.export_dialog = dlg
+        return dlg
+
+    def copy_frame(self) -> None:
+        path = self._frames().get(self.playback.frame)
+        if path is None:
+            self.status_label.setText("This frame isn't rendered yet.")
+            return
+        QGuiApplication.clipboard().setImage(QImage(str(path)))
+        self.status_label.setText(f"Copied frame {self.playback.frame} (preview quality).")
+
+    def save_snapshot(self, path: str | None = None, quality: str = "high_quality") -> None:
+        scene = self.current_scene()
+        if not scene:
+            return
+        seconds = self.playback.frame / max(self.playback.fps, 1e-9)
+        if path is None:
+            default = self.service.file.parent / f"{scene}_{self.playback.frame:05d}.png"
+            path, _ = QFileDialog.getSaveFileName(self, "Save frame", str(default), "PNG (*.png)")
+            if not path:
+                return
+        self.status_label.setText(f"Rendering frame at {seconds:.2f} s…")
+        file, out = self.service.file, Path(path)
+
+        def work() -> None:
+            try:
+                saved, index = snapshot(file, scene, seconds, out, quality=quality)
+                self._snapshot_results.append(("ok", f"Saved frame {index} to {saved}"))
+            except Exception as exc:  # reported in the status bar
+                self._snapshot_results.append(("error", f"Snapshot failed: {exc}"))
+
+        threading.Thread(target=work, daemon=True).start()
+
+    def _drain_snapshots(self) -> None:
+        while self._snapshot_results:
+            kind, text = self._snapshot_results.popleft()
+            self.status_label.setText(("⚠ " if kind == "error" else "") + text)
+            self.last_snapshot_message = text
 
     def toggle_theme(self) -> None:
         app = QApplication.instance()

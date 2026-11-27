@@ -2,6 +2,16 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-27 — export and snapshots (backlog 1.5)
+
+- **New:** [Export](manim-stage/export.md) through `manim render`, covering:
+  - Manim quality presets and formats (MP4, WebM, MOV, GIF, PNG sequence, PNG);
+  - transparency, `--save_sections`, and in/out range via `-n`;
+  - progress, cancel, and a result check (size, fps, duration, codecs, audio, variable frame rate).
+- **New:** the exact Manim command is shown and copyable, for headless reproduction.
+- **New:** Save frame (full-quality PNG at the playhead, pixel-identical to the preview at the same quality) and Copy frame.
+- **New:** runner `--snapshot-at SECONDS --out PNG`.
+
 ## 2026-11-27 — timeline (backlog 1.4, MF.3)
 
 - **New:** [Timeline](manim-stage/timeline.md) in the Studio editor: sections, play/wait, nested group members (overlaps get their own rows), audio. It has a seconds/frames ruler with render progress, zoom, scroll, and the in/out range.

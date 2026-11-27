@@ -27,6 +27,7 @@ A local, offline reference for **every manim-stage feature and how to use it**. 
 | [Preview service](manim-stage/preview-service.md) | Render a scene in the background; revisions, cancel, events, dependency tracking | Available | Cairo | F01, §8 |
 | [Frame cache and preview frames](manim-stage/frame-cache.md) | Cache every frame for scrubbing; parallel drawing | Available | Cairo | F01, §4 P1 |
 | [Studio editor](manim-stage/studio-editor.md) | Python (PySide6) desktop editor: scene picker, viewport, playback, live reload, errors | Partial (export: Planned) | Cairo | F01 |
+| [Export and snapshots](manim-stage/export.md) | Render via `manim render` (quality, format, range, transparency, sections) with progress, cancel and result check; save/copy frames | Available | Cairo | F01, F10 |
 | [Timeline](manim-stage/timeline.md) | Lanes of play/wait/section/sound and group members; Manim categories, rate curves, jump to source | Available | Cairo | F02 |
 | Named cues (`self.cue`) | Narration-aligned timing with editable sidecar | Planned (M2) | — | F03 |
 | Audio workspace | Waveforms, offset/trim/fade, voiceover adapter | Planned (M2) | — | F04 |
@@ -58,6 +59,8 @@ A local, offline reference for **every manim-stage feature and how to use it**. 
 | Run a scene safely in the background and get errors with line numbers | [Scene runner](manim-stage/runner.md) |
 | Find which line produced a moment in the video | [Timeline](manim-stage/timeline.md#quick-start) |
 | See a LaggedStart's staircase and each animation's rate_func | [Timeline → how it works](manim-stage/timeline.md#how-it-works) |
+| Export an MP4/GIF/PNGs, or just part of a scene | [Export](manim-stage/export.md) |
+| Save a full-quality still of the current frame | [Export → Save frame](manim-stage/export.md#quick-start) |
 | Preview a scene while I edit it | [Studio editor](manim-stage/studio-editor.md#quick-start) |
 | Learn the editor's keyboard shortcuts | [Studio editor → shortcuts](manim-stage/studio-editor.md#keyboard-shortcuts) |
 | Drive previews from code (render, cancel, listen for frames/errors) | [Preview service](manim-stage/preview-service.md) |
