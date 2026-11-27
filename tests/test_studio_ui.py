@@ -520,3 +520,28 @@ def test_inspector_select_preview_save_undo(qtbot, tmp_path):
     qtbot.waitUntil(rendered_after(seq), timeout=TIMEOUT)
     assert inspector.load(side) == {} and not red_center()
     dispose(win)
+
+
+def test_assets_panel_lists_and_adds(qtbot, window, tmp_path):
+    from PIL import Image
+    from PySide6.QtGui import QGuiApplication
+
+    wait_done(qtbot, window, "MixedRunTimes")
+    window.check_assets()
+    qtbot.waitUntil(lambda: window.assets_panel.env.topLevelItemCount() > 0, timeout=TIMEOUT)
+    names = [
+        window.assets_panel.env.topLevelItem(i).text(1)
+        for i in range(window.assets_panel.env.topLevelItemCount())
+    ]
+    assert "Manim" in names and "Tex / MathTex" in names
+    img = tmp_path / "pic.png"
+    Image.new("RGB", (4, 4)).save(img)
+    root = window._project_root()
+    rel = window.add_asset(str(img))
+    try:
+        assert rel == "assets/images/pic.png" and (root / rel).exists()
+        assert QGuiApplication.clipboard().text() == 'ImageMobject("assets/images/pic.png")'
+    finally:
+        import shutil
+
+        shutil.rmtree(root / "assets", ignore_errors=True)

@@ -34,6 +34,7 @@ from PySide6.QtWidgets import (
 from ...export import (
     ALPHA_FORMATS,
     FORMATS,
+    PRESETS,
     ExportJob,
     ExportResult,
     ExportSettings,
@@ -75,6 +76,12 @@ class ExportDialog(QDialog):
         self._queue: deque[tuple[str, Any]] = deque()  # filled by the job's thread
 
         form = QFormLayout()
+        self.preset = QComboBox()
+        self.preset.setAccessibleName("Render preset")
+        self.preset.addItem("Custom (quality below)", "")
+        for key, pr in PRESETS.items():
+            self.preset.addItem(pr.label, key)
+        form.addRow("Preset", self.preset)
         self.quality = QComboBox()
         self.quality.setAccessibleName("Quality")
         for key, q in manim_qualities().items():
@@ -164,6 +171,7 @@ class ExportDialog(QDialog):
         lay.addLayout(brow)
         self.resize(720, 440)
 
+        self.preset.currentIndexChanged.connect(self._preset_chosen)
         for w in (self.quality, self.format):
             w.currentIndexChanged.connect(self._refresh)
         for w in (self.transparent, self.sections, self.whole, self.ranged):
@@ -187,8 +195,11 @@ class ExportDialog(QDialog):
         play_range = None
         if self.ranged.isChecked() and self.range_frames and self.timeline:
             play_range = play_range_for_frames(self.timeline, *self.range_frames)
+        preset = PRESETS.get(self.preset.currentData() or "")
         return ExportSettings(
             quality=self.quality.currentData(),
+            resolution=preset.resolution if preset else None,
+            fps=preset.fps if preset else None,
             format=fmt,
             transparent=self.transparent.isChecked() and fmt in ALPHA_FORMATS,
             save_sections=self.sections.isChecked(),
@@ -196,6 +207,28 @@ class ExportDialog(QDialog):
             media_dir=Path(self.media_dir.text()).expanduser(),
             output_name=self.name.text().strip() or None,
         )
+
+    def _preset_chosen(self) -> None:
+        pr = PRESETS.get(self.preset.currentData() or "")
+        if pr is None:
+            self._refresh()
+            return
+        self.quality.setCurrentIndex(max(self.quality.findData(pr.quality), 0))
+        self.format.setCurrentIndex(max(self.format.findData(pr.format), 0))
+        self.transparent.setChecked(pr.transparent)
+        self._refresh()
+
+    def check_assets(self) -> str:
+        """Missing assets/fonts, checked before rendering (spec F10)."""
+        from ...assets import inventory
+
+        try:
+            inv = inventory([self.file])
+        except Exception as e:  # a syntax error etc.: the render will report it
+            return f"(asset check skipped: {e})"
+        bad = [f"{r.name} ({r.source})" for r in inv.missing]
+        bad += [f"font {f} ({src})" for f, src in inv.fonts_missing]
+        return ("⚠ Missing: " + "; ".join(bad)) if bad else ""
 
     def _refresh(self) -> None:
         fmt = self.format.currentData()
@@ -228,7 +261,8 @@ class ExportDialog(QDialog):
         self.open_btn.setEnabled(False)
         self.cancel_btn.setText("Cancel")
         self.progress.setValue(0)
-        self.status.setText("Starting Manim…")
+        warning = self.check_assets()
+        self.status.setText((warning + "\n" if warning else "") + "Starting Manim…")
         self.log.clear()
         total = None
         if self.timeline:

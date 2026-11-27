@@ -46,6 +46,7 @@ from ..cue_edit import CueEdit, edit_for_plan, edit_reset, plan_move
 from ..playback import Playback
 from ..service import PreviewMessage, PreviewService, RenderSettings
 from ..timeline_model import resolve_source
+from .assets_panel import AssetsPanel
 from .bridge import ServiceBridge
 from .event_panel import EventPanel
 from .export_dialog import ExportDialog
@@ -153,6 +154,12 @@ class MainWindow(QMainWindow):
         self.inspector_dock.setWidget(self.inspector_panel)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.inspector_dock)
         self.tabifyDockWidget(self.project_dock, self.inspector_dock)
+        self.assets_panel = AssetsPanel()
+        self.assets_dock = QDockWidget("Assets", self)
+        self.assets_dock.setObjectName("assets_dock")
+        self.assets_dock.setWidget(self.assets_panel)
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.assets_dock)
+        self.tabifyDockWidget(self.inspector_dock, self.assets_dock)
         self.event_dock.raise_()
         self.event_dock.raise_()
         self.resizeDocks([self.event_dock], [340], Qt.Orientation.Horizontal)
@@ -199,6 +206,9 @@ class MainWindow(QMainWindow):
         ip.discardRequested.connect(self.discard_properties)
         ip.copyRequested.connect(self.copy_properties)
         self.viewport.sceneClicked.connect(self.pick_at)
+        self.assets_panel.refreshRequested.connect(self.check_assets)
+        self.assets_panel.addRequested.connect(lambda: self.add_asset())
+        self._assets_results: deque = deque()
         self._inspect_results: deque = deque()
         self._inspect_timer = QTimer(self)
         self._inspect_timer.setSingleShot(True)
@@ -492,6 +502,8 @@ class MainWindow(QMainWindow):
             self._drain_audio()
         if self._inspect_results:
             self._drain_inspect()
+        if self._assets_results:
+            self._drain_assets()
         if not self.playback.playing:
             if self.audio.playing:
                 self.audio.stop()
@@ -765,6 +777,48 @@ class MainWindow(QMainWindow):
     def copy_properties(self, name: str, props: dict) -> None:
         QGuiApplication.clipboard().setText(inspector_core.as_python(name, props))
         self.status_label.setText(f"Copied Python for {name!r} to the clipboard")
+
+    # -- assets & environment (F10, MF.9) ----------------------------------------------
+
+    def check_assets(self) -> None:
+        file = self.service.file
+        self.assets_panel.summary.setText("Checking…")
+
+        def work() -> None:
+            from ... import assets as assets_core
+            from ...doctor import run_checks
+
+            try:
+                self._assets_results.append(("inv", assets_core.inventory([file])))
+            except Exception as e:
+                self._assets_results.append(("error", str(e)))
+            self._assets_results.append(("env", run_checks()))
+
+        threading.Thread(target=work, daemon=True).start()
+
+    def _drain_assets(self) -> None:
+        while self._assets_results:
+            kind, data = self._assets_results.popleft()
+            if kind == "inv":
+                self.assets_panel.show_inventory(data)
+            elif kind == "env":
+                self.assets_panel.show_environment(data)
+            else:
+                self.assets_panel.summary.setText(f"⚠ {data}")
+
+    def add_asset(self, path: str | None = None) -> str | None:
+        from .assets_panel import SNIPPETS, import_asset
+
+        if path is None:
+            path, _ = QFileDialog.getOpenFileName(self, "Add asset", str(self._project_root()))
+            if not path:
+                return None
+        rel, kind = import_asset(self._project_root(), Path(path))
+        snippet = SNIPPETS.get(kind, '"{p}"').format(p=rel, name=Path(rel).stem)
+        QGuiApplication.clipboard().setText(snippet)
+        self.status_label.setText(f"Added {rel}; copied: {snippet}")
+        self.check_assets()
+        return rel
 
     def project_path(self) -> Path:
         return project_core.project_file(self.service.file)

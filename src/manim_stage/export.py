@@ -45,12 +45,53 @@ class ExportSettings:
     media_dir: Path | None = None  # default: Manim's (./media next to the scene)
     output_name: str | None = None
     seed: int = 0
+    resolution: tuple[int, int] | None = None  # custom size: -r W,H (overrides quality's)
+    fps: float | None = None  # custom frame rate: --fps
 
     def __post_init__(self) -> None:
         if self.format not in FORMATS:
             raise ValueError(f"format must be one of {FORMATS}")
         if self.transparent and self.format not in ALPHA_FORMATS:
             raise ValueError(f"transparent output needs one of {ALPHA_FORMATS}")
+
+
+@dataclass(frozen=True)
+class RenderPreset:
+    """A named export setting (spec F10 render presets)."""
+
+    label: str
+    quality: str
+    resolution: tuple[int, int] | None = None
+    fps: float | None = None
+    format: str = "mp4"
+    transparent: bool = False
+
+    def apply(self, base: ExportSettings) -> ExportSettings:
+        from dataclasses import replace
+
+        return replace(
+            base,
+            quality=self.quality,
+            resolution=self.resolution,
+            fps=self.fps,
+            format=self.format,
+            transparent=self.transparent,
+        )
+
+
+PRESETS: dict[str, RenderPreset] = {
+    "draft": RenderPreset("Draft 480p15 (-ql)", "low_quality"),
+    "720p30": RenderPreset("720p30 (-qm)", "medium_quality"),
+    "1080p30": RenderPreset("1080p30", "high_quality", (1920, 1080), 30),
+    "1080p60": RenderPreset("1080p60 (-qh)", "high_quality"),
+    "1440p60": RenderPreset("1440p60 (-qp)", "production_quality"),
+    "4k30": RenderPreset("4K 2160p30", "fourk_quality", (3840, 2160), 30),
+    "4k60": RenderPreset("4K 2160p60 (-qk)", "fourk_quality"),
+    "alpha1080p30": RenderPreset(
+        "Transparent MOV 1080p30 (ProRes 4444)", "high_quality", (1920, 1080), 30, "mov", True
+    ),
+    "gif480": RenderPreset("GIF 480p15", "low_quality", None, None, "gif"),
+}
 
 
 def quality_flag(quality: str) -> str:
@@ -98,6 +139,8 @@ def manim_command(
         scene,
         "-q",
         quality_flag(s.quality),
+        *(["-r", f"{s.resolution[0]},{s.resolution[1]}"] if s.resolution else []),
+        *(["--fps", f"{s.fps:g}"] if s.fps else []),
         "--format",
         s.format,
         "--seed",
