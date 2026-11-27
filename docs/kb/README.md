@@ -28,6 +28,7 @@ A local, offline reference for **every manim-stage feature and how to use it**. 
 | [Frame cache and preview frames](manim-stage/frame-cache.md) | Cache every frame for scrubbing; parallel drawing | Available | Cairo | F01, §4 P1 |
 | [Studio editor](manim-stage/studio-editor.md) | Python (PySide6) desktop editor: scene picker, viewport, playback, live reload, errors | Partial (export: Planned) | Cairo | F01 |
 | [Command line](manim-stage/cli.md) | `manim-stage studio / scenes / timeline / doctor / cache` | Available | — | F01 |
+| [Text and LaTeX helpers](manim-stage/text-latex.md) | Text tab: font picker (project font), MathTex colour map + TeX template snippets, LaTeX preview; `theme.tex_template` | Available (preview needs LaTeX) | — | MF.10 |
 | [Camera-aware preview](manim-stage/camera.md) | Per-frame camera readout (moved frame, ThreeDCamera angles, ZoomedScene); clicks and selection map through the camera; renderer badge names scene type and camera | Available | — | MF.8 |
 | [Manim config (manim.cfg)](manim-stage/config.md) | Config tab edits `manim.cfg` [CLI] (background, size, fps, format, transparent, sections, renderer, media dir); undoable; preview follows background | Available | — | MF.6 |
 | [Sections navigator](manim-stage/sections.md) | Sections tab: jump, loop, export one section, export all (`--save_sections`); skipped sections marked | Available | — | MF.7 |
@@ -83,6 +84,7 @@ A local, offline reference for **every manim-stage feature and how to use it**. 
 | See a LaggedStart's staircase and each animation's rate_func | [Timeline → how it works](manim-stage/timeline.md#how-it-works) |
 | Change the background or default output format for every render | [Config](manim-stage/config.md#quick-start) |
 | Export one section of a scene | [Sections](manim-stage/sections.md) |
+| Pick a font or colour parts of a formula | [Text and LaTeX](manim-stage/text-latex.md) |
 | Find a Manim class, animation or rate function and its snippet | [Library](manim-stage/library.md#quick-start) |
 | Explore a scene with sliders while presenting | [Demo parameters](manim-stage/demo-params.md#quick-start) |
 | Share a video with chapters as a web page | [Web player](manim-stage/web-player.md#quick-start) |

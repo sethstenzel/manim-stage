@@ -48,6 +48,7 @@ app.exec()
 - **Timeline and Event panel.** Under the viewport; see [Timeline](timeline.md). The Event and Log panels share the right dock as tabs; an error brings the Log forward.
 - **Sections tab.** It lists the Manim sections; click to jump, **Loop**, **Export section…**, **Export all…**. See [Sections](sections.md).
 - **Config tab.** It edits the scene folder's `manim.cfg` `[CLI]` defaults; see [Config](config.md).
+- **Text tab.** It has a font picker and a MathTex helper (coloured parts, TeX templates, preview); see [Text and LaTeX](text-latex.md).
 - **Library tab.** A searchable catalog of Manim and manim-stage features, with signatures, rate-function curves, colour swatches and **Copy Python**; see [Library](library.md).
 - **Demo tab.** It shows live controls for the scene's `demo.param(...)` values; moving one re-renders the preview. These values aren't saved or exported by default; see [Demo parameters](demo-params.md).
 - **Assets tab.** It shows the scene's assets with a found/missing mark, **Add asset…**, and the environment checks; see [Assets](assets.md).

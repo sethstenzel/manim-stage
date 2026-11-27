@@ -13,6 +13,7 @@ renderer, sections.
 
 from __future__ import annotations
 
+import copy
 import json
 import os
 import threading
@@ -63,6 +64,7 @@ from .plugins_panel import PluginsPanel
 from .project_panel import ProjectPanel
 from .quality import manim_qualities, quality_label
 from .sections_panel import SectionsPanel
+from .text_panel import TextPanel
 from .theme import apply_theme, is_dark
 from .timeline import TimelineView
 from .transport import TransportBar
@@ -233,6 +235,16 @@ class MainWindow(QMainWindow):
         self.library_dock.setWidget(self.library_panel)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.library_dock)
         self.tabifyDockWidget(self.plugins_dock, self.library_dock)
+        self.text_panel = TextPanel()
+        self.text_dock = QDockWidget("Text", self)
+        self.text_dock.setObjectName("text_dock")
+        self.text_dock.setWidget(self.text_panel)
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.text_dock)
+        self.tabifyDockWidget(self.library_dock, self.text_dock)
+        self.text_panel.themeRequested.connect(self.set_theme_key)
+        self.text_panel.copied.connect(
+            lambda what: self.status_label.setText(f"Copied Python for {what} to the clipboard")
+        )
         self.library_panel.snippetCopied.connect(
             lambda name: self.status_label.setText(f"Copied Python for {name} to the clipboard")
         )
@@ -724,6 +736,25 @@ class MainWindow(QMainWindow):
         start = pb.range.start if pb.range else 0
         pb.set_range(start, pb.frame + 1)
         self._sync_transport()
+
+    def set_theme_key(self, key: str, value: str) -> None:
+        """Set one theme field in project.json (Text tab: font / TeX template); undoable."""
+        try:
+            before = project_core.load(self.project_path()).to_dict()
+        except project_core.ProjectError as e:
+            self.status_label.setText(f"⚠ {e}")
+            return
+        after = copy.deepcopy(before)
+        theme = after.setdefault("theme", {})
+        if value and value != "default":
+            theme[key] = value
+        else:
+            theme.pop(key, None)
+        if after == before:
+            return
+        label = f"Set project {key.replace('_', ' ')} to {value or 'default'}"
+        edit = project_core.ProjectEdit(before, after, label)
+        self.undo_stack.push(_SidecarCommand(self, edit, self.project_path))
 
     # -- camera & renderer (MF.8) --------------------------------------------------------
 

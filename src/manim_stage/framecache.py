@@ -18,6 +18,7 @@ import json
 import os
 import re
 import tempfile
+import time
 from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import Any
@@ -41,6 +42,19 @@ def revision_key(
     for blob in extra:
         h.update(b"\0" + blob)
     return h.hexdigest()[:32]
+
+
+def _replace(src: str, dst: Path, attempts: int = 8) -> None:
+    """``os.replace`` that tolerates Windows' brief "access denied" while another
+    process deletes or replaces ``dst`` (concurrent ``trim`` or a second writer)."""
+    for attempt in range(attempts):
+        try:
+            os.replace(src, dst)
+            return
+        except PermissionError:
+            if attempt == attempts - 1:
+                raise
+            time.sleep(0.005 * (attempt + 1))
 
 
 class FrameCache:
@@ -91,7 +105,7 @@ class FrameCache:
                     for k, v in text.items():
                         info.add_text(k, v)
                 image.save(f, format="PNG", compress_level=compress_level, pnginfo=info)
-            os.replace(tmp, target)
+            _replace(tmp, target)
         except BaseException:
             Path(tmp).unlink(missing_ok=True)
             raise
@@ -136,7 +150,10 @@ class FrameCache:
         for _protected, _mtime, size, p in sorted(entries, key=lambda e: (e[0], e[1])):
             if total - freed <= self.budget_bytes:
                 break
-            p.unlink(missing_ok=True)
+            try:
+                p.unlink(missing_ok=True)
+            except PermissionError:  # Windows: another process is replacing it right now
+                continue
             freed += size
         for d in self.root.iterdir():
             if d.is_dir() and _REV_RE.match(d.name):

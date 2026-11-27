@@ -61,6 +61,7 @@ class Theme:
     font: str | None = None  # default font for Text / MarkupText
     code_font: str | None = None  # AnimatedCode font (None: bundled JetBrains Mono)
     code_style: str | None = None  # Pygments style for AnimatedCode (None: monokai)
+    tex_template: str | None = None  # MathTex/Tex template name (typography.tex_templates)
 
     def color(self, name: str) -> str:
         try:
@@ -82,7 +83,7 @@ class Theme:
 
     def to_dict(self) -> dict[str, Any]:
         d: dict[str, Any] = {"colors": dict(self.colors)}
-        for k in ("font", "code_font", "code_style"):
+        for k in ("font", "code_font", "code_style", "tex_template"):
             if getattr(self, k):
                 d[k] = getattr(self, k)
         return d
@@ -149,6 +150,7 @@ def load(path: str | os.PathLike[str]) -> Project:
         t.get("font"),
         t.get("code_font"),
         t.get("code_style"),
+        t.get("tex_template"),
     )
     variables = {}
     for name, v in d.get("variables", {}).items():
@@ -333,7 +335,7 @@ def reset_cache() -> None:
 def apply_theme(scene: Any, th: Theme) -> Any:
     """Apply the theme's background and Text font to a scene; returns a restore function
     (StageScene calls it at tear_down so other scenes in the process are unaffected)."""
-    from manim import MarkupText, Text
+    from manim import MarkupText, MathTex, Tex, Text
 
     old_bg = None
     with contextlib.suppress(Exception):
@@ -342,11 +344,20 @@ def apply_theme(scene: Any, th: Theme) -> Any:
     if th.font:
         Text.set_default(font=th.font)
         MarkupText.set_default(font=th.font)
+    if th.tex_template:
+        from .typography import tex_template
+
+        template = tex_template(th.tex_template)
+        MathTex.set_default(tex_template=template)
+        Tex.set_default(tex_template=template)
 
     def restore() -> None:
         if th.font:
             Text.set_default()
             MarkupText.set_default()
+        if th.tex_template:
+            MathTex.set_default()
+            Tex.set_default()
         if old_bg is not None:
             with contextlib.suppress(Exception):
                 scene.camera.background_color = old_bg

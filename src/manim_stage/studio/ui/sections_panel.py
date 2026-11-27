@@ -13,9 +13,11 @@ from typing import Any
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
+    QFrame,
     QHBoxLayout,
     QLabel,
     QPushButton,
+    QScrollArea,
     QTreeWidget,
     QTreeWidgetItem,
     QVBoxLayout,
@@ -73,7 +75,15 @@ class SectionsPanel(QWidget):
         self.setAccessibleName("Sections")
         self.fps = 15.0
         self.spans: list[SectionSpan] = []
-        lay = QVBoxLayout(self)
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        scroll = QScrollArea()  # never let this panel's minimum width widen the dock
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        body = QWidget()
+        scroll.setWidget(body)
+        outer.addWidget(scroll)
+        lay = QVBoxLayout(body)
         lay.setContentsMargins(6, 6, 6, 6)
         self.tree = QTreeWidget()
         self.tree.setAccessibleName("Scene sections")
