@@ -468,3 +468,55 @@ def test_project_panel_edits_theme_and_variables_with_undo(qtbot, tmp_path):
         pj.load(proj / ".manim-stage" / "project.json").theme.accent == pj.DEFAULT_COLORS["accent"]
     )
     dispose(win)
+
+
+def test_inspector_select_preview_save_undo(qtbot, tmp_path):
+    import shutil
+
+    import numpy as np
+    from PIL import Image
+
+    from manim_stage import inspector
+
+    proj = tmp_path / "p"
+    (proj / ".manim-stage").mkdir(parents=True)
+    shutil.copy(SCENES / "inspectable.py", proj / "lesson.py")
+    side = proj / ".manim-stage" / "properties.json"
+    win, svc = create_window(
+        proj / "lesson.py", "Labeled", workers=1, cache_dir=tmp_path / "c", watch=True
+    )
+    win.show()
+    wait_done(qtbot, win, "Labeled")
+    win.shortcuts["inspect"].trigger()
+    qtbot.waitUntil(lambda: win.inspect_msg is not None, timeout=TIMEOUT)
+    # click on the circle in the viewport
+    pt = win.viewport.scene_to_widget(-2.6, 0.5)
+    qtbot.mouseClick(win.viewport, Qt.MouseButton.LeftButton, pos=pt.toPoint())
+    node = win.inspector_panel.node
+    assert node["class"] == "Circle" and node["exposed"]["name"] == "node"
+    assert win.viewport.selection == node["bounds"]
+    w, _ = win.inspector_panel.editors["fill_color"]
+    w.set_value("#ff0000")
+
+    def red_center():
+        f = svc.current.frames[0]
+        a = np.asarray(Image.open(f).convert("RGB"))
+        h, wd, _ = a.shape
+        return a[int(h * 0.58), int(wd * 0.36)][0] > 200
+
+    def rendered_after(seq):
+        return lambda: win.shown_state[0] > seq and win.shown_state[2] == "done"
+
+    seq = win.shown_state[0]
+    win.inspector_panel.previewRequested.emit("node", win.inspector_panel.values())
+    qtbot.waitUntil(rendered_after(seq), timeout=TIMEOUT)
+    assert red_center() and not side.exists()  # preview only
+    seq = win.shown_state[0]
+    win.inspector_panel.saveRequested.emit("node", win.inspector_panel.values())
+    qtbot.waitUntil(rendered_after(seq), timeout=TIMEOUT)
+    assert inspector.load(side)["Labeled"]["node"]["fill_color"] == "#ff0000" and red_center()
+    seq = win.shown_state[0]
+    win.act_undo.trigger()
+    qtbot.waitUntil(rendered_after(seq), timeout=TIMEOUT)
+    assert inspector.load(side) == {} and not red_center()
+    dispose(win)

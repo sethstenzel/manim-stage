@@ -144,6 +144,7 @@ def _main(argv: list[str] | None = None) -> int:
         "--snapshot-at", type=float, help="render the frame showing this time (s) to --out"
     )
     parser.add_argument("--out", type=Path, help="PNG path for --snapshot-at")
+    parser.add_argument("--inspect-at", type=float, help="report the Mobject tree at this time (s)")
     parser.add_argument("--shard", default="0/1", help="i/n: draw only frames with index %% n == i")
     args = parser.parse_args(argv)
     if not args.list and not args.scene:
@@ -177,8 +178,14 @@ def _main(argv: list[str] | None = None) -> int:
         if args.list:
             send({"type": "scenes", "scenes": list_scenes(args.file)})
             lap("total")
-            send({"type": "done", "elapsed_s": timings["total"], "timings": timings,
-                  "frames_drawn": 0})  # fmt: skip
+            send(
+                {
+                    "type": "done",
+                    "elapsed_s": timings["total"],
+                    "timings": timings,
+                    "frames_drawn": 0,
+                }
+            )
             return 0
         settings = {
             "frame_rate": args.fps,
@@ -209,6 +216,17 @@ def _main(argv: list[str] | None = None) -> int:
                     rec.add(ev.meta["file"])  # opened by FFmpeg, invisible to the hook
             scene_file = args.file.resolve()
             deps = [f for f in rec.files() if f != scene_file]
+            # sidecars redirected by environment (editor previews, tests) always count,
+            # even when they live in excluded folders such as the frame cache
+            for var in (
+                "MANIM_STAGE_PROPERTIES",
+                "MANIM_STAGE_CUES",
+                "MANIM_STAGE_AUDIO",
+                "MANIM_STAGE_PROJECT",
+            ):
+                p = os.environ.get(var)
+                if p and Path(p).is_file() and Path(p).resolve() not in deps:
+                    deps.append(Path(p).resolve())
             pixel_settings = {k: v for k, v in settings.items() if k != "media_dir"}
             revision = revision_key(
                 args.file,
@@ -242,6 +260,30 @@ def _main(argv: list[str] | None = None) -> int:
 
                 capture(scene_cls, frame_times=[index / args.fps], on_frame=save)
                 send({"type": "snapshot", "frame": index, "path": str(args.out.resolve())})
+
+            if args.inspect_at is not None:
+                from .inspector import snapshot
+
+                last = max(timeline.duration_frames - 1, 0)
+                index = min(math.floor(args.inspect_at * args.fps + 1e-9), last)
+
+                def inspect_frame(frame: Any, scene: Any) -> None:
+                    send(
+                        {
+                            "type": "inspect",
+                            "frame": index,
+                            "frame_width": float(config.frame_width),
+                            "frame_height": float(config.frame_height),
+                            "tree": snapshot(scene, getattr(scene, "_stage_exposed", {})),
+                        }
+                    )
+
+                capture(
+                    scene_cls,
+                    frame_times=[index / args.fps],
+                    on_frame=inspect_frame,
+                    with_scene=True,
+                )
 
             if args.cache_dir:
                 cache = FrameCache(args.cache_dir, budget_bytes=args.budget_mb * 1024**2)
@@ -368,8 +410,19 @@ def runner_command(
     if list_scenes:
         return [*cmd, "--list"]
     assert scene
-    cmd += [scene, "--fps", str(fps), "--width", str(width), "--height", str(height),
-            "--seed", str(seed), "--shard", f"{shard[0]}/{shard[1]}"]  # fmt: skip
+    cmd += [
+        scene,
+        "--fps",
+        str(fps),
+        "--width",
+        str(width),
+        "--height",
+        str(height),
+        "--seed",
+        str(seed),
+        "--shard",
+        f"{shard[0]}/{shard[1]}",
+    ]
     if cache_dir is not None:
         cmd += ["--cache-dir", str(cache_dir), "--budget-mb", str(budget_mb)]
     if media_dir is not None:
@@ -397,6 +450,7 @@ class RunnerProcess:
         on_stderr: Any = None,
         on_exit: Any = None,
         cwd: str | os.PathLike[str] | None = None,
+        env: dict[str, str] | None = None,
     ) -> None:
         import threading
 
@@ -407,9 +461,17 @@ class RunnerProcess:
         else:
             kw["start_new_session"] = True
         self.proc = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.DEVNULL,
-            text=True, encoding="utf-8", errors="replace", env=child_env(), cwd=cwd, **kw,
-        )  # fmt: skip
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            stdin=subprocess.DEVNULL,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            env={**child_env(), **(env or {})},
+            cwd=cwd,
+            **kw,
+        )
         self.killed = False
         self._threads = [
             threading.Thread(target=self._read_stdout, daemon=True),
@@ -453,8 +515,9 @@ class RunnerProcess:
         if os.name == "nt":
             subprocess.run(
                 ["taskkill", "/F", "/T", "/PID", str(self.proc.pid)],
-                capture_output=True, check=False,
-            )  # fmt: skip
+                capture_output=True,
+                check=False,
+            )
         else:
             import signal
 
@@ -505,14 +568,27 @@ def run_capture(
         # runners sharing it can read each other's half-written files.
         media = Path(cache_dir) / ".media" / f"shard-{shard}" if workers > 1 else None
         cmd = runner_command(
-            file, scene, fps=fps, width=width, height=height, seed=seed,
-            cache_dir=cache_dir, budget_mb=budget_mb, media_dir=media,
-            shard=(shard, workers), python=python,
-        )  # fmt: skip
+            file,
+            scene,
+            fps=fps,
+            width=width,
+            height=height,
+            seed=seed,
+            cache_dir=cache_dir,
+            budget_mb=budget_mb,
+            media_dir=media,
+            shard=(shard, workers),
+            python=python,
+        )
         proc = subprocess.run(
-            cmd, capture_output=True, text=True, encoding="utf-8", timeout=timeout,
-            env=child_env(), cwd=workdir,
-        )  # fmt: skip
+            cmd,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=timeout,
+            env=child_env(),
+            cwd=workdir,
+        )
         return _parse(proc.stdout, proc.stderr, proc.returncode)
 
     if workers == 1:

@@ -204,7 +204,8 @@ def capture(
     scene_cls: type,
     *,
     frame_times: Sequence[float] | None = None,
-    on_frame: Callable[[Any], None] | None = None,
+    on_frame: Callable[..., None] | None = None,
+    with_scene: bool = False,
 ) -> SceneTimeline:
     """Evaluate ``scene_cls`` once and return its events.
 
@@ -215,7 +216,13 @@ def capture(
     frame_rate = float(config.frame_rate)
     scene_name = scene_cls.__name__
     scene = scene_cls()
-    result = _compat.evaluate(scene, frame_times=frame_times, on_frame=on_frame)
+    callback = on_frame
+    if on_frame is not None and with_scene:
+
+        def callback(frame: Any) -> None:
+            on_frame(frame, scene)
+
+    result = _compat.evaluate(scene, frame_times=frame_times, on_frame=callback)
     tl = result.timeline
     ids = _Ids(scene_name)
     warnings: list[str] = []

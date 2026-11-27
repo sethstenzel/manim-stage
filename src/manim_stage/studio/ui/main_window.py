@@ -37,6 +37,7 @@ from PySide6.QtWidgets import (
 
 from ... import audio as audio_core
 from ... import cues as cue_store
+from ... import inspector as inspector_core
 from ... import project as project_core
 from ...export import snapshot
 from .. import audio_edit
@@ -48,6 +49,7 @@ from ..timeline_model import resolve_source
 from .bridge import ServiceBridge
 from .event_panel import EventPanel
 from .export_dialog import ExportDialog
+from .inspector_panel import InspectorPanel
 from .log_panel import LogPanel, open_in_editor
 from .project_panel import ProjectPanel
 from .quality import manim_qualities, quality_label
@@ -145,6 +147,13 @@ class MainWindow(QMainWindow):
         self.project_dock.setWidget(self.project_panel)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.project_dock)
         self.tabifyDockWidget(self.log_dock, self.project_dock)
+        self.inspector_panel = InspectorPanel()
+        self.inspector_dock = QDockWidget("Inspector", self)
+        self.inspector_dock.setObjectName("inspector_dock")
+        self.inspector_dock.setWidget(self.inspector_panel)
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.inspector_dock)
+        self.tabifyDockWidget(self.project_dock, self.inspector_dock)
+        self.event_dock.raise_()
         self.event_dock.raise_()
         self.resizeDocks([self.event_dock], [340], Qt.Orientation.Horizontal)
 
@@ -180,6 +189,23 @@ class MainWindow(QMainWindow):
         tc.clipDragged.connect(self.drag_clip)
         self.event_panel.clipChangeRequested.connect(self.change_clip)
         self.event_panel.clipRemoveRequested.connect(self.remove_clip)
+        ip = self.inspector_panel
+        ip.inspectRequested.connect(self.inspect_now)
+        ip.nodeSelected.connect(
+            lambda n: self.viewport.set_selection(n.get("bounds") if n else None)
+        )
+        ip.previewRequested.connect(self.preview_properties)
+        ip.saveRequested.connect(self.save_properties)
+        ip.discardRequested.connect(self.discard_properties)
+        ip.copyRequested.connect(self.copy_properties)
+        self.viewport.sceneClicked.connect(self.pick_at)
+        self._inspect_results: deque = deque()
+        self._inspect_timer = QTimer(self)
+        self._inspect_timer.setSingleShot(True)
+        self._inspect_timer.setInterval(500)  # follow the playhead, debounced
+        self._inspect_timer.timeout.connect(self.inspect_now)
+        self.inspect_msg: dict | None = None
+        self._preview_props: dict = {}  # ephemeral (unsaved) property edits
         self.project_panel.applyRequested.connect(
             lambda edit: self.undo_stack.push(_SidecarCommand(self, edit, self.project_path))
         )
@@ -303,6 +329,7 @@ class MainWindow(QMainWindow):
             "zoom_in": act("Zoom in", ["Ctrl++", "Ctrl+="], self.viewport.zoom_in),
             "zoom_out": act("Zoom out", "Ctrl+-", self.viewport.zoom_out),
             "copy_frame": act("Copy frame", "Ctrl+Shift+C", self.copy_frame),
+            "inspect": act("Inspect frame", "Ctrl+I", self.inspect_now),
         }
 
     # -- scenes & rendering -----------------------------------------------------------
@@ -334,7 +361,7 @@ class MainWindow(QMainWindow):
         if not scene:
             return
         self.log.clear_error()
-        self.service.render(scene, self.render_settings())
+        self.service.render(scene, self.render_settings(), env=self._properties_env())
 
     # -- service events ---------------------------------------------------------------
 
@@ -463,6 +490,8 @@ class MainWindow(QMainWindow):
             self._drain_snapshots()
         if self._audio_results:
             self._drain_audio()
+        if self._inspect_results:
+            self._drain_inspect()
         if not self.playback.playing:
             if self.audio.playing:
                 self.audio.stop()
@@ -564,6 +593,8 @@ class MainWindow(QMainWindow):
     def seek(self, frame: int) -> None:
         self.playback.seek(frame)
         self._show_frame()
+        if self.inspector_panel.auto.isChecked() and not self.playback.playing:
+            self._inspect_timer.start()
         if self.playback.playing:
             self._sync_audio(jumped=True)
 
@@ -654,6 +685,86 @@ class MainWindow(QMainWindow):
             self.undo_stack.push(_SidecarCommand(self, edit, self.cue_sidecar))
         except (cue_store.CueError, OSError) as e:
             self.status_label.setText(f"⚠ Could not save cues: {e}")
+
+    # -- inspector (MF.5, F08) ---------------------------------------------------------
+
+    def properties_path(self) -> Path:
+        return inspector_core.sidecar_path(self.service.file)
+
+    def _properties_env(self) -> dict[str, str]:
+        """Env for a render that shows unsaved property edits (a temp overrides file)."""
+        if not self._preview_props:
+            return {}
+        saved = inspector_core.load(self.properties_path())
+        scene = self.current_scene() or ""
+        doc = saved
+        for name, props in self._preview_props.items():
+            doc = inspector_core.merged(doc, scene, name, props)
+        tmp = self.service.cache_dir / ".inspector" / "preview-properties.json"
+        inspector_core.save(tmp, doc)
+        return {"MANIM_STAGE_PROPERTIES": str(tmp)}
+
+    def inspect_now(self) -> None:
+        scene = self.current_scene()
+        if not scene:
+            return
+        seconds = self.playback.frame / max(self.playback.fps, 1e-9)
+        settings, env = self.render_settings(), self._properties_env()
+        self.inspector_panel.status.setText(f"Inspecting {scene} at {seconds:.2f} s…")
+
+        def work() -> None:
+            try:
+                self._inspect_results.append(
+                    ("ok", self.service.inspect_at(scene, seconds, settings, env))
+                )
+            except Exception as e:
+                self._inspect_results.append(("error", str(e)))
+
+        threading.Thread(target=work, daemon=True).start()
+
+    def _drain_inspect(self) -> None:
+        while self._inspect_results:
+            kind, data = self._inspect_results.popleft()
+            if kind == "error":
+                self.inspector_panel.status.setText(f"⚠ Inspection failed: {data}")
+                continue
+            self.inspect_msg = data
+            self.viewport.scene_frame = (data["frame_width"], data["frame_height"])
+            self.inspector_panel.set_tree(data)
+            self.inspector_dock.raise_()
+
+    def pick_at(self, x: float, y: float) -> None:
+        if not self.inspect_msg:
+            return
+        node = inspector_core.hit_test(self.inspect_msg["tree"], x, y)
+        self.inspector_panel.select(node["id"] if node else None)
+        if node is None:
+            self.viewport.set_selection(None)
+
+    def preview_properties(self, name: str, props: dict) -> None:
+        self._preview_props[name] = props
+        self.service.render(
+            self.current_scene(), self.render_settings(), env=self._properties_env()
+        )
+        self.status_label.setText(f"Previewing edits to {name!r} (not saved)")
+
+    def discard_properties(self) -> None:
+        self._preview_props = {}
+        self.render()
+
+    def save_properties(self, name: str, props: dict) -> None:
+        scene = self.current_scene()
+        if not scene:
+            return
+        before = inspector_core.load(self.properties_path())
+        after = inspector_core.merged(before, scene, name, props)
+        self._preview_props.pop(name, None)
+        edit = inspector_core.PropertiesEdit(before, after, f"Edit properties of {name!r}")
+        self.undo_stack.push(_SidecarCommand(self, edit, self.properties_path))
+
+    def copy_properties(self, name: str, props: dict) -> None:
+        QGuiApplication.clipboard().setText(inspector_core.as_python(name, props))
+        self.status_label.setText(f"Copied Python for {name!r} to the clipboard")
 
     def project_path(self) -> Path:
         return project_core.project_file(self.service.file)

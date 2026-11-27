@@ -2,6 +2,13 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-27 — inspector and exposed properties (backlog 3.3, MF.5)
+
+- **New:** [Inspector](manim-stage/inspector.md): the Mobject tree at the playhead (Ctrl+I, or follow the playhead). Click in the viewport to pick an object, which is outlined; the panel shows its class, bounds, colours, opacity, z-index and updaters.
+- **New:** `self.expose(mobject, name, *props)` makes properties editable, with Preview (temporary overrides), Save (`properties.json`, undoable), Discard and Copy as Python. Plain `manim render` reproduces saved edits.
+- **New:** runner `--inspect-at`; `PreviewService.inspect_at()`; render `env=` for previews.
+- **Fixed:** sidecars redirected through `MANIM_STAGE_*` environment variables are always part of the cache key.
+
 ## 2026-11-27 — project theme and variables (backlog 3.2)
 
 - **New:** [`project.theme()` and `project.var()`](manim-stage/project.md), stored in `.manim-stage/project.json` and read by preview and `manim render` alike.

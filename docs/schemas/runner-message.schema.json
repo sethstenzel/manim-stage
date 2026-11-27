@@ -20,7 +20,8 @@
         "frame",
         "done",
         "error",
-        "snapshot"
+        "snapshot",
+        "inspect"
       ]
     }
   },
@@ -182,6 +183,35 @@
         "frame",
         "path"
       ]
+    },
+    {
+      "properties": {
+        "type": {
+          "const": "inspect"
+        },
+        "frame": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "frame_width": {
+          "type": "number"
+        },
+        "frame_height": {
+          "type": "number"
+        },
+        "tree": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MobjectNode"
+          }
+        }
+      },
+      "required": [
+        "frame",
+        "frame_width",
+        "frame_height",
+        "tree"
+      ]
     }
   ],
   "$defs": {
@@ -211,6 +241,78 @@
         "stage": {
           "type": "boolean",
           "description": "subclass of manim_stage StageScene/StageMixin (has cues)"
+        }
+      }
+    },
+    "MobjectNode": {
+      "type": "object",
+      "required": [
+        "id",
+        "class"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[0-9]+(/[0-9]+)*$"
+        },
+        "class": {
+          "type": "string"
+        },
+        "module": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "bounds": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "center": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        },
+        "z_index": {
+          "type": "integer"
+        },
+        "points": {
+          "type": "integer"
+        },
+        "updaters": {
+          "type": "integer"
+        },
+        "fill_color": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "stroke_color": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "fill_opacity": {
+          "type": "number"
+        },
+        "stroke_width": {
+          "type": "number"
+        },
+        "exposed": {
+          "type": "object"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MobjectNode"
+          }
         }
       }
     }

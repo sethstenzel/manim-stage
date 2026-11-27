@@ -27,6 +27,7 @@ Newest first. One line per decision; details in the linked ADR or PR.
 
 | Date | Decision | Why | Where |
 |---|---|---|---|
+| 2026-11-27 | Inspector = replay-to-frame snapshot of Mobject families; `expose()` opt-in edits saved to `properties.json`, previews via env-redirected temp file (always a cache dependency) | F08 with headless reproduction; no source mutation; correct cache invalidation | PR #28 |
 | 2026-11-27 | Theme + typed variables in `project.json`; `var()` read = opt-in to editing; StageScene applies background/font and restores; runner reports used variables | F07 in Manim terms; deterministic across CLI/Studio; no source edits to restyle | PR #27 |
 | 2026-11-27 | `Signal` is a `ValueTracker` (values flattened into points); `computed` lazy+cached with tracking stack; `bind`/`effect` change-only updaters disposed at scene end | Manim concept kept (ADR-0013); `.animate` works for free; no per-frame recompute | PR #26 |
 | 2026-11-27 | M2 gate passed. AnimatedCode: ligatures off, all uncached lines in one Pango call, no system-font scan; `run_capture` cwd = scene folder | Exact glyph↔char mapping; a cold Pango call costs ~3.4 s on Windows; relative assets behave like `manim` | PR #25 |
@@ -228,8 +229,19 @@ One record per Motion Canvas feature. Status: **Ported** (implemented and tested
 - **Implementation:** `src/manim_stage/project.py`, `scene.py`, `code.py`, `runner.py`, `studio/ui/project_panel.py`. Tests: `tests/test_project.py` (F07 acceptance: two scenes recolour on one accent change), `tests/test_studio_ui.py`. KB: `docs/kb/manim-stage/project.md`.
 
 ### Inspector (MC: read-only node inspector)
-- **Status:** Not started. Backlog MF.5, 3.3.
-- **Manim mapping:** Mobject family tree at any frame; opt-in editing via `expose()`.
+- **Status:** Ported (3.3, MF.5).
+- **MC behaviour:** select a node in the viewport and see its properties, read-only.
+- **Manim mapping:**
+  - the runner replays to a frame (`--inspect-at`) and snapshots `scene.mobjects` families through Manim's public getters;
+  - the viewport maps clicks to scene units for a bounds hit-test (topmost z, deepest);
+  - `self.expose(mobject, name, *props)` is the explicit opt-in;
+  - saved edits live in `properties.json` and are applied by `expose()`, so headless renders match;
+  - unsaved previews use a temporary overrides file via `MANIM_STAGE_PROPERTIES`, which always joins the cache key;
+  - edits are undoable sidecar commands, plus Copy as Python.
+- **Improvements over MC:**
+  - editing with preview, save, undo and a code action;
+  - works for any Mobject class read-only, never claiming more than Manim reports.
+- **Implementation:** `src/manim_stage/inspector.py`, `scene.py`, `runner.py`, `capture.py` (`with_scene`), `studio/service.py` (`inspect_at`, render `env`), `studio/ui/inspector_panel.py`, `viewport.py`. Tests: `tests/test_inspector.py` (F08 acceptance), `tests/test_studio_ui.py`. KB: `docs/kb/manim-stage/inspector.md`.
 
 ### Scene transitions (MC: slide/fade/zoom transitions)
 - **Status:** Designed (ADR-0013). Backlog 3.4.

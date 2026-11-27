@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from collections import OrderedDict
 from pathlib import Path
+from typing import Any
 
 from PySide6.QtCore import QPointF, QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QFont, QPainter, QPixmap, QWheelEvent
@@ -46,6 +47,7 @@ class PixmapCache:
 
 class Viewport(QWidget):
     zoomChanged = Signal(object)  # None = fit, else factor
+    sceneClicked = Signal(float, float)  # scene coordinates (Manim units)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -61,6 +63,8 @@ class Viewport(QWidget):
         self.overlay = ""
         self.overlay_is_error = False
         self.placeholder = "Open a scene to preview it."
+        self.scene_frame: tuple[float, float] | None = None  # Manim frame width/height
+        self.selection: list[float] | None = None  # bounds [x0, y0, x1, y1] in scene units
 
     # -- content ----------------------------------------------------------------------
 
@@ -108,6 +112,34 @@ class Viewport(QWidget):
         s = self.current_scale()
         self.set_zoom(next((z for z in reversed(ZOOMS) if z < s - 1e-6), ZOOMS[0]))
 
+    def scene_to_widget(self, x: float, y: float) -> QPointF:
+        fw, fh = self.scene_frame or (14.222, 8.0)
+        r = self.frame_rect()
+        return QPointF(
+            r.left() + (x + fw / 2) / fw * r.width(), r.top() + (fh / 2 - y) / fh * r.height()
+        )
+
+    def widget_to_scene(self, px: float, py: float) -> tuple[float, float]:
+        fw, fh = self.scene_frame or (14.222, 8.0)
+        r = self.frame_rect()
+        return (
+            (px - r.left()) / r.width() * fw - fw / 2,
+            fh / 2 - (py - r.top()) / r.height() * fh,
+        )
+
+    def mousePressEvent(self, event: Any) -> None:  # noqa: N802 (Qt API)
+        if event.button() == Qt.MouseButton.LeftButton and self.frame_rect().contains(
+            event.position()
+        ):
+            self.sceneClicked.emit(
+                *self.widget_to_scene(event.position().x(), event.position().y())
+            )
+        super().mousePressEvent(event)
+
+    def set_selection(self, bounds: list[float] | None) -> None:
+        self.selection = bounds
+        self.update()
+
     def wheelEvent(self, event: QWheelEvent) -> None:  # noqa: N802 (Qt API)
         if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             self.zoom_in() if event.angleDelta().y() > 0 else self.zoom_out()
@@ -135,6 +167,14 @@ class Viewport(QWidget):
             p.fillRect(rect, QColor(c["alt"]))
             p.setPen(QColor(c["muted"]))
             p.drawText(rect, Qt.AlignmentFlag.AlignCenter, self.placeholder)
+        if self.selection:
+            a = self.scene_to_widget(self.selection[0], self.selection[3])
+            b = self.scene_to_widget(self.selection[2], self.selection[1])
+            from PySide6.QtGui import QPen
+
+            p.setPen(QPen(QColor(c["playhead"]), 2, Qt.PenStyle.DashLine))
+            p.setBrush(Qt.BrushStyle.NoBrush)
+            p.drawRect(QRectF(a, b).normalized().adjusted(-3, -3, 3, 3))
         if self.overlay:
             self._paint_overlay(p, c)
         p.end()
