@@ -54,6 +54,7 @@ from .demo_panel import DemoPanel
 from .event_panel import EventPanel
 from .export_dialog import ExportDialog
 from .inspector_panel import InspectorPanel
+from .library_panel import LibraryPanel
 from .log_panel import LogPanel, open_in_editor
 from .plugins_panel import PluginsPanel
 from .project_panel import ProjectPanel
@@ -210,6 +211,15 @@ class MainWindow(QMainWindow):
         self.plugins_dock.setWidget(self.plugins_panel)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.plugins_dock)
         self.tabifyDockWidget(self.assets_dock, self.plugins_dock)
+        self.library_panel = LibraryPanel()
+        self.library_dock = QDockWidget("Library", self)
+        self.library_dock.setObjectName("library_dock")
+        self.library_dock.setWidget(self.library_panel)
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.library_dock)
+        self.tabifyDockWidget(self.plugins_dock, self.library_dock)
+        self.library_panel.snippetCopied.connect(
+            lambda name: self.status_label.setText(f"Copied Python for {name} to the clipboard")
+        )
         self.event_dock.raise_()
         self.event_dock.raise_()
         self.resizeDocks([self.event_dock], [340], Qt.Orientation.Horizontal)

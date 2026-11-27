@@ -186,6 +186,25 @@ def cmd_web(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_catalog(args: argparse.Namespace) -> int:
+    from .catalog import KINDS, catalog, search
+
+    cat = catalog()
+    if args.json:
+        print(json.dumps(cat, indent=1))
+        return 0
+    if args.query:
+        entries = search(" ".join(args.query), cat)
+    else:
+        entries = [e for k in KINDS for e in cat["kinds"][k]]
+    if args.kind:
+        entries = [e for e in entries if e["kind"] == args.kind]
+    for e in entries:
+        print(f"{e['kind']:15s} {e['group']:16s} {e['name']:28s} {e.get('summary', '')[:70]}")
+    print(f"{len(entries)} entries (Manim {cat['manim_version']})")
+    return 0
+
+
 def cmd_plugins(args: argparse.Namespace) -> int:
     from .plugins import API_VERSION, discover, manim_plugins
 
@@ -274,6 +293,25 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("-o", "--out", type=Path, help="output folder (default <video>_web)")
     p.add_argument("--title", help="page title (default: the scene name)")
     p.set_defaults(func=cmd_web)
+    p = sub.add_parser("catalog", help="search or dump the catalog of Manim features")
+    p.add_argument("query", nargs="*", help="words to search for (name or summary)")
+    p.add_argument(
+        "--kind",
+        choices=[
+            "mobjects",
+            "animations",
+            "scenes",
+            "cameras",
+            "rate_functions",
+            "colors",
+            "manim_stage",
+            "utilities",
+            "constants",
+            "modules",
+        ],
+    )
+    p.add_argument("--json", action="store_true", help="the whole catalog as JSON")
+    p.set_defaults(func=cmd_catalog)
     p = sub.add_parser("plugins", help="list Studio plugins (and why any are disabled)")
     p.set_defaults(func=cmd_plugins)
     p = sub.add_parser("assets", help="list and check the assets scenes use (exit 1 if missing)")
