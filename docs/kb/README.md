@@ -42,6 +42,7 @@ A local, offline reference for **every manim-stage feature and how to use it**. 
 |---|---|
 | [Motion Canvas equivalents](reference/motion-canvas-equivalents.md) | Motion Canvas feature → manim-stage status |
 | [Upstream sync](workflow/upstream-sync.md) | How new Manim / Motion Canvas changes are brought in |
+| [Regression tests and golden frames](workflow/regression-tests.md) | Proving manim-stage never changes Manim output; catching upstream rendering changes |
 
 ## By task
 
@@ -53,6 +54,7 @@ A local, offline reference for **every manim-stage feature and how to use it**. 
 | Pre-render frames for fast scrubbing | [Frame cache](manim-stage/frame-cache.md) |
 | Render frames faster on a multi-core machine | [Frame cache → parallel drawing](manim-stage/frame-cache.md#parallel-drawing) |
 | Understand why durations round up | [Evaluate and timeline export → frame quantization](manim/evaluate-and-timeline.md#frame-quantization) |
+| Check a Manim upgrade didn't change rendering | [Regression tests](workflow/regression-tests.md#after-a-manim-upgrade) |
 | Know what changed since the last update | [whats-new.md](whats-new.md) |
 
 ## Update rules (definition of done)
