@@ -27,6 +27,7 @@ Newest first. One line per decision; details in the linked ADR or PR.
 
 | Date | Decision | Why | Where |
 |---|---|---|---|
+| 2026-11-27 | Voiceover = `self.narration()` on add_sound/add_subcaption/cues; bookmarks are cues `<name>.<mark>`; no TTS in core; manim-voiceover cache importer instead of a runtime dependency | manim-voiceover breaks on 0.30; keep concepts (ADR-0013); draggable bookmarks | PR #22 |
 | 2026-11-27 | Clip edits store the whole clip list per undo step; imports copied into `assets/audio/`; silent clips shown on the timeline | Exact undo; portable project-relative paths (§8); muted clips stay editable | PR #21 |
 | 2026-11-27 | Audio clips = cached processed copies added via `add_sound` in `StageMixin.setup()`; preview mix from timeline sound events; playback via sounddevice | Manim mixes the final audio (spec §2.1); non-destructive (F04); avoids the PySide6-Addons dependency | PR #20 |
 | 2026-11-27 | Cue drag: hold (bounded by next cue's wait) vs ripple (Shift); undo via QUndoStack; atomic write + immediate render + watcher acknowledge; new sidecars at 60 fps | Prevent negative waits in the UI as well as the resolver; exact at 15/30/60 fps | PR #19 |
@@ -93,6 +94,24 @@ One record per Motion Canvas feature. Status: **Ported** (implemented and tested
   - keyboard nudge and an exact-time field for accessibility;
   - the planning rules are a Qt-free `plan_move` with unit tests.
 - **Implementation:** `src/manim_stage/cues.py` (store, resolver, Manim-free), `studio/cue_edit.py` (drag planning, undoable edits), `scene.py` (`StageMixin`, `StageScene`), `capture.py` (`cue` events, wait attribution), `cuetools.py` + `cli.py` (`validate`, `bake`), and the timeline Cues lane. Tests: `tests/test_cues.py`. KB: `docs/kb/manim-stage/cues.md`.
+
+### Narration / voiceover (Manim ecosystem: manim-voiceover; MC: none)
+- **Status:** Ported (2.4).
+- **Ecosystem behaviour:** manim-voiceover's `with self.voiceover(text=...) as tracker`:
+  - synthesises speech with a TTS service and adds it with `add_sound`;
+  - adds subcaptions and waits for the end;
+  - maps `<bookmark mark/>` tags to times via TTS word boundaries or Whisper.
+  - It doesn't run on Manim 0.30, has no pre-recorded audio (#100) and no manual bookmark times (#113).
+- **Manim mapping:** `StageMixin.narration(name, file=…, text=…)` built on `add_sound`, `add_subcaption`, `wait` and named cues:
+  - `n.wait_until(mark)` is `self.cue(f"{name}.{mark}", at=…)`;
+  - bookmark defaults come from explicit times, word timings or a linear text estimate;
+  - a manim-voiceover `cache.json` importer reuses its generated audio and word boundaries.
+- **Improvements:**
+  - works with recordings;
+  - bookmarks are draggable, validated and sidecar-persisted cues;
+  - runs on 0.30;
+  - no TTS, recording or recognition in core (spec F04).
+- **Implementation:** `src/manim_stage/voiceover.py`, `scene.py` (`narration`), `capture.py` (narration tagging). Tests: `tests/test_voiceover.py`. KB: `docs/kb/manim-stage/narration.md`.
 
 ### Code block and code animation (MC: `Code` node, token diff)
 - **Status:** Designed (ADR-0008). Backlog 2.5–2.6.

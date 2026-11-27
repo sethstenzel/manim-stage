@@ -21,16 +21,21 @@ sidecar, so headless renders match the Studio preview.
 
 from __future__ import annotations
 
+import contextlib
 import inspect
 import logging
 import os
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from manim import Scene, config
 
 from . import _compat
 from .cues import CueRecord, CueResolver, load, sidecar_path
+
+if TYPE_CHECKING:
+    from .voiceover import Narration
 
 _PKG = Path(__file__).resolve().parent
 _MANIM = Path(inspect.getfile(Scene)).resolve().parents[1]  # site-packages/manim
@@ -116,6 +121,98 @@ class StageMixin:
         if self._stage_resolver_obj is None:
             return []
         return self._stage_resolver_obj.orphans()
+
+    # -- narration (voiceover adapter) ---------------------------------------------------
+
+    @contextlib.contextmanager
+    def narration(
+        self,
+        name: str,
+        *,
+        file: str | os.PathLike[str] | None = None,
+        text: str | None = None,
+        bookmarks: dict[str, float] | None = None,
+        words: Any = None,
+        voiceover_cache: str | os.PathLike[str] | None = None,
+        gain: float | None = None,
+        captions: bool = True,
+        wait: bool = True,
+    ) -> Iterator[Narration]:
+        """Play a recorded narration while the ``with`` block animates.
+
+        - ``file``: the recording (any format PyAV reads). Or ``voiceover_cache``: a
+          manim-voiceover ``cache.json``; the entry whose text matches is used.
+        - ``text``: shown as a subcaption; may contain ``<bookmark mark='x'/>`` tags.
+        - ``bookmarks``: explicit bookmark times (s from the narration start).
+        - ``words``: word timings ``[(word, start, end), ...]`` or a transcript JSON path.
+        - On exit, waits until the narration has finished (``wait=False`` to skip).
+
+        ``n.wait_until("x")`` waits for a bookmark: the named cue ``<name>.x``.
+        """
+        from . import audio as audio_core
+        from .voiceover import (
+            Narration,
+            bookmark_times,
+            find_cached,
+            load_voiceover_cache,
+            load_words,
+            strip_bookmarks,
+        )
+
+        word_list = (
+            load_words(words) if isinstance(words, (str, os.PathLike)) else list(words or [])
+        )
+        if voiceover_cache is not None:
+            entry = find_cached(load_voiceover_cache(voiceover_cache), text or "")
+            if entry is None:
+                raise FileNotFoundError(f"no entry for this text in {voiceover_cache}")
+            file = entry.audio
+            word_list = word_list or entry.words
+        if file is None:
+            raise ValueError("narration needs file= or voiceover_cache=")
+        path = Path(file)
+        if not path.is_absolute():
+            path = Path.cwd() / path
+        fps = float(config.frame_rate)
+        duration = audio_core.duration_of(path)
+        marks = bookmark_times(text or "", duration, bookmarks=bookmarks, words=word_list)
+        start = _compat.scene_frame(self, fps)
+        self.add_sound(str(path), gain=gain)  # type: ignore[attr-defined]
+        clean = strip_bookmarks(text)[0] if text else ""
+        if captions and clean:
+            self.add_subcaption(clean, duration=duration)  # type: ignore[attr-defined]
+        n = Narration(
+            self,
+            name,
+            path,
+            text=text,
+            bookmarks=marks,
+            start_frame=start,
+            duration=duration,
+            fps=fps,
+            words=word_list,
+        )
+        log_ = getattr(self, "_stage_narrations", None)
+        if log_ is None:
+            log_ = self._stage_narrations = []
+        log_.append(
+            {
+                "name": name,
+                "file": str(path),
+                "start_frame": start,
+                "duration": duration,
+                "text": clean,
+                "bookmarks": marks,
+                "words": [list(w) for w in word_list],
+            }
+        )
+        yield n
+        if wait:
+            n.wait_for_end()
+
+    @property
+    def stage_narrations(self) -> list[dict[str, Any]]:
+        return list(getattr(self, "_stage_narrations", []) or [])
 
     # -- audio clips (.manim-stage/audio.json) -------------------------------------------
 

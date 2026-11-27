@@ -31,7 +31,8 @@ A local, offline reference for **every manim-stage feature and how to use it**. 
 | [Export and snapshots](manim-stage/export.md) | Render via `manim render` (quality, format, range, transparency, sections) with progress, cancel and result check; save/copy frames | Available | Cairo | F01, F10 |
 | [Timeline](manim-stage/timeline.md) | Lanes of play/wait/section/sound and group members; Manim categories, rate curves, jump to source | Available | Cairo | F02 |
 | [Named cues (`self.cue`)](manim-stage/cues.md) | Named, adjustable waits for narration; drag on the timeline (hold/ripple, undo); `cues.json`; validate/bake | Available | Both | F03 |
-| [Audio workspace](manim-stage/audio.md) | Import, drag, trim, gain, fade, mute/solo audio clips (undoable); waveforms; preview playback = render mix | Available (voiceover adapter: Planned) | Both | F04 |
+| [Narration (voiceover adapter)](manim-stage/narration.md) | `with self.narration(...)`: recorded voiceover + subcaption + bookmarks as draggable cues; word timings; manim-voiceover cache import | Available | Both | F04, F03 |
+| [Audio workspace](manim-stage/audio.md) | Import, drag, trim, gain, fade, mute/solo audio clips (undoable); waveforms; preview playback = render mix | Available | Both | F04 |
 | `AnimatedCode` | Token-level code-diff animations | Planned (M2) | — | F05 |
 
 ### Manim features we build on (pinned `main@8c258a0`)
@@ -65,6 +66,8 @@ A local, offline reference for **every manim-stage feature and how to use it**. 
 | Check what my machine can render (LaTeX, fonts, codecs) | [CLI → doctor](manim-stage/cli.md#commands) |
 | Print a scene's timing without opening the editor | [CLI → timeline](manim-stage/cli.md#quick-start) |
 | Make animations wait for the narration without hand-tuned waits | [Named cues](manim-stage/cues.md#quick-start) |
+| Narrate with a recording and wait for words in it | [Narration](manim-stage/narration.md#quick-start) |
+| Reuse audio from manim-voiceover | [Narration → reusing manim-voiceover output](manim-stage/narration.md#how-it-works) |
 | Add narration or music without changing my code | [Audio workspace](manim-stage/audio.md#quick-start) |
 | Hear the scene while previewing | [Audio workspace → playback](manim-stage/audio.md#how-it-works) |
 | Retime animations to a new narration take | [Named cues → editing in the Studio](manim-stage/cues.md#editing-cues-in-the-studio) |

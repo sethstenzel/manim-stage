@@ -3,7 +3,7 @@
 - **Status:** Available.
   - **Clips:** import, drag, trim, gain, fades, mute and solo, with undo, plus waveforms.
   - **Playback:** synced to the playhead; the preview mixdown is the render mixdown.
-  - **Planned:** the voiceover adapter (2.4).
+  - **Narration:** recorded voiceover with bookmarks is in [Narration](narration.md).
 - **Renderer:** Both (audio only)
 - **Since:** PR #20 (editing: PR #21)
 - **Spec:** F04 · **Backlog:** 2.3 · **Source:** `src/manim_stage/audio.py`, `scene.py` (`StageMixin.setup`), `studio/audio_player.py`
@@ -107,7 +107,7 @@ Then `manim render voice_lesson.py Voiced` renders the clip into the video exact
 - Clips from code (`self.add_sound(...)` in your scene) are shown with waveforms but are read-only; change them in Python.
 - **Plain StageScene only.** Clips are added in `StageMixin.setup()`. If you override `setup()`, call `super().setup()`.
 - **Ducking.** `gain_to_background` on code `add_sound` calls is applied by Manim at render time but not in the preview mix.
-- **Captions and word timings** come with the voiceover adapter (2.4).
+- Captions and word timings: see [Narration](narration.md).
 
 ## Related
 

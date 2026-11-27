@@ -79,7 +79,7 @@ The editor must cover every Motion Canvas editor capability **and** surface Mani
 | 2.1 | `StageScene.cue()` + resolver + `cues.json` (atomic, versioned) + `validate` + `bake` | ☑ | F03, ADR-0006 |
 | 2.2 | Timeline cue drag with ripple/hold, undo/redo, downstream preview | ☑ | F03 |
 | 2.3 | Audio workspace: multi-clip import, PyAV peaks → waveform, offset/trim/gain/fade/mute/solo, mixdown via pre-processed assets + `add_sound` | ☑ | 2.3a core (PR #20), 2.3b editing UI (PR #21) | F04 |
-| 2.4 | manim-voiceover adapter (+ upstream PRs: 0.30 compat, manual bookmark times #113, pre-recorded audio #100) | ☐ | F04 |
+| 2.4 | manim-voiceover adapter (+ upstream PRs: 0.30 compat, manual bookmark times #113, pre-recorded audio #100) | ☑ | `self.narration()`; bookmarks = cues; cache import. Upstream PRs still to propose | F04 |
 | 2.5 | `AnimatedCode` layout: Pygments tokens, token IDs, anchored grid, bundled font, `CodeRange`, `highlight_lines` | ☐ | F05, ADR-0008 |
 | 2.6 | Diff engine (patience line→token, moves, overrides) + `animate_to`; tests: repeated tokens, multi-line, non-ASCII, 500+ lines | ☐ | F05 |
 | 2.7 | End-to-end narrated bubble-sort demo + headless reproducibility test | ☐ | M2 gate |

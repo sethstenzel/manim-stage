@@ -2,6 +2,13 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-27 — narration / voiceover adapter (backlog 2.4)
+
+- **New:** [`with self.narration(name, file=, text=...) as n:`](manim-stage/narration.md). It plays a recorded voiceover, adds the text as a subcaption, and waits for the narration to end.
+- **New:** `<bookmark mark='x'/>` in the text gives `n.wait_until('x')`, which is the named cue `name.x`, so it is draggable on the timeline.
+- **New:** bookmark times come from explicit times, word timings (transcript JSON) or a text-position estimate. There is also a manim-voiceover `cache.json` importer.
+- **New:** the Event panel shows the narration name, bookmarks and word timings.
+
 ## 2026-11-27 — audio clip editing (backlog 2.3b)
 
 - **New:** Add audio… (Ctrl+Shift+A). External files are copied into `assets/audio/`.
