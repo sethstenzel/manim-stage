@@ -16,6 +16,16 @@ REQUIRED = [
     "manim_stage/studio/ui/timeline.py",
     "manim_stage/fonts/JetBrainsMono-Regular.ttf",
     "manim_stage/fonts/OFL.txt",
+    "manim_stage/catalog.py",
+    "manim_stage/edu.py",
+    "manim_stage/demo.py",
+    "manim_stage/web.py",
+    "manim_stage/plugins.py",
+    "manim_stage/typography.py",
+    "manim_stage/camera_info.py",
+    "manim_stage/manimcfg.py",
+    "manim_stage/studio/ui/library_panel.py",
+    "manim_stage/studio/ui/text_panel.py",
 ]
 
 

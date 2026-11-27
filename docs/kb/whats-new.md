@@ -2,6 +2,16 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-27 — 0.1.0: performance, migration guide, packaging, M4 gate passed (backlog 4.4)
+
+- **Faster:** preview runners PNG-encode on worker threads, overlapping drawing. The first full 1080p30 preview is 36% faster with one worker ([benchmarks](../benchmarks.md)).
+- **New:** [migration guide](../migration-guide.md) for Manim and Motion Canvas users; [install and release](../release.md) docs; `CHANGELOG.md`.
+- **Packaging:**
+  - version 0.1.0;
+  - CI smoke-installs the wheel on Windows, Linux and macOS;
+  - a `release` workflow builds, tests and attaches the wheel and sdist to a GitHub Release when a version tag is pushed.
+- **Gate:** `docs/m4-gate-report.md` — PASSED.
+
 ## 2026-11-27 — compatibility suite and third-party-style examples (backlog 4.4)
 
 - **New:** [compatibility suite](reference/compatibility.md):

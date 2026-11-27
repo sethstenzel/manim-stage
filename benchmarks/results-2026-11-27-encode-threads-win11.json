@@ -1,0 +1,86 @@
+{
+ "machine": {
+  "os": "Windows-11-10.0.26100-SP0",
+  "cpu": "Intel64 Family 6 Model 158 Stepping 12, GenuineIntel",
+  "cpus": "16",
+  "python": "3.13.5"
+ },
+ "cases": [
+  {
+   "case": "720p30",
+   "workers": 1,
+   "frames": 317,
+   "duration_s": 10.566666666666666,
+   "cold_wall_s": 8.22,
+   "cold_child": {
+    "import": 0.735,
+    "timeline": 1.9,
+    "frames": 7.91,
+    "total": 7.92
+   },
+   "timeline_ready_s": 1.9,
+   "warm_wall_s": 1.71,
+   "warm_frames_drawn": 0,
+   "seek_ms_median": 7.6,
+   "seek_ms_p95": 10.5,
+   "frame_png_kb_median": 46.8
+  },
+  {
+   "case": "1080p30",
+   "workers": 1,
+   "frames": 317,
+   "duration_s": 10.566666666666666,
+   "cold_wall_s": 12.46,
+   "cold_child": {
+    "import": 0.715,
+    "timeline": 1.256,
+    "frames": 12.15,
+    "total": 12.159
+   },
+   "timeline_ready_s": 1.256,
+   "warm_wall_s": 1.59,
+   "warm_frames_drawn": 0,
+   "seek_ms_median": 9.4,
+   "seek_ms_p95": 12.1,
+   "frame_png_kb_median": 95.4
+  },
+  {
+   "case": "1080p30",
+   "workers": 4,
+   "frames": 317,
+   "duration_s": 10.566666666666666,
+   "cold_wall_s": 7.17,
+   "cold_child": {
+    "total": 6.756,
+    "timeline": 2.17,
+    "frames": 6.746,
+    "import": 0.8
+   },
+   "timeline_ready_s": 2.17,
+   "warm_wall_s": 1.63,
+   "warm_frames_drawn": 0,
+   "seek_ms_median": 9.7,
+   "seek_ms_p95": 13.4,
+   "frame_png_kb_median": 95.4
+  },
+  {
+   "case": "1080p30",
+   "workers": 8,
+   "frames": 317,
+   "duration_s": 10.566666666666666,
+   "cold_wall_s": 7.55,
+   "cold_child": {
+    "total": 6.949,
+    "timeline": 2.76,
+    "frames": 6.933,
+    "import": 1.034
+   },
+   "timeline_ready_s": 2.76,
+   "warm_wall_s": 1.8,
+   "warm_frames_drawn": 0,
+   "seek_ms_median": 10.1,
+   "seek_ms_p95": 12.6,
+   "frame_png_kb_median": 95.4
+  }
+ ]
+}

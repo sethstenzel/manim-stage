@@ -35,9 +35,11 @@ import math
 import os
 import subprocess
 import sys
+import threading
 import time
 import traceback
 import uuid
+from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import IO, Any
@@ -45,6 +47,7 @@ from typing import IO, Any
 from .events import SceneTimeline
 
 PROTOCOL_VERSION = 1
+ENCODE_THREADS = 2  # PNG encoders per runner (they overlap Cairo drawing)
 
 
 class RunnerError(RuntimeError):
@@ -163,9 +166,13 @@ def _main(argv: list[str] | None = None) -> int:
     out: IO[str] = sys.stdout
     sys.stdout = sys.stderr  # keep the protocol channel clean
 
+    send_lock = threading.Lock()  # frames are encoded and announced from a thread pool
+
     def send(msg: dict[str, Any]) -> None:
-        out.write(json.dumps({"v": PROTOCOL_VERSION, **msg}) + "\n")
-        out.flush()
+        line = json.dumps({"v": PROTOCOL_VERSION, **msg}) + "\n"
+        with send_lock:
+            out.write(line)
+            out.flush()
 
     started = time.perf_counter()
     timings: dict[str, float] = {}
@@ -310,24 +317,41 @@ def _main(argv: list[str] | None = None) -> int:
                 if missing:
                     from .camera_info import camera_state, encode
 
+                    # PNG encoding (~40% of a frame's cost) runs on worker threads and
+                    # overlaps drawing the next frame; zlib and PIL release the GIL.
+                    # A bounded queue keeps memory flat (performance pass, backlog 4.4).
+                    pool = ThreadPoolExecutor(max_workers=ENCODE_THREADS)
+                    slots = threading.BoundedSemaphore(ENCODE_THREADS * 2)
+                    pending: list[Future[None]] = []
+
+                    def store(index: int, image: Any, text: dict[str, str]) -> None:
+                        try:
+                            path = cache.put(revision, index, image, text=text)
+                            send({"type": "frame", "frame": index, "path": str(path)})
+                        finally:
+                            slots.release()
+
                     def on_frame(frame: Any, scene: Any) -> None:
                         nonlocal drawn
-                        path = cache.put(
-                            revision,
-                            frame.frame_index,
-                            frame.image,
-                            text=encode(camera_state(scene)),
-                        )
+                        # Manim may reuse its pixel buffer for the next frame: copy.
+                        image = frame.image.copy()
+                        text = encode(camera_state(scene))
+                        slots.acquire()
+                        pending.append(pool.submit(store, frame.frame_index, image, text))
                         drawn += 1
-                        send({"type": "frame", "frame": frame.frame_index, "path": str(path)})
 
-                    # A fresh scene instance: Manim evaluates each scene only once.
-                    capture(
-                        scene_cls,
-                        frame_times=[i / args.fps for i in missing],
-                        on_frame=on_frame,
-                        with_scene=True,
-                    )
+                    try:
+                        # A fresh scene instance: Manim evaluates each scene only once.
+                        capture(
+                            scene_cls,
+                            frame_times=[i / args.fps for i in missing],
+                            on_frame=on_frame,
+                            with_scene=True,
+                        )
+                    finally:
+                        pool.shutdown(wait=True)
+                    for f in pending:
+                        f.result()  # surface encoding errors
                 cache.trim(keep=revision)
                 lap("frames")
         lap("total")
