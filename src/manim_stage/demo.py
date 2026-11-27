@@ -32,6 +32,7 @@ from .project import VAR_TYPES, ProjectError, Variable, _infer, _validate
 ENV = "MANIM_STAGE_DEMO"
 USED: dict[str, dict[str, Any]] = {}  # params read in this process (reported to the Studio)
 
+
 def overrides() -> dict[str, Any]:
     """The current override values (``{}`` when no override file is set).
 
