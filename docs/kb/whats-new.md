@@ -2,6 +2,14 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-27 — AnimatedCode layout (backlog 2.5)
+
+- **New:** [`AnimatedCode`](manim-stage/animated-code.md) shows code as Pygments tokens, each a Manim `VGroup` of glyphs, on an exact character grid:
+  - laid out in a bundled JetBrains Mono, so it looks the same on every OS;
+  - grid anchors follow moves and scales.
+- **New:** `lines()`, `word()`, `find()` and `find_all()` ranges; `get()` for any Manim animation; `highlight()` / `highlight_lines()` / `reset_highlight()`; `surround()` selection boxes.
+- **New:** dependency `pygments`; the JetBrains Mono font (OFL) is bundled.
+
 ## 2026-11-27 — narration / voiceover adapter (backlog 2.4)
 
 - **New:** [`with self.narration(name, file=, text=...) as n:`](manim-stage/narration.md). It plays a recorded voiceover, adds the text as a subcaption, and waits for the narration to end.

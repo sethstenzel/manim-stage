@@ -18,6 +18,15 @@ python-sounddevice and PortAudio
   MIT License (sounddevice), MIT-style license (PortAudio). Optional runtime
   dependency of the Studio editor for preview audio playback.
 
+JetBrains Mono (font)
+  https://github.com/JetBrains/JetBrainsMono  (v2.304)
+  Copyright 2020 The JetBrains Mono Project Authors. SIL Open Font License 1.1;
+  full text in src/manim_stage/fonts/OFL.txt. Bundled unmodified as the default
+  AnimatedCode font so code layout is identical on every machine.
+
+Pygments
+  https://pygments.org  BSD-2-Clause. Runtime dependency for syntax highlighting.
+
 Qt for Python (PySide6)
   https://wiki.qt.io/Qt_for_Python
   Copyright (c) The Qt Company Ltd. LGPLv3 (GPLv2/GPLv3 also offered).

@@ -17,7 +17,7 @@ classifiers = [
 # Manim is pinned to a reviewed upstream commit via [tool.uv.sources] until
 # 0.30.0 is released (ADR-0003). Upstream main still reports version 0.22.1,
 # so capability is checked at runtime in manim_stage._compat, not by version.
-dependencies = ["manim"]
+dependencies = ["manim", "pygments>=2.17"]
 
 [project.optional-dependencies]
 # The Studio editor (ADR-0012). Headless features need none of this.

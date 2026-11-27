@@ -14,6 +14,8 @@ REQUIRED = [
     "manim_stage/studio/service.py",
     "manim_stage/studio/ui/main_window.py",
     "manim_stage/studio/ui/timeline.py",
+    "manim_stage/fonts/JetBrainsMono-Regular.ttf",
+    "manim_stage/fonts/OFL.txt",
 ]
 
 

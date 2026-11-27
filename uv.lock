@@ -377,6 +377,7 @@ version = "0.0.1.dev0"
 source = { editable = "." }
 dependencies = [
     { name = "manim" },
+    { name = "pygments" },
 ]
 
 [package.optional-dependencies]
@@ -400,6 +401,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "manim", git = "https://github.com/ManimCommunity/manim?rev=8c258a0082dc760d9a93671bbdfaca3cc53a6f91" },
+    { name = "pygments", specifier = ">=2.17" },
     { name = "pyside6-essentials", marker = "python_full_version >= '3.12' and extra == 'studio'", specifier = ">=6.8" },
     { name = "pyside6-essentials", marker = "python_full_version < '3.12' and extra == 'studio'", specifier = ">=6.8,<6.12" },
     { name = "sounddevice", marker = "extra == 'studio'", specifier = ">=0.5" },
