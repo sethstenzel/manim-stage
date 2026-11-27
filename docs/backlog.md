@@ -52,7 +52,8 @@ A local, offline knowledge base in `docs/kb/` covering **every feature and how t
 | 1.3 | Editor shell (Python/PySide6): scene picker, viewport, play/pause/step/speed, timecode, zoom/fit, dark/light, keyboard shortcuts, accessibility | ☑ | F01, ADR-0012, ADR-0013 |
 | 1.4 | Timeline UI: ruler (s/frames), zoom, range, play/wait/section/sound tracks, nested children, jump-to-source | ☑ | F02 |
 | 1.5 | Snapshot + range/full export through Manim CLI with progress/cancel | ☑ | F01, F10 |
-| 1.6 | `manim-stage studio` CLI; `[studio]` extra; packaging smoke test | ☑ | ADR-0009 |
+| 1.6 | `manim-stage studio` CLI; `[studio]` extra; packaging smoke test | ☑ |
+| 1.7 | **M1 gate**: user-journey test, Studio latency benchmark, gate report | ☑ | `docs/m1-gate-report.md`: PASSED | ADR-0009 |
 
 ## Manim feature coverage in the editor (continuous, requested by owner 2026-11-27)
 

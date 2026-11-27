@@ -1,0 +1,14 @@
+{
+  "quality": "low_quality",
+  "workers": 4,
+  "open_to_timeline_s": 2.916,
+  "open_to_first_frame_s": 3.12,
+  "open_to_all_frames_s": 4.289,
+  "frames": 160,
+  "seek_median_ms": 15.15,
+  "seek_p95_ms": 17.19,
+  "save_to_first_new_frame_s": 2.014,
+  "save_to_all_frames_s": 3.192,
+  "save_frames_drawn": 160,
+  "save_frames_total": 160
+}

@@ -2,6 +2,13 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-27 — M1 gate passed
+
+- **Report:** `docs/m1-gate-report.md`. Unmodified Manim scenes are authorable in the Studio, and exports are unchanged (end-to-end journey test).
+- **Fixed:** live reload now keeps the chosen preview quality and workers.
+- **Changed:** the editor starts rendering the requested scene at once instead of waiting for scene discovery (about 0.8 s faster to first frame).
+- **New:** `benchmarks/studio_latency.py`; results in `docs/benchmarks.md`.
+
 ## 2026-11-27 — `manim-stage` command (backlog 1.6)
 
 - **New:** [`manim-stage`](manim-stage/cli.md) console script with these commands:

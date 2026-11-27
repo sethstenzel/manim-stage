@@ -4,7 +4,7 @@ Motion Canvas–class authoring for [Manim Community Edition](https://github.com
 
 ![Studio editor](docs/kb/img/timeline-dark.png)
 
-> **Status:** M0 complete ([gate report](docs/m0-gate-report.md)); M1 Studio MVP in progress.
+> **Status:** M1 Studio MVP complete ([gate report](docs/m1-gate-report.md)); next: M2 teaching workflow (cues, audio, `AnimatedCode`).
 >
 > - Spec: [`spec.md`](spec.md)
 > - Knowledge base: [`docs/kb/`](docs/kb/README.md)

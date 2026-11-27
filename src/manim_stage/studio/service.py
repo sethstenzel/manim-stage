@@ -119,6 +119,7 @@ class PreviewService:
         self._closed = False
         self._known_deps: list[Path] = []
         self._last_scene: str | None = None
+        self._last_settings: RenderSettings | None = None
         self._watcher: FileWatcher | None = None
 
     # -- subscription ---------------------------------------------------------------
@@ -200,6 +201,7 @@ class PreviewService:
             seq = next(self._seq)
             self._last_scene = scene
             rev = Revision(seq, scene, settings or self.settings)
+            self._last_settings = rev.settings  # live reload re-renders with these
             self._current = rev
             self._idle.clear()
             self._start_locked(rev)
@@ -240,7 +242,7 @@ class PreviewService:
             scene = self._last_scene
             self._emit(PreviewMessage("changed", 0, {"files": [str(f) for f in files]}))
             if scene is not None:
-                self.render(scene)
+                self.render(scene, self._last_settings)
 
     def close(self) -> None:
         self.unwatch()
