@@ -2,6 +2,14 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-27 — Text and LaTeX helpers (backlog MF.10)
+
+- **New:** [Text tab](manim-stage/text-latex.md):
+  - a font picker that shows each font in its own face, with **Use as project font**;
+  - a MathTex helper: coloured parts via `tex_to_color_map`, every `TexTemplateLibrary`/`TexFontTemplates` template, and a LaTeX preview.
+- **New:** project theme `tex_template`, which `StageScene` applies to `MathTex`/`Tex`; also editable in the Project tab.
+- **New:** `manim_stage.typography` (`fonts`, `tex_templates`, `mathtex_snippet`, `latex_status`).
+
 ## 2026-11-27 — camera-aware preview (backlog MF.8)
 
 - **New:** [camera readout](manim-stage/camera.md):

@@ -114,6 +114,10 @@
         },
         "code_style": {
           "type": "string"
+        },
+        "tex_template": {
+          "type": "string",
+          "description": "MathTex/Tex template: default, simple, ctex, threeb1b, or font:<TexFontTemplates name>"
         }
       }
     },

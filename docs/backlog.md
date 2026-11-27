@@ -70,7 +70,7 @@ The editor must cover every Motion Canvas editor capability **and** surface Mani
 | MF.7 | Sections navigator: Manim `next_section` names/types, `skip_animations`, per-section export (`--save_sections`) | ☑ | F02, F10 |
 | MF.8 | Camera-aware preview: `MovingCameraScene` frame overlay, `ZoomedScene`, `ThreeDScene` orientation readout; renderer capability labels (Cairo/OpenGL) | ☑ | spec §2.7. In this Manim every scene's camera frame is animatable (MovingCameraScene deprecated): readout + click/selection mapping instead of an overlay |
 | MF.9 | Environment health: LaTeX availability, fonts (`manimpango.list_fonts()`), FFmpeg/PyAV codecs, installed Manim plugins (`manim.plugins` entry points) | ☑ | F10. `manim-stage doctor` + Studio Assets tab |
-| MF.10 | Text/LaTeX helpers: font picker, `MathTex` substring colouring preview, `Tex` template selection | ☐ | F07 |
+| MF.10 | Text/LaTeX helpers: font picker, `MathTex` substring colouring preview, `Tex` template selection | ☑ | F07. Preview needs LaTeX (skipped where absent) |
 
 ## M2 — Teaching workflow (P1)
 

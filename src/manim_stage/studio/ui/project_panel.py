@@ -136,6 +136,16 @@ class ProjectPanel(QWidget):
         idx = self.code_style.findData(proj.theme.code_style or "")
         self.code_style.setCurrentIndex(max(idx, 0))
         form.addRow("Code style", self.code_style)
+        self.tex_template = QComboBox()
+        self.tex_template.setAccessibleName("TeX template")
+        self.tex_template.addItem("(Manim default)", "")
+        from ...typography import tex_templates
+
+        for name in tex_templates():
+            self.tex_template.addItem(name, name)
+        idx = self.tex_template.findData(proj.theme.tex_template or "")
+        self.tex_template.setCurrentIndex(max(idx, 0))
+        form.addRow("TeX template", self.tex_template)
 
         form.addRow(QLabel("<b>Variables</b>"))
         self.var_editors = {}
@@ -195,6 +205,10 @@ class ProjectPanel(QWidget):
                 theme[key] = edit.text().strip()
             else:
                 theme.pop(key, None)
+        if self.tex_template.currentData():
+            theme["tex_template"] = self.tex_template.currentData()
+        else:
+            theme.pop("tex_template", None)
         if self.code_style.currentData():
             theme["code_style"] = self.code_style.currentData()
         else:

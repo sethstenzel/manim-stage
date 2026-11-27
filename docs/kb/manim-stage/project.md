@@ -45,6 +45,7 @@ print(project.USED["speed"].value)   # 2.0
 - **Colours:** semantic names `primary`, `secondary`, `accent`, `highlight`, `success`, `warning`, `error`, `text`, `muted` and `background`. The defaults are Manim's own colour constants; add your own names.
 - **`font`:** default font for `Text` and `MarkupText`.
 - **`code_font` / `code_style`:** defaults for [AnimatedCode](animated-code.md) (any Pygments style).
+- **`tex_template`:** the default TeX template for `MathTex`/`Tex`: `default`, `simple`, `ctex`, `threeb1b` or `font:<TexFontTemplates name>`. See [Text and LaTeX](text-latex.md).
 - **`StageScene` applies it:** the scene uses the theme's `background` and `font` when it starts and restores Manim's defaults when it ends.
 
 **Variables** (`project.var(name, default, *, min, max, options, type, description)`):
