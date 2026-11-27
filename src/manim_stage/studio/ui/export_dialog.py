@@ -64,6 +64,7 @@ class ExportDialog(QDialog):
         range_frames: tuple[int, int] | None,
         fps: float,
         parent: QWidget | None = None,
+        after_export: list | None = None,
     ) -> None:
         super().__init__(parent)
         self.setWindowTitle(f"Export {scene}")
@@ -72,6 +73,7 @@ class ExportDialog(QDialog):
         self.file, self.scene, self.timeline, self.fps = file, scene, timeline, fps
         self.range_frames = range_frames
         self.job: ExportJob | None = None
+        self.after_export = list(after_export or [])  # (label, fn(result)) from plugins
         self.result: ExportResult | None = None
         self._queue: deque[tuple[str, Any]] = deque()  # filled by the job's thread
 
@@ -159,6 +161,14 @@ class ExportDialog(QDialog):
         self.log_btn.toggled.connect(self.log.setVisible)
         brow = QHBoxLayout()
         brow.addWidget(self.log_btn)
+        self.plugin_buttons = []
+        for label, fn in self.after_export:
+            b = QPushButton(label)
+            b.setAccessibleName(f"Plugin action: {label}")
+            b.setEnabled(False)
+            b.clicked.connect(lambda _=False, f=fn: self._run_after(f))
+            brow.addWidget(b)
+            self.plugin_buttons.append(b)
         brow.addStretch(1)
         for b in (self.open_btn, self.cancel_btn, self.export_btn):
             brow.addWidget(b)
@@ -303,6 +313,8 @@ class ExportDialog(QDialog):
             self.log_btn.setChecked(True)
             return
         self.open_btn.setEnabled(True)
+        for b in self.plugin_buttons:
+            b.setEnabled(True)
         p = r.probe
         try:
             shown = str(r.output.relative_to(self.file.parent))
@@ -317,6 +329,13 @@ class ExportDialog(QDialog):
                 f"{p.get('duration_s', 0):.2f} s · {p.get('video_codec')} · {audio}{vfr}"
             )
         self.status.setText("✔ Done: " + "\n".join(bits))
+
+    def _run_after(self, fn) -> None:
+        try:
+            msg = fn(self.result)
+            self.status.setText(str(msg) if msg else "Done.")
+        except Exception as e:
+            self.status.setText(f"⚠ Plugin action failed: {e}")
 
     def _cancel_or_close(self) -> None:
         if self.job is not None:

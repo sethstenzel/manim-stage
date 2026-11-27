@@ -20,7 +20,7 @@ How Motion Canvas features map to manim-stage. Behaviour is described in our own
 | Transitions | Slide/fade/zoom between scenes | [`manim-stage compose`](../manim-stage/transitions.md): overlapping fade/slide/wipe between rendered scenes, frame-exact with audio; in-scene `enter`/`exit` | Available |
 | Rendering | In the browser tab only; image sequence or FFmpeg | Manim CLI stays the renderer; headless and reproducible | Available (Manim) |
 | (none; Manim ecosystem) manim-voiceover `self.voiceover()` + bookmarks | TTS narration with text bookmarks | [`self.narration()`](../manim-stage/narration.md): recorded audio, bookmarks as draggable cues, word timings, cache import | Available |
-| Plugins | Three layers, no version handshake | Versioned editor plugin API with handshake | Planned (M4) |
+| Plugins | Three layers, no version handshake | [Studio plugins](../manim-stage/plugins.md): entry points, API-version handshake, timeline lanes, panels, inspector rows, commands, exporters | Available |
 
 ## Concepts: Motion Canvas → manim-stage API (ADR-0013)
 
@@ -41,7 +41,7 @@ Motion Canvas concepts are ported into Manim's model. They stay available under 
 | Code block, `lines()`, `word()`, ranges | [`AnimatedCode`](../manim-stage/animated-code.md), `CodeRange`, `lines()`, `word()`, `find()` | `VGroup` of token Mobjects | Available |
 | Scene transitions | [`enter`/`exit`; `manim-stage compose`](../manim-stage/transitions.md) | `FadeIn`/`FadeOut`; rendered videos | Available |
 | References (`createRef`) | ordinary Python attributes | — | n/a |
-| Editor plugins | Studio plugins (`manim_stage.plugins` entry points) | — | Planned (M4) |
+| Editor plugins | [Studio plugins](../manim-stage/plugins.md) (`manim_stage.plugins` entry points) | — | Available |
 
 ## Terminology: Motion Canvas → Manim (ADR-0013)
 

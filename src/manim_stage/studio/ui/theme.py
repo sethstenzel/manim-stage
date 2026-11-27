@@ -102,6 +102,7 @@ CATEGORY_COLORS = {
     "wait": "#6b6f76",
     "section": "#e0b94c",
     "cue": "#ff8a5c",
+    "plugin": "#b39ddb",
     "sound": "#3aa0d8",
     "caption": "#9aa3ad",
 }

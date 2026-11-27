@@ -160,6 +160,22 @@ def cmd_bake(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_plugins(args: argparse.Namespace) -> int:
+    from .plugins import API_VERSION, discover, manim_plugins
+
+    print(f"Studio plugin API version {API_VERSION}")
+    found = discover()
+    for lp in found:
+        state = "ok  " if lp.enabled else "OFF "
+        detail = ", ".join(lp.hooks) if lp.enabled else lp.reason
+        print(f"{state} {lp.name:20s} {detail}  [{lp.source}]")
+    if not found:
+        print("no Studio plugins installed")
+    for name in manim_plugins():
+        print(f"manim {name}")
+    return 0
+
+
 def cmd_assets(args: argparse.Namespace) -> int:
     from .assets import format_report, inventory
 
@@ -219,6 +235,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("file", type=Path)
     p.add_argument("scene", nargs="*", help="scenes to bake (default: every StageScene)")
     p.set_defaults(func=cmd_bake)
+    p = sub.add_parser("plugins", help="list Studio plugins (and why any are disabled)")
+    p.set_defaults(func=cmd_plugins)
     p = sub.add_parser("assets", help="list and check the assets scenes use (exit 1 if missing)")
     p.add_argument("files", type=Path, nargs="+", help="scene files")
     p.add_argument("--json", action="store_true")

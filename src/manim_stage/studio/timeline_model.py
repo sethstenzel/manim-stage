@@ -51,7 +51,7 @@ class EventBox:
     def category(self) -> str:
         if self.kind == "wait":
             return "wait"
-        if self.kind in ("section", "sound", "caption", "cue"):
+        if self.kind in ("section", "sound", "caption", "cue", "plugin"):
             return self.kind
         anim = self.animation
         if anim:
@@ -104,6 +104,8 @@ def lane_key(box: EventBox) -> str:
         return "sections"
     if box.kind == "cue":
         return "cues"
+    if box.kind == "plugin":
+        return box.meta.get("_track", "plugin")
     if box.kind == "sound":
         return "audio"
     if box.kind == "caption":
@@ -130,10 +132,16 @@ def build_layout(timeline: dict[str, Any]) -> Layout:
                 depth=depth,
             )
         )
+        if e["kind"] == "plugin":
+            boxes[-1].meta = {**boxes[-1].meta, "_track": track}
     max_depth = max((b.depth for b in boxes), default=0)
     lanes = [Lane("sections", "Sections"), Lane("cues", "Cues"), Lane("main", "Animations")]
     lanes += [Lane(f"level{d}", f"Level {d}") for d in range(1, max_depth + 1)]
     lanes += [Lane("audio", "Audio"), Lane("captions", "Captions")]
+    for e in timeline.get("events", []):  # one lane per plugin track (Studio plugins, F11)
+        track = e.get("track", "")
+        if e.get("kind") == "plugin" and all(ln.key != track for ln in lanes):
+            lanes.append(Lane(track, track.split(":", 1)[-1].capitalize()))
     by_key = {lane.key: lane for lane in lanes}
     for box in sorted(boxes, key=lambda b: (b.start, b.end, b.id)):
         by_key[lane_key(box)].add(box)

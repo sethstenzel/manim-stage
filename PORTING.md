@@ -27,6 +27,7 @@ Newest first. One line per decision; details in the linked ADR or PR.
 
 | Date | Decision | Why | Where |
 |---|---|---|---|
+| 2026-11-27 | Plugin SDK v1: entry points + api_version handshake; hooks for lanes/panels/inspector/commands/exporters through a narrow StudioAPI; per-hook failure isolation | F11; MC has no handshake; keep editor stable | PR #32 |
 | 2026-11-27 | M3 gate passed (themed three-scene lesson; deterministic compose; restyle via project only) | Spec §11 M3 | PR #31 |
 | 2026-11-27 | Asset validation = static scan resolved with Manim's rules + audio clips + fonts; presets map to Manim CLI flags | Fail before rendering; no second path resolver to drift from Manim | PR #30 |
 | 2026-11-27 | Flow helpers return Manim groups (`sequence` in exact seconds); cross-scene transitions composed after `manim render` with overlap semantics | MC vocabulary, Manim objects; Manim renders scenes separately | PR #29 |
@@ -281,8 +282,17 @@ One record per Motion Canvas feature. Status: **Ported** (implemented and tested
 - **Implementation:** `src/manim_stage/compose.py`, `flow.py` (`enter`/`exit`), `cli.py`. Tests: `tests/test_flow.py` (F09 acceptance with three rendered scenes). KB: `docs/kb/manim-stage/transitions.md`.
 
 ### Editor plugins (MC: editor/runtime plugins)
-- **Status:** Not started. Backlog 4.1.
-- **Manim mapping:** `manim_stage.plugins` entry points with a version handshake; bridges Manim's own plugins.
+- **Status:** Ported (4.1).
+- **MC behaviour:** a plugin object can add editor tabs, timeline content and exporters; there is no version handshake.
+- **Manim mapping:**
+  - `manim_stage.plugins` entry points (Python packaging, like Manim's `manim.plugins`), plus a `MANIM_STAGE_PLUGINS` env var for development;
+  - a plugin declares `api_version`, and mismatched plugins are disabled with the reason;
+  - hooks: `timeline_events` (own lane `plugin:<name>`), `panels` (dock tabs), `inspector_rows`, `commands`, `exporters`;
+  - a narrow `StudioAPI` (read timeline/playhead, seek, status, log);
+  - each hook is caught, so a failure disables only that plugin;
+  - Manim plugins are listed beside them.
+- **Improvements over MC:** a compatibility handshake, failure isolation, and a CLI listing.
+- **Implementation:** `src/manim_stage/plugins.py`, `studio/ui/main_window.py` (`load_plugins`, `_WindowAPI`), `plugins_panel.py`, `timeline_model.py` (plugin lanes), `export_dialog.py` (post-export actions); sample `examples/plugins/stage_beats/`. Tests: `tests/test_plugins.py` (F11 acceptance). KB: `docs/kb/manim-stage/plugins.md`.
 
 ### Editor shell (MC: browser editor with live project preview)
 - **Status:** Ported (M1 gate passed, `docs/m1-gate-report.md`).

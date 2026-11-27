@@ -1,0 +1,16 @@
+[project]
+name = "stage-beats"
+version = "0.1.0"
+description = "Sample manim-stage Studio plugin: a Beats timeline track and panel"
+requires-python = ">=3.11"
+dependencies = ["manim-stage"]
+
+[project.entry-points."manim_stage.plugins"]
+beats = "stage_beats:plugin"
+
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+include = ["stage_beats.py"]
