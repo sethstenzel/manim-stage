@@ -206,3 +206,44 @@ def test_click_on_ruler_seeks(qtbot, window):
     )
     assert abs(window.playback.frame - window.playback.total // 2) <= 1
     assert x > LABEL_W
+
+
+def test_export_dialog_range_command_and_run(qtbot, window, tmp_path):
+    wait_done(qtbot, window, "MixedRunTimes")
+    window.scene_box.setCurrentIndex(window.scene_box.findData("Lesson"))
+    window._scene_chosen(0)
+    wait_done(qtbot, window, "Lesson")
+    tl = window.service.current.timeline.to_dict()
+    second = [e for e in tl["events"] if e["kind"] in ("play", "wait")][1]
+    window.seek(second["start_frame"] + 1)
+    window.shortcuts["range_in"].trigger()
+    window.seek(second["end_frame"] - 2)
+    window.shortcuts["range_out"].trigger()
+    dlg = window.open_export()
+    assert dlg is not None and dlg.ranged.isChecked()
+    assert "-n 1,1" in dlg.command.text() and dlg.command.text().startswith("manim render")
+    assert "animations 1–1" in dlg.range_note.text()
+    dlg.quality.setCurrentIndex(dlg.quality.findData("low_quality"))
+    dlg.format.setCurrentIndex(dlg.format.findData("mp4"))
+    assert not dlg.transparent.isEnabled()  # mp4 has no alpha in Manim
+    dlg.media_dir.setText(str(tmp_path / "media"))
+    dlg.start()
+    qtbot.waitUntil(lambda: dlg.result is not None, timeout=TIMEOUT)
+    assert dlg.result.ok, dlg.result.error
+    assert "✔ Done" in dlg.status.text() and "854×480" in dlg.status.text()
+    assert dlg.open_btn.isEnabled()
+    dlg.close()
+
+
+def test_snapshot_and_copy_frame(qtbot, window, tmp_path):
+    from PySide6.QtGui import QGuiApplication
+
+    wait_done(qtbot, window, "MixedRunTimes")
+    window.seek(10)
+    window.shortcuts["copy_frame"].trigger()
+    img = QGuiApplication.clipboard().image()
+    assert not img.isNull() and img.width() == 854
+    out = tmp_path / "snap.png"
+    window.save_snapshot(str(out), quality="low_quality")
+    qtbot.waitUntil(lambda: bool(window.last_snapshot_message), timeout=TIMEOUT)
+    assert out.is_file() and "Saved frame 10" in window.last_snapshot_message

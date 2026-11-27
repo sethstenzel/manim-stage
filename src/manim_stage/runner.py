@@ -31,6 +31,7 @@ import contextlib
 import dataclasses
 import importlib.util
 import json
+import math
 import os
 import subprocess
 import sys
@@ -131,6 +132,10 @@ def _main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--seed", type=int, default=0, help="random seed (Manim's --seed); keeps replays identical"
     )
+    parser.add_argument(
+        "--snapshot-at", type=float, help="render the frame showing this time (s) to --out"
+    )
+    parser.add_argument("--out", type=Path, help="PNG path for --snapshot-at")
     parser.add_argument("--shard", default="0/1", help="i/n: draw only frames with index %% n == i")
     args = parser.parse_args(argv)
     if not args.list and not args.scene:
@@ -215,6 +220,19 @@ def _main(argv: list[str] | None = None) -> int:
                     "dependencies": [str(f) for f in deps],
                 }
             )
+
+            if args.snapshot_at is not None:
+                if args.out is None:
+                    raise RunnerError("--snapshot-at needs --out")
+                last = max(timeline.duration_frames - 1, 0)
+                index = min(math.floor(args.snapshot_at * args.fps + 1e-9), last)
+                args.out.parent.mkdir(parents=True, exist_ok=True)
+
+                def save(frame: Any) -> None:
+                    frame.image.save(args.out, format="PNG")
+
+                capture(scene_cls, frame_times=[index / args.fps], on_frame=save)
+                send({"type": "snapshot", "frame": index, "path": str(args.out.resolve())})
 
             if args.cache_dir:
                 cache = FrameCache(args.cache_dir, budget_bytes=args.budget_mb * 1024**2)

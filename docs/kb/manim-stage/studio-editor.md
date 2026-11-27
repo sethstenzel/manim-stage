@@ -1,6 +1,6 @@
 # Studio editor
 
-- **Status:** Partial. Scene picker, viewport, playback, [timeline](timeline.md), live reload and errors are available. Export (1.5) and the `manim-stage studio` CLI (1.6) are Planned.
+- **Status:** Partial. Scene picker, viewport, playback, [timeline](timeline.md), live reload and errors are available. [Export and snapshots](export.md) are available. The `manim-stage studio` CLI (1.6) is Planned.
 - **Renderer:** Cairo (OpenGL scenes are labelled unsupported)
 - **Since:** PR #12 (timeline: PR #14)
 - **Spec:** F01 · **ADRs:** ADR-0010, ADR-0012, ADR-0013 · **Source:** `src/manim_stage/studio/ui/`, `studio/app.py`, `studio/playback.py`
@@ -58,6 +58,9 @@ app.exec()
 | Alt+X | Clear range |
 | L | Toggle loop |
 | Ctrl+R | Re-render |
+| Ctrl+E | Export… |
+| Ctrl+Shift+S | Save frame (full quality) |
+| Ctrl+Shift+C | Copy frame (preview) |
 | Esc | Cancel rendering |
 | Ctrl+0 / Ctrl+1 | Zoom to fit / 100% |
 | Ctrl++ / Ctrl+- (or Ctrl+wheel) | Zoom in / out |
@@ -88,7 +91,6 @@ Preferences (theme) are stored in an INI file under the user's config folder (`m
 
 - **Qt version:** on Python 3.11 the `studio` extra installs PySide6 < 6.12. PySide6 6.12.0 corrupts reference counts on every signal under Python 3.11 on Linux and crashes the editor; Python 3.12+ is unaffected. `tests/test_qt_sanity.py` guards this.
 
-- No export or snapshots yet (backlog 1.5).
 - OpenGL-renderer scenes are not previewed.
 - Audio does not play during preview yet (M2 audio workspace).
 - Opening a file executes its Python. Open trusted projects only.

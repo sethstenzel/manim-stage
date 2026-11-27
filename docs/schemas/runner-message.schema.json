@@ -19,7 +19,8 @@
         "timeline",
         "frame",
         "done",
-        "error"
+        "error",
+        "snapshot"
       ]
     }
   },
@@ -156,6 +157,24 @@
         "traceback",
         "file",
         "line"
+      ]
+    },
+    {
+      "properties": {
+        "type": {
+          "const": "snapshot"
+        },
+        "frame": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "frame",
+        "path"
       ]
     }
   ],
