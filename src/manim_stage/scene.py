@@ -259,7 +259,24 @@ class StageMixin:
         """Audio-workspace clips added to this run: id, processed file, label, settings."""
         return list(getattr(self, "_stage_audio_clips", []))
 
+    # -- reactive values (signals) -----------------------------------------------------
+
+    def effect(self, fn: Any) -> Any:
+        """Run ``fn`` now and whenever a Signal/computed it reads changes (an updater)."""
+        from .signals import effect
+
+        return effect(fn, scene=self)
+
+    def bind(self, mobject: Any, *, align: Any = None, update: Any = None, **props: Any) -> Any:
+        """Keep ``mobject``'s properties equal to signal expressions (see signals.bind)."""
+        from .signals import bind
+
+        return bind(mobject, align=align, update=update, scene=self, **props)
+
     def tear_down(self) -> None:  # Manim hook, called after construct()
+        from .signals import dispose_all
+
+        dispose_all(self)  # effects and bindings end with the scene
         for name in self.stage_orphan_cues():
             log.warning(
                 "cue %r in %s is in the sidecar but no longer reached (orphan)",

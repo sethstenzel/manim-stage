@@ -27,6 +27,7 @@ Newest first. One line per decision; details in the linked ADR or PR.
 
 | Date | Decision | Why | Where |
 |---|---|---|---|
+| 2026-11-27 | `Signal` is a `ValueTracker` (values flattened into points); `computed` lazy+cached with tracking stack; `bind`/`effect` change-only updaters disposed at scene end | Manim concept kept (ADR-0013); `.animate` works for free; no per-frame recompute | PR #26 |
 | 2026-11-27 | M2 gate passed. AnimatedCode: ligatures off, all uncached lines in one Pango call, no system-font scan; `run_capture` cwd = scene folder | Exact glyph↔char mapping; a cold Pango call costs ~3.4 s on Windows; relative assets behave like `manim` | PR #25 |
 | 2026-11-27 | Code diff = patience lines → token LCS + moved lines + overrides + ambiguity warnings; `CodeEdit` interpolates raw arrays; line-glyph cache | MC behaviour plus explicit control; deterministic and fast enough for many edits | PR #24 |
 | 2026-11-27 | AnimatedCode: token = VGroup of glyphs; one MarkupText per line; marker glyph for exact grid; VectorizedPoint anchors; bundled JetBrains Mono; 1-based lines/cols | Fast, exact, OS-independent layout that survives transforms; editor-style coordinates | PR #23 |
@@ -147,8 +148,23 @@ One record per Motion Canvas feature. Status: **Ported** (implemented and tested
 - **Implementation:** `src/manim_stage/code.py`, `code_diff.py`, `src/manim_stage/fonts/`. Tests: `tests/test_code.py`, `tests/test_code_diff.py`. KB: `docs/kb/manim-stage/animated-code.md`.
 
 ### Signals (MC: `createSignal`, computed, effects)
-- **Status:** Designed (ADR-0013). Backlog 3.1.
-- **Manim mapping:** `Signal` subclasses `ValueTracker`; `computed()` derives read-only values; `effect()` registers updaters.
+- **Status:** Ported (3.1).
+- **MC behaviour:**
+  - signals are callable getters/setters;
+  - `createComputed` is lazy and cached, with automatic dependency tracking;
+  - node properties accept signals, so views follow state;
+  - tweening a signal animates everything bound to it.
+- **Manim mapping:**
+  - `Signal` **subclasses `ValueTracker`**: numbers, lists, arrays and colours are flattened into the tracker's points, so Manim's `.animate.set_value` interpolates them unchanged;
+  - `computed` is a pull-based cache over a global tracking stack, with cycle detection;
+  - `bind`/`effect` are Manim updaters that only act when their inputs changed;
+  - `StageMixin` disposes them at `tear_down`.
+- **Improvements over MC:**
+  - works with every existing `ValueTracker` idiom;
+  - `align=` keeps edges fixed when resizing (bars on a baseline);
+  - purity check and cycle-chain errors;
+  - deterministic pull order for preview/export parity.
+- **Implementation:** `src/manim_stage/signals.py`, `scene.py`. Tests: `tests/test_signals.py` (including the F06 acceptance array scene). KB: `docs/kb/manim-stage/signals.md`.
 
 ### Flow helpers (MC: `all`, `sequence`, `chain`, `delay`, `loop`, `tween`)
 - **Status:** Designed (ADR-0013). Backlog 3.4.

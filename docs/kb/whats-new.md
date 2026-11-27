@@ -2,6 +2,12 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-27 — signals on ValueTracker (backlog 3.1)
+
+- **New:** [`Signal`](manim-stage/signals.md) is a `ValueTracker` holding a number, list, array or colour, so `.animate.set_value` interpolates every component.
+- **New:** lazy, cached, dependency-tracked `computed`; `self.bind(mobject, height=..., color=..., align=DOWN)` and `self.effect(fn)` as change-only updaters, disposed at scene end.
+- **New:** `CycleError` with the dependency chain; `check_purity()`; `untracked()`.
+
 ## 2026-11-27 — M2 gate passed: narrated bubble-sort demo (backlog 2.7)
 
 - **New:** `examples/bubble_sort/` and the [tutorial](tutorials/narrated-bubble-sort.md): narration + cues + AnimatedCode, with no `wait()` timing.

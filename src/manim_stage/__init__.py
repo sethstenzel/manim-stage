@@ -4,6 +4,7 @@ Scene APIs (import Manim lazily, so ``import manim_stage`` stays cheap)::
 
     from manim_stage import StageScene, StageMixin   # self.cue(...), self.narration(...)
     from manim_stage import AnimatedCode, CodeRange  # code animation
+    from manim_stage import Signal, computed, bind     # reactive values (ValueTracker-based)
 """
 
 from __future__ import annotations
@@ -17,10 +18,25 @@ _LAZY = {
     "StageMixin": ("manim_stage.scene", "StageMixin"),
     "CueError": ("manim_stage.cues", "CueError"),
     "AnimatedCode": ("manim_stage.code", "AnimatedCode"),
+    "Signal": ("manim_stage.signals", "Signal"),
+    "computed": ("manim_stage.signals", "computed"),
+    "bind": ("manim_stage.signals", "bind"),
+    "effect": ("manim_stage.signals", "effect"),
     "CodeRange": ("manim_stage.code", "CodeRange"),
 }
 
-__all__ = ["AnimatedCode", "CodeRange", "CueError", "StageMixin", "StageScene", "__version__"]
+__all__ = [
+    "AnimatedCode",
+    "CodeRange",
+    "CueError",
+    "Signal",
+    "StageMixin",
+    "StageScene",
+    "__version__",
+    "bind",
+    "computed",
+    "effect",
+]
 
 
 def __getattr__(name: str) -> Any:
