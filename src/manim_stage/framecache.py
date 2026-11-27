@@ -62,8 +62,16 @@ class FrameCache:
     def put(self, revision: str, frame: int, image: Any, *, compress_level: int = 1) -> Path:
         """Store a PIL image atomically. Low PNG compression keeps writes fast."""
         target = self.path(revision, frame)
-        target.parent.mkdir(parents=True, exist_ok=True)
-        fd, tmp = tempfile.mkstemp(dir=target.parent, prefix=".tmp-", suffix=".png")
+        for attempt in range(5):
+            # A concurrent trim() may remove the (still empty) revision folder between
+            # mkdir and mkstemp; once our temp file exists the folder is not empty.
+            target.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                fd, tmp = tempfile.mkstemp(dir=target.parent, prefix=".tmp-", suffix=".png")
+                break
+            except FileNotFoundError:
+                if attempt == 4:
+                    raise
         try:
             with os.fdopen(fd, "wb") as f:
                 image.save(f, format="PNG", compress_level=compress_level)
