@@ -27,6 +27,7 @@ Newest first. One line per decision; details in the linked ADR or PR.
 
 | Date | Decision | Why | Where |
 |---|---|---|---|
+| 2026-11-27 | Educational helpers are Manim VGroups whose methods return animations; tree layout feeds Manim's `Graph` instead of a new graph class; traces recorded first (trusted function, JSON) then replayed with `play_trace` | F12; audit: Manim has `Graph`/`Table` but no array/stack/sequence helpers; no live execution in the viewer | PR #33 |
 | 2026-11-27 | Plugin SDK v1: entry points + api_version handshake; hooks for lanes/panels/inspector/commands/exporters through a narrow StudioAPI; per-hook failure isolation | F11; MC has no handshake; keep editor stable | PR #32 |
 | 2026-11-27 | M3 gate passed (themed three-scene lesson; deterministic compose; restyle via project only) | Spec §11 M3 | PR #31 |
 | 2026-11-27 | Asset validation = static scan resolved with Manim's rules + audio clips + fonts; presets map to Manim CLI flags | Fail before rendering; no second path resolver to drift from Manim | PR #30 |

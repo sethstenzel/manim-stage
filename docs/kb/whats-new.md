@@ -2,6 +2,14 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-27 — educational helpers (backlog 4.2)
+
+- **New:** [`manim_stage.edu`](manim-stage/edu.md):
+  - Mobjects: `Array` (with pointers), `LinkedList`, `Tree` (`from_heap`), `CallStack`, `SequenceDiagram`;
+  - `tree_layout` for Manim's `Graph`, and `label_edges` for weights that follow edges;
+  - traces: `trace_calls` records a trusted function's calls; `Trace.step` records algorithm steps; `play_trace` animates either.
+- **Example:** `examples/algorithms/gallery.py` (four scenes).
+
 ## 2026-11-27 — Studio plugin SDK (backlog 4.1)
 
 - **New:** [Studio plugins](manim-stage/plugins.md), API version 1:
