@@ -50,7 +50,7 @@ A local, offline knowledge base in `docs/kb/` covering **every feature and how t
 | 1.1 | `PreviewService` (no Qt, no socket): revisions, cancel/restart, stale-message discard, typed `PreviewMessage` events; dependency-aware revisions (hash imported modules/assets) | ☑ | F01; gate-report risk 2; ADR-0010 |
 | 1.2 | File watcher (debounce 200–500 ms) → new runner revision; traceback with file/line | ☑ | F01 |
 | 1.3 | Editor shell (Python/PySide6): scene picker, viewport, play/pause/step/speed, timecode, zoom/fit, dark/light, keyboard shortcuts, accessibility | ☑ | F01, ADR-0012, ADR-0013 |
-| 1.4 | Timeline UI: ruler (s/frames), zoom, range, play/wait/section/sound tracks, nested children, jump-to-source | ☐ | F02 |
+| 1.4 | Timeline UI: ruler (s/frames), zoom, range, play/wait/section/sound tracks, nested children, jump-to-source | ☑ | F02 |
 | 1.5 | Snapshot + range/full export through Manim CLI with progress/cancel | ☐ | F01, F10 |
 | 1.6 | `manim-stage studio` CLI; `[studio]` extra; packaging smoke test | ☐ | ADR-0009 |
 
@@ -62,7 +62,7 @@ The editor must cover every Motion Canvas editor capability **and** surface Mani
 |---|---|---|---|
 | MF.1 | `manim_stage.catalog`: introspect Mobjects, Animations, rate functions, colors, scene types, camera types, config options, plugins → JSON with category, signature, doc summary, KB link; coverage test over `manim.__all__` | ☐ | ADR-0011 |
 | MF.2 | Rich event metadata: animation class + category, rate function name, run_time, lag_ratio, target mobject class/name, `.animate` method chain, updaters, `ValueTracker` | ◐ | F02. Animations done (`catalog.animation_info`); updaters/`ValueTracker` with MF.5 |
-| MF.3 | Timeline knows Manim: per-category colour + icon (non-colour signal too), rate-function curve drawn in event bars, lag-ratio staircase for `LaggedStart`, wait vs `wait_until` vs frozen frame, `skip_animations` sections shown | ☐ | F02 |
+| MF.3 | Timeline knows Manim: per-category colour + icon (non-colour signal too), rate-function curve drawn in event bars, lag-ratio staircase for `LaggedStart`, wait vs `wait_until` vs frozen frame, `skip_animations` sections shown | ☑ | F02 |
 | MF.4 | Library panel: searchable catalog (Mobjects, Animations, rate functions with live curve, colours with swatches, scene types), docs summary, "copy Python" snippets | ☐ | |
 | MF.5 | Scene-tree inspector for any frame: `scene.mobjects` families (class, name, bounds, colour, opacity, z-index, updaters), read-only by default; opt-in editable via `expose()` (F08) | ☐ | F08 |
 | MF.6 | Manim config panel: quality presets (`-ql…-qk`), fps, resolution, background colour, renderer, format (mp4/mov/webm/gif/png), transparent, sections export | ☐ | F10 |

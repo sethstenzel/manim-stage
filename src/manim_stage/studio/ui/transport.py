@@ -43,8 +43,14 @@ class ScrubBar(QWidget):
         self.cached_count = 0
         self.range: tuple[int, int] | None = None
 
-    def set_state(self, total: int, frame: int, cached: Container[int], cached_count: int,
-                  range_: tuple[int, int] | None) -> None:  # fmt: skip
+    def set_state(
+        self,
+        total: int,
+        frame: int,
+        cached: Container[int],
+        cached_count: int,
+        range_: tuple[int, int] | None,
+    ) -> None:
         self.total, self.frame, self.cached = total, frame, cached
         self.cached_count, self.range = cached_count, range_
         self.setAccessibleDescription(
@@ -80,8 +86,10 @@ class ScrubBar(QWidget):
                 if inside and run_start is None:
                     run_start = i
                 elif not inside and run_start is not None:
-                    p.fillRect(QRectF(run_start * px, bar.top(), (i - run_start) * px,
-                                      bar.height()), QColor(c["cached"]))  # fmt: skip
+                    p.fillRect(
+                        QRectF(run_start * px, bar.top(), (i - run_start) * px, bar.height()),
+                        QColor(c["cached"]),
+                    )
                     run_start = None
             if self.range:
                 a, b = self.range
@@ -176,8 +184,9 @@ class TransportBar(QWidget):
         if not self._updating:
             self.frameEntered.emit(value)
 
-    def show_state(self, *, playing: bool, buffering: bool, frame: int, total: int,
-                   timecode: str) -> None:  # fmt: skip
+    def show_state(
+        self, *, playing: bool, buffering: bool, frame: int, total: int, timecode: str
+    ) -> None:
         self.btn_play.setProperty("icon_name", "pause" if playing else "play")
         self.refresh_icons()
         self.btn_play.setAccessibleName("Pause" if playing else "Play")

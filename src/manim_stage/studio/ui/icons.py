@@ -29,7 +29,7 @@ SHAPES = {
         p.addRect(QRectF(10, 14, 6, 36)),
         _tri(p, 16, 36, False),
         _tri(p, 34, 54, False),
-    ),  # fmt: skip
+    ),
     "end": lambda p: (_tri(p, 10, 30), _tri(p, 28, 48), p.addRect(QRectF(48, 14, 6, 36))),
 }
 

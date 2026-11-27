@@ -1,8 +1,8 @@
 # Studio editor
 
-- **Status:** Partial. Scene picker, viewport, playback, live reload and errors are available. The timeline (1.4), export (1.5) and `manim-stage studio` CLI (1.6) are Planned.
+- **Status:** Partial. Scene picker, viewport, playback, [timeline](timeline.md), live reload and errors are available. Export (1.5) and the `manim-stage studio` CLI (1.6) are Planned.
 - **Renderer:** Cairo (OpenGL scenes are labelled unsupported)
-- **Since:** PR #12
+- **Since:** PR #12 (timeline: PR #14)
 - **Spec:** F01 · **ADRs:** ADR-0010, ADR-0012, ADR-0013 · **Source:** `src/manim_stage/studio/ui/`, `studio/app.py`, `studio/playback.py`
 - **Motion Canvas origin:** the editor's viewport, playback controls and settings. **Built on:** Manim scenes rendered in child processes by the [preview service](preview-service.md); Manim's quality presets (`manim.constants.QUALITIES`).
 
@@ -43,6 +43,7 @@ app.exec()
 - **Scrub bar.** Filled segments are rendered frames; the rest is still rendering. Click or drag to seek.
 - **Live reload.** Saving the scene file or any file it uses (helper modules, images, data) starts a new render; the old one is cancelled. The playhead stays where it was if that frame still exists. Otherwise it resets to the start and the status bar says so.
 - **Errors.** The message and file:line show on the viewport and in the log, with the traceback. **Open file:line** jumps to it in your code editor: set `MANIM_STAGE_EDITOR`, e.g. `code -g {file}:{line}` or `subl {file}:{line}`. Without it, VS Code (`code`) is used if found, else the system default app.
+- **Timeline and Event panel.** Under the viewport; see [Timeline](timeline.md). The Event and Log panels share the right dock as tabs; an error brings the Log forward.
 - **Renderer badge.** It says what the preview is: Cairo, from cached frames. OpenGL is not supported in the preview yet, and is never silently substituted (spec §2.7).
 
 ## Keyboard shortcuts
@@ -61,6 +62,8 @@ app.exec()
 | Ctrl+0 / Ctrl+1 | Zoom to fit / 100% |
 | Ctrl++ / Ctrl+- (or Ctrl+wheel) | Zoom in / out |
 | Ctrl+Shift+T | Dark / light theme |
+
+Timeline-specific keys: see [Timeline → keyboard](timeline.md#keyboard-timeline-focused).
 
 ## Accessibility
 
@@ -83,7 +86,7 @@ Preferences (theme) are stored in an INI file under the user's config folder (`m
 
 ## Limitations and unsupported cases
 
-- No timeline tracks, export or snapshots yet (backlog 1.4, 1.5).
+- No export or snapshots yet (backlog 1.5).
 - OpenGL-renderer scenes are not previewed.
 - Audio does not play during preview yet (M2 audio workspace).
 - Opening a file executes its Python. Open trusted projects only.
