@@ -93,7 +93,7 @@ The editor must cover every Motion Canvas editor capability **and** surface Mani
 | 3.3 | `expose()` editable properties + inspector editing, sidecar persistence, undo/redo, copy-as-Python | ☑ | F08 |
 | 3.4 | Transitions + choreography helpers; multi-scene sequence with cross-scene transitions | ☑ | F09 |
 | 3.5 | Asset manager + validator; render presets; range export; export metadata inspection | ☑ | F10 (range export and metadata inspection since 1.5) |
-| 3.6 | M3 gate: multi-scene lesson with configurable visuals, deterministic exports | ☐ | |
+| 3.6 | M3 gate: multi-scene lesson with configurable visuals, deterministic exports | ☑ | PASSED: `docs/m3-gate-report.md` |
 
 ## M4 — Ecosystem and polish (P2/P3)
 

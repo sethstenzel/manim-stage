@@ -2,6 +2,11 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-27 — M3 gate passed: themed multi-scene lesson (backlog 3.6)
+
+- **New:** `examples/lesson_series/` and the [tutorial](tutorials/multi-scene-lesson.md): three scenes using theme, variables, signals, flow helpers, an exposed property and a composed sequence.
+- **Report:** `docs/m3-gate-report.md`. Exports are pixel-deterministic, and changing the project restyles every scene with no source edits.
+
 ## 2026-11-27 — assets, render presets, environment panel (backlog 3.5, MF.9)
 
 - **New:** [`manim-stage assets`](manim-stage/assets.md) and the Studio **Assets** tab:

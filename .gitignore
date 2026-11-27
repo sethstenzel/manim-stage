@@ -31,3 +31,5 @@ spikes/timeline.json
 .venv311/
 examples/**/narration*.wav
 examples/**/media/
+examples/**/lesson.mp4
+examples/**/*.sequence.json.mp4

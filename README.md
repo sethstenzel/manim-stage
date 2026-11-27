@@ -4,7 +4,7 @@ Motion Canvas–class authoring for [Manim Community Edition](https://github.com
 
 ![Studio editor](docs/kb/img/timeline-dark.png)
 
-> **Status:** M1 Studio MVP and M2 teaching workflow complete ([M1](docs/m1-gate-report.md), [M2](docs/m2-gate-report.md) gate reports). Try the [narrated bubble-sort example](examples/bubble_sort/). Next: M3 (derived values, themes, inspector, transitions).
+> **Status:** M1 Studio, M2 teaching workflow and M3 composition/customisation are complete ([M1](docs/m1-gate-report.md), [M2](docs/m2-gate-report.md), [M3](docs/m3-gate-report.md) gate reports). Examples: [narrated bubble sort](examples/bubble_sort/), [themed lesson series](examples/lesson_series/). Next: M4 (plugin SDK, educational helpers, polish).
 >
 > - Spec: [`spec.md`](spec.md)
 > - Knowledge base: [`docs/kb/`](docs/kb/README.md)

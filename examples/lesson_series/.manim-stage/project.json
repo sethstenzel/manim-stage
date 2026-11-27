@@ -1,0 +1,8 @@
+{
+  "schema": "manim_stage.project",
+  "version": 1,
+  "theme": {
+    "colors": {"accent": "#FFC857", "primary": "#58C4DD", "success": "#83C167", "text": "#FFFFFF", "muted": "#9AA3AD", "background": "#0F1720"}
+  },
+  "variables": {"speed": {"type": "number", "value": 1.0, "default": 1.0, "min": 0.25, "max": 4, "description": "pacing multiplier"}}
+}
