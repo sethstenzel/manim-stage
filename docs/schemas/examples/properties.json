@@ -1,0 +1,12 @@
+{
+  "schema": "manim_stage.properties",
+  "version": 1,
+  "scenes": {
+    "Labeled": {
+      "node": {
+        "fill_color": "#FF0000",
+        "scale": 1.2
+      }
+    }
+  }
+}

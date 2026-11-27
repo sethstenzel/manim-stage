@@ -16,7 +16,7 @@ How Motion Canvas features map to manim-stage. Behaviour is described in our own
 | Code animations | Token-level patience diff; unchanged tokens slide, changed ones cross-fade | [`AnimatedCode`](../manim-stage/animated-code.md): `animate_to` / `replace` / `insert` / `remove`. Line-level patience diff, then a token LCS; adds moved-line detection, override mappings and ambiguity warnings | Available |
 | Signals | Lazy computed values with dependency tracking | [`Signal`](../manim-stage/signals.md) *is* a `ValueTracker`; `computed`, `bind`, `effect` are cached updaters | Available |
 | Project variables | Reactive variables, untyped, no editor UI | [Typed, validated `project.var()` + theme](../manim-stage/project.md) with a Studio Project panel | Available |
-| Inspector | Read-only node inspection | Opt-in inspector with editing persisted to a sidecar | Planned (M3) |
+| Inspector | Read-only node inspection | [Inspector](../manim-stage/inspector.md): any Mobject read-only; `expose()`d properties editable with preview, save (sidecar), undo, copy as Python | Available |
 | Transitions | Slide/fade/zoom between scenes | File-level transitions between scenes | Planned (M3) |
 | Rendering | In the browser tab only; image sequence or FFmpeg | Manim CLI stays the renderer; headless and reproducible | Available (Manim) |
 | (none; Manim ecosystem) manim-voiceover `self.voiceover()` + bookmarks | TTS narration with text bookmarks | [`self.narration()`](../manim-stage/narration.md): recorded audio, bookmarks as draggable cues, word timings, cache import | Available |

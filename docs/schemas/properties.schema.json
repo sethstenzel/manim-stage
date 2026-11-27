@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/sethstenzel/manim-stage/docs/schemas/properties.schema.json",
+  "title": "manim-stage exposed properties sidecar v1",
+  "description": "`.manim-stage/properties.json`: saved edits of properties a scene opted in with self.expose(mobject, name, *props) (spec F08, \u00a78 EditableProperty; backlog 3.3). Applied by expose(), so plain manim render reproduces them. Status: implemented (manim_stage.inspector).",
+  "type": "object",
+  "required": [
+    "schema",
+    "version",
+    "scenes"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "manim_stage.properties"
+    },
+    "version": {
+      "const": 1
+    },
+    "scenes": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {
+          "$ref": "#/$defs/Props"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "Props": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fill_color": {
+          "$ref": "#/$defs/Color"
+        },
+        "stroke_color": {
+          "$ref": "#/$defs/Color"
+        },
+        "color": {
+          "$ref": "#/$defs/Color"
+        },
+        "fill_opacity": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "opacity": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "stroke_width": {
+          "type": "number",
+          "minimum": 0
+        },
+        "scale": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "z_index": {
+          "type": "integer"
+        },
+        "position": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 3,
+          "maxItems": 3
+        }
+      }
+    },
+    "Color": {
+      "type": "string",
+      "pattern": "^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$"
+    }
+  }
+}

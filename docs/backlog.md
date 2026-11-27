@@ -62,10 +62,10 @@ The editor must cover every Motion Canvas editor capability **and** surface Mani
 | # | Item | Status | Notes |
 |---|---|---|---|
 | MF.1 | `manim_stage.catalog`: introspect Mobjects, Animations, rate functions, colors, scene types, camera types, config options, plugins → JSON with category, signature, doc summary, KB link; coverage test over `manim.__all__` | ☐ | ADR-0011 |
-| MF.2 | Rich event metadata: animation class + category, rate function name, run_time, lag_ratio, target mobject class/name, `.animate` method chain, updaters, `ValueTracker` | ◐ | F02. Animations done (`catalog.animation_info`); updaters/`ValueTracker` with MF.5 |
+| MF.2 | Rich event metadata: animation class + category, rate function name, run_time, lag_ratio, target mobject class/name, `.animate` method chain, updaters, `ValueTracker` | ☑ | F02. Animations: `catalog.animation_info`; updaters: counted per Mobject in the inspector; `ValueTracker`: `Signal` (3.1) |
 | MF.3 | Timeline knows Manim: per-category colour + icon (non-colour signal too), rate-function curve drawn in event bars, lag-ratio staircase for `LaggedStart`, wait vs `wait_until` vs frozen frame, `skip_animations` sections shown | ☑ | F02 |
 | MF.4 | Library panel: searchable catalog (Mobjects, Animations, rate functions with live curve, colours with swatches, scene types), docs summary, "copy Python" snippets | ☐ | |
-| MF.5 | Scene-tree inspector for any frame: `scene.mobjects` families (class, name, bounds, colour, opacity, z-index, updaters), read-only by default; opt-in editable via `expose()` (F08) | ☐ | F08 |
+| MF.5 | Scene-tree inspector for any frame: `scene.mobjects` families (class, name, bounds, colour, opacity, z-index, updaters), read-only by default; opt-in editable via `expose()` (F08) | ☑ | F08 |
 | MF.6 | Manim config panel: quality presets (`-ql…-qk`), fps, resolution, background colour, renderer, format (mp4/mov/webm/gif/png), transparent, sections export | ☐ | F10 |
 | MF.7 | Sections navigator: Manim `next_section` names/types, `skip_animations`, per-section export (`--save_sections`) | ☐ | F02, F10 |
 | MF.8 | Camera-aware preview: `MovingCameraScene` frame overlay, `ZoomedScene`, `ThreeDScene` orientation readout; renderer capability labels (Cairo/OpenGL) | ☐ | spec §2.7 |
@@ -90,7 +90,7 @@ The editor must cover every Motion Canvas editor capability **and** surface Mani
 |---|---|---|---|
 | 3.1 | Derived values on `ValueTracker` (F06 in Manim terms, ADR-0013): derived trackers, bound updaters, dependency tracking, cycle detection, disposal | ☑ | F06 |
 | 3.2 | Project config / variables / themes (`project.json` settings, `stage.theme`) resolved identically in CLI and Studio | ☑ | F07 |
-| 3.3 | `expose()` editable properties + inspector editing, sidecar persistence, undo/redo, copy-as-Python | ☐ | F08 |
+| 3.3 | `expose()` editable properties + inspector editing, sidecar persistence, undo/redo, copy-as-Python | ☑ | F08 |
 | 3.4 | Transitions + choreography helpers; multi-scene sequence with cross-scene transitions | ☐ | F09 |
 | 3.5 | Asset manager + validator; render presets; range export; export metadata inspection | ☐ | F10 |
 | 3.6 | M3 gate: multi-scene lesson with configurable visuals, deterministic exports | ☐ | |

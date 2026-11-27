@@ -89,6 +89,7 @@ class Revision:
     frames: dict[int, Path] = field(default_factory=dict)
     error: dict[str, Any] | None = None
     timings: dict[str, float] = field(default_factory=dict)
+    env: dict[str, str] = field(default_factory=dict)  # extra child env (e.g. previews)
     frames_drawn: int = 0
 
 
@@ -120,6 +121,7 @@ class PreviewService:
         self._known_deps: list[Path] = []
         self._last_scene: str | None = None
         self._last_settings: RenderSettings | None = None
+        self._last_env: dict[str, str] = {}
         self._watcher: FileWatcher | None = None
 
     # -- subscription ---------------------------------------------------------------
@@ -192,7 +194,66 @@ class PreviewService:
         self._emit(PreviewMessage("scenes", 0, {"file": str(self.file), "scenes": scenes}))
         return scenes
 
-    def render(self, scene: str, settings: RenderSettings | None = None) -> int:
+    def inspect_at(
+        self,
+        scene: str,
+        seconds: float,
+        settings: RenderSettings | None = None,
+        env: dict[str, str] | None = None,
+        timeout: float = 300,
+    ) -> dict[str, Any]:
+        """The scene's Mobject tree at ``seconds`` (runner ``--inspect-at``). Blocking:
+        call it from a worker thread. Raises RunnerError on scene errors."""
+        import json
+
+        from ..runner import RunnerError
+
+        s = settings or self.settings
+        cmd = runner_command(
+            self.file,
+            scene,
+            fps=s.fps,
+            width=s.width,
+            height=s.height,
+            seed=s.seed,
+            python=self.python,
+        )
+        cmd += [
+            "--inspect-at",
+            repr(float(seconds)),
+            "--media-dir",
+            str(self.cache_dir / ".media" / "inspect"),
+        ]
+        proc = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=timeout,
+            cwd=self.cwd,
+            env={**child_env(), **(env or {})},
+        )
+        for raw in proc.stdout.splitlines():
+            try:
+                m = json.loads(raw)
+            except json.JSONDecodeError:
+                continue
+            if m.get("type") == "inspect":
+                return m
+            if m.get("type") == "error":
+                raise RunnerError(
+                    m["message"], file=m.get("file"), line=m.get("line"), tb=m.get("traceback", "")
+                )
+        raise RunnerError(f"inspection failed (exit {proc.returncode})", tb=proc.stderr)
+
+    def render(
+        self,
+        scene: str,
+        settings: RenderSettings | None = None,
+        *,
+        env: dict[str, str] | None = None,
+    ) -> int:
         """Start a new revision of ``scene``; cancels the running one. Returns its seq."""
         with self._lock:
             if self._closed:
@@ -200,8 +261,9 @@ class PreviewService:
             self._cancel_locked("superseded")
             seq = next(self._seq)
             self._last_scene = scene
-            rev = Revision(seq, scene, settings or self.settings)
+            rev = Revision(seq, scene, settings or self.settings, env=dict(env or {}))
             self._last_settings = rev.settings  # live reload re-renders with these
+            self._last_env = rev.env
             self._current = rev
             self._idle.clear()
             self._start_locked(rev)
@@ -248,7 +310,7 @@ class PreviewService:
             scene = self._last_scene
             self._emit(PreviewMessage("changed", 0, {"files": [str(f) for f in files]}))
             if scene is not None:
-                self.render(scene, self._last_settings)
+                self.render(scene, self._last_settings, env=self._last_env)
 
     def close(self) -> None:
         self.unwatch()
@@ -312,6 +374,7 @@ class PreviewService:
                 on_stderr=lambda line, seq=rev.seq: self._on_stderr(seq, line),
                 on_exit=lambda code, seq=rev.seq: self._on_exit(seq, code, remaining),
                 cwd=self.cwd,
+                env=rev.env,
             )
             self._procs.append(proc)
 

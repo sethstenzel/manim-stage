@@ -267,6 +267,36 @@ class StageMixin:
         """Audio-workspace clips added to this run: id, processed file, label, settings."""
         return list(getattr(self, "_stage_audio_clips", []))
 
+    # -- inspector (exposed properties) -------------------------------------------------
+
+    def expose(self, mobject: Any, name: str, *props: str) -> Any:
+        """Name ``mobject`` for the Studio inspector and make ``props`` editable.
+
+        Saved edits from ``.manim-stage/properties.json`` are applied here, so plain
+        ``manim render`` reproduces them. Properties: fill_color, stroke_color, color,
+        fill_opacity, stroke_width, opacity, position, scale, z_index.
+        """
+        from . import inspector
+
+        unknown = set(props) - set(inspector.EDITABLE)
+        if unknown:
+            raise ValueError(
+                f"expose({name!r}): unknown properties {sorted(unknown)}; "
+                f"editable: {sorted(inspector.EDITABLE)}"
+            )
+        try:
+            anchor = Path(inspect.getfile(type(self)))
+        except (OSError, TypeError):
+            anchor = None
+        saved = inspector.load(inspector.sidecar_path(anchor)).get(type(self).__name__, {})
+        inspector.apply(mobject, {k: v for k, v in saved.get(name, {}).items() if k in props})
+        mobject.name = name
+        exposed = getattr(self, "_stage_exposed", None)
+        if exposed is None:
+            exposed = self._stage_exposed = {}
+        exposed[id(mobject)] = inspector.Exposed(name, tuple(props), _user_source())
+        return mobject
+
     # -- reactive values (signals) -----------------------------------------------------
 
     def effect(self, fn: Any) -> Any:
