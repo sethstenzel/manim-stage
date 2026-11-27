@@ -2,6 +2,12 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-26 — regression baseline (backlog 0.7)
+
+- **New:** [Regression tests and golden frames](workflow/regression-tests.md).
+  - Importing manim-stage leaves Manim CLI output byte-identical.
+  - Golden frames of 3 unmodified scenes, checked on Windows, Linux and macOS.
+
 ## 2026-11-26 — knowledge base created (backlog 0.10)
 
 - **New pages:** [Event capture](manim-stage/event-capture.md), [Scene runner](manim-stage/runner.md), [Frame cache](manim-stage/frame-cache.md).
