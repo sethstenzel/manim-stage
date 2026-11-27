@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/sethstenzel/manim-stage/docs/schemas/editable-property.schema.json",
+  "title": "manim-stage editable property v1 (draft)",
+  "description": "A property of an opted-in object shown in the inspector (spec §8 EditableProperty, F08). Status: DRAFT, not implemented (M3).",
+  "type": "object",
+  "required": ["object_id", "key", "type", "value", "writable", "persist"],
+  "additionalProperties": false,
+  "properties": {
+    "object_id": {"type": "string", "minLength": 1},
+    "key": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_.]*$"},
+    "type": {"enum": ["number", "integer", "boolean", "string", "color", "point", "enum"]},
+    "value": {},
+    "units": {"type": "string"},
+    "minimum": {"type": "number"},
+    "maximum": {"type": "number"},
+    "options": {"type": "array"},
+    "writable": {"type": "boolean"},
+    "persist": {
+      "enum": ["ephemeral", "sidecar", "python"],
+      "description": "ephemeral: preview only; sidecar: saved to .manim-stage; python: offered as a reviewable code change"
+    }
+  },
+  "allOf": [
+    {"if": {"properties": {"type": {"const": "enum"}}}, "then": {"required": ["options"]}},
+    {"if": {"properties": {"type": {"const": "color"}}}, "then": {"properties": {"value": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$"}}}},
+    {"if": {"properties": {"type": {"const": "point"}}}, "then": {"properties": {"value": {"type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3}}}}
+  ]
+}

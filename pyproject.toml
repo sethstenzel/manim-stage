@@ -23,7 +23,11 @@ dependencies = ["manim"]
 repository = "https://github.com/sethstenzel/manim-stage"
 
 [dependency-groups]
-dev = ["pytest>=8", "ruff>=0.8"]
+dev = [
+    "jsonschema>=4.23",
+    "pytest>=8",
+    "ruff>=0.8",
+]
 
 [tool.uv.sources]
 # Keep in sync with upstreams.json (scripts/upstream_sync.py bump updates it).

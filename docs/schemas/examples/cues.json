@@ -1,0 +1,14 @@
+{
+  "schema": "manim_stage.cues",
+  "version": 1,
+  "frame_rate": 30,
+  "scenes": {
+    "BubbleSortLesson": {
+      "cues": {
+        "introduce_array": {"target_frame": 30, "description": "after 'here is our array'"},
+        "explain_swap": {"target_frame": 210, "audio_segment": "narration.wav#2"},
+        "old_cue": {"target_frame": 400, "tombstone": true}
+      }
+    }
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/sethstenzel/manim-stage/docs/schemas/runner-message.schema.json",
+  "title": "manim-stage runner message v1",
+  "description": "One JSON line on the runner's stdout (spec §8 PreviewMessage, runner half; ADR-0004). The browser-facing preview protocol (M1) will extend this with request IDs, commands and cancellation. Status: implemented.",
+  "type": "object",
+  "required": ["v", "type"],
+  "properties": {
+    "v": {"const": 1},
+    "type": {"enum": ["hello", "timeline", "frame", "done", "error"]}
+  },
+  "oneOf": [
+    {
+      "properties": {
+        "type": {"const": "hello"},
+        "manim_version": {"type": "string"},
+        "pid": {"type": "integer"}
+      },
+      "required": ["manim_version", "pid"]
+    },
+    {
+      "properties": {
+        "type": {"const": "timeline"},
+        "revision": {"type": "string", "pattern": "^[0-9a-f]{16,64}$"},
+        "timeline": {"$ref": "timeline.schema.json"}
+      },
+      "required": ["revision", "timeline"]
+    },
+    {
+      "properties": {
+        "type": {"const": "frame"},
+        "frame": {"type": "integer", "minimum": 0},
+        "path": {"type": "string"}
+      },
+      "required": ["frame", "path"]
+    },
+    {
+      "properties": {
+        "type": {"const": "done"},
+        "elapsed_s": {"type": "number", "minimum": 0},
+        "timings": {"type": "object", "additionalProperties": {"type": "number"}},
+        "frames_drawn": {"type": "integer", "minimum": 0}
+      },
+      "required": ["elapsed_s", "timings", "frames_drawn"]
+    },
+    {
+      "properties": {
+        "type": {"const": "error"},
+        "message": {"type": "string"},
+        "traceback": {"type": "string"},
+        "file": {"type": ["string", "null"]},
+        "line": {"type": ["integer", "null"]}
+      },
+      "required": ["message", "traceback", "file", "line"]
+    }
+  ]
+}

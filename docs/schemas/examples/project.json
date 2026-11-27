@@ -1,0 +1,10 @@
+{
+  "schema": "manim_stage.project",
+  "version": 1,
+  "studio_version": "0.0.1.dev0",
+  "manim_build": "0.22.1+g8c258a0082dc760d9a93671bbdfaca3cc53a6f91",
+  "settings": {"frame_rate": 30, "pixel_width": 1920, "pixel_height": 1080, "seed": 0},
+  "scenes": [{"file": "lessons/bubble_sort.py", "class": "BubbleSortLesson"}],
+  "assets": ["audio/narration.wav"],
+  "cues_file": ".manim-stage/cues.json"
+}
