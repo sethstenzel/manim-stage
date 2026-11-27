@@ -123,3 +123,17 @@ def test_syntax_error_points_at_the_line_and_recovers_on_save(project):
     scene.write_text(SCENE, encoding="utf-8")
     assert wait_for(lambda: done_seqs(rec))
     assert svc.current.state == "done"
+
+
+def test_reload_keeps_the_render_settings(project):
+    """Regression: live reload used to fall back to the service's default quality."""
+    from manim_stage.studio import RenderSettings
+
+    proj, svc, rec = project
+    custom = RenderSettings(fps=10, width=192, height=108, workers=2)
+    svc.render("S", custom)
+    assert svc.wait_idle(120) and svc.current.state == "done"
+    svc.watch(debounce=0.2)
+    (proj / "helper.py").write_text("SIDE = 3.0", encoding="utf-8")
+    assert wait_for(lambda: len(done_seqs(rec)) == 2)
+    assert svc.current.settings == custom

@@ -145,6 +145,8 @@ class MainWindow(QMainWindow):
         self.timer.start(10)
 
         self.refresh_scenes()
+        if self.requested_scene:  # don't wait for discovery when the scene is known
+            self.render()
 
     # -- toolbar & actions ------------------------------------------------------------
 

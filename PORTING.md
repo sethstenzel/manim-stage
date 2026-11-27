@@ -27,6 +27,7 @@ Newest first. One line per decision; details in the linked ADR or PR.
 
 | Date | Decision | Why | Where |
 |---|---|---|---|
+| 2026-11-27 | M1 gate passed; live reload reuses the last render settings; requested scene renders before discovery finishes | Gate evidence in `docs/m1-gate-report.md`; the reload bug was found by the latency benchmark | PR #17 |
 | 2026-11-27 | Export = visible `manim render` command; range via `-n` snapped to whole calls; PyAV result check | Manim stays the renderer (spec §2.1); reproducible headlessly (§13); no lossy re-cut | PR #15 |
 | 2026-11-27 | PySide6 < 6.12 on Python 3.11 (6.12.0 drops None/True refs per signal on 3.11/Linux → abort); guard test | Found via Linux CI SIGABRT; reproduced in WSL; 6.11.3 and 3.12+ clean | PR #14 |
 | 2026-11-27 | Background → GUI events via a deque drained by a GUI timer; windows delete on close | No cross-thread Qt calls; Qt objects never finalised on runner threads | PR #14 |
@@ -120,7 +121,7 @@ One record per Motion Canvas feature. Status: **Ported** (implemented and tested
 - **Manim mapping:** `manim_stage.plugins` entry points with a version handshake; bridges Manim's own plugins.
 
 ### Editor shell (MC: browser editor with live project preview)
-- **Status:** In progress. Engine (1.1), live reload (1.2) and the PySide6 shell (1.3) ported; timeline (1.4) and export (1.5) next.
+- **Status:** Ported (M1 gate passed, `docs/m1-gate-report.md`).
 - **MC behaviour:** the editor runs the project in the page; Vite hot-reloads changed modules and the player re-runs the scene, keeping the playhead.
 - **Manim mapping:** `PreviewService` (no Qt, no socket) runs each revision in fresh runner children; frames come from the cache; PySide6 UI subscribes to typed `PreviewMessage`s.
 - **Improvements over MC:** a crashing or hanging scene can't take down the editor (separate process, killable tree); dependency-aware cache keys; stale results can never overwrite current ones (integer `seq`).

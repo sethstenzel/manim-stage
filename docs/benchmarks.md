@@ -50,3 +50,23 @@ uv run python benchmarks/profile_frames.py 1920 1080 30   # draw vs PNG cost per
 - Encode previews as WebP/JPEG or uncompressed BMP to cut ~17 ms/frame. Golden parity tests keep PNG.
 - A persistent warm worker pool, to avoid re-import per revision. This conflicts with ADR-0004's fresh-process rule, so a pool would need per-revision fork/spawn hygiene.
 - Draw visible-range frames first (seek-priority ordering).
+
+## Studio editor latency (M1 gate, 2026-11-27)
+
+`benchmarks/studio_latency.py` drives the real editor window (offscreen Qt) on the 10 s reference scene with 4 workers. Same machine as above (Windows 11, 16 logical CPUs). Raw results: `benchmarks/results-2026-11-27-studio-*-win11.json`.
+
+| Preview quality | Frames | Open → timeline | Open → first frame | Open → all frames | Save → first new frame | Save → all frames | Seek median / p95 |
+|---|---|---|---|---|---|---|---|
+| Low 480p15 | 160 | 2.9 s | 3.1 s | 4.3 s | 2.0 s | 3.2 s | 15.2 / 17.2 ms |
+| Medium 720p30 | 317 | 2.9 s | 3.1 s | 5.9 s | 2.1 s | 4.9 s | 18.3 / 20.0 ms |
+| High 1080p60 | 630 | 3.0 s | 3.3 s | 12.6 s | 2.2 s | 11.9 s | 24.6 / 26.7 ms |
+
+- **Seek** is end to end in the editor: playhead moved → frame on screen, including PNG decode on a pixmap-cache miss, timeline and transport updates.
+- **Save** includes the 0.3 s debounce.
+- **Open** includes scene discovery running alongside the first render.
+- **Found by this benchmark:** live reload re-rendered at the service's default quality instead of the window's. Fixed, with a regression test (`test_reload_keeps_the_render_settings`).
+- **Against spec §9:**
+  - scrub ≤ 100 ms: met (≤ 27 ms p95, even at 1080p);
+  - debounce 200–500 ms with cancel/restart: met (0.3 s);
+  - first usable preview of a simple 10 s 1080p scene ≤ 10 s: met at 30 fps (8.0 s, above). At 1080p**60** (twice the frames) it takes 12.6 s, but the first frame shows after 3.3 s and frames stream in from then on.
+- **Where the ~3 s to first frame goes:** Python start-up and `import manim` per child (~1.2 s), importing the scene and laying out `Text`, and the timeline pass. A warm runner pool would cut the first part (noted for M4 performance work).
