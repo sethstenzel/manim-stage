@@ -84,7 +84,7 @@ assert sorted(result.frames) == list(range(result.timeline.duration_frames))
 
 ## Limitations and unsupported cases
 
-- **Not in the revision:** imported helper modules and asset files. Editing them doesn't invalidate the cache unless you pass them in `extra`. Automatic dependency tracking is planned.
+- **Imported modules and assets:** the runner hashes every local file the scene imported or opened into the revision (see [preview service → dependencies](preview-service.md#how-it-works)). Files opened from C code (fonts) are not tracked.
 - **Frames are PNG**, about 95 kB per frame at 1080p. There is no in-memory cache yet.
 - **Not covered:** scenes using wall-clock time, unseeded randomness or `dt`-dependent updaters may not replay identically. A warning for these is planned (ADR-0007).
 - **No live scrubbing:** scrubbing uses cached frames only. True live scrubbing (seek P3) is not feasible with current Manim.

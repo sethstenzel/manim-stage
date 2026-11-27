@@ -56,10 +56,13 @@ Anything the scene or Manim prints goes to **stderr**, so stdout carries only th
 | `type` | Fields |
 |---|---|
 | `hello` | `manim_version`, `pid` |
-| `timeline` | `revision`, `timeline` (see [event capture](event-capture.md)) |
+| `scenes` | with `--list`: `scenes` (`name`, `line`, `bases`) |
+| `timeline` | `revision`, `timeline` (see [event capture](event-capture.md)), `dependencies` (local files the scene imported or opened) |
 | `frame` | `frame` (index), `path` (PNG in the cache) |
 | `done` | `elapsed_s`, `timings` (`import`, `timeline`, `frames`, `total`, seconds since start), `frames_drawn` |
 | `error` | `message`, `traceback`, `file`, `line` (innermost frame in the scene file if any) |
+
+**Streaming:** `RunnerProcess(cmd, on_message=...)` runs one child and calls back per message; `kill()` ends it with everything it spawned. The [preview service](preview-service.md) is built on it.
 
 **The parent**, `run_capture(...)`, runs the child(ren), parses the messages and returns a `RunResult`, or raises `RunnerError` with `.file`, `.line` and `.traceback`.
 

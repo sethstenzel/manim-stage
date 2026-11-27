@@ -52,10 +52,11 @@ def runner_lines(scene: str, *extra: str) -> list[dict]:
 def test_runner_messages_match_schema(tmp_path):
     msgs = runner_lines("MixedRunTimes", "--cache-dir", str(tmp_path))
     msgs += runner_lines("Broken")
+    msgs += runner_lines("--list")
     v = validator("runner-message.schema.json")
     for m in msgs:
         v.validate(m)
-    assert {m["type"] for m in msgs} == {"hello", "timeline", "frame", "done", "error"}
+    assert {m["type"] for m in msgs} == {"hello", "scenes", "timeline", "frame", "done", "error"}
 
 
 @pytest.mark.parametrize(
