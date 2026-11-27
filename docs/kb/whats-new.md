@@ -2,6 +2,14 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-27 — camera-aware preview (backlog MF.8)
+
+- **New:** [camera readout](manim-stage/camera.md):
+  - the moved or zoomed frame centre and width, `ThreeDCamera` φ θ γ and zoom, and the `ZoomedScene` zoomed camera, per frame;
+  - recorded inside cached PNGs.
+- **Changed:** viewport clicks and inspector selection boxes now map through a moved camera frame.
+- **Changed:** the renderer badge names the scene type and camera, and flags `renderer = opengl` exports.
+
 ## 2026-11-27 — Config and Sections tabs (backlog MF.6, MF.7)
 
 - **New:** [Config tab](manim-stage/config.md):

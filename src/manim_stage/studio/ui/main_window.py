@@ -13,6 +13,7 @@ renderer, sections.
 
 from __future__ import annotations
 
+import json
 import os
 import threading
 import time
@@ -36,10 +37,10 @@ from PySide6.QtWidgets import (
 )
 
 from ... import audio as audio_core
+from ... import camera_info, manimcfg
 from ... import cues as cue_store
 from ... import demo as demo_core
 from ... import inspector as inspector_core
-from ... import manimcfg
 from ... import plugins as plugins_core
 from ... import project as project_core
 from ...export import snapshot
@@ -244,6 +245,10 @@ class MainWindow(QMainWindow):
         self.status_label = QLabel("")
         self.status_label.setAccessibleName("Render status")
         self.statusBar().addWidget(self.status_label, 1)
+        self.camera_label = QLabel("")
+        self.camera_label.setAccessibleName("Camera state at the playhead")
+        self.statusBar().addPermanentWidget(self.camera_label)
+        self.viewport.cameraChanged.connect(self._on_camera)
 
         # wiring
         self.audio = AudioPlayer()
@@ -521,6 +526,7 @@ class MainWindow(QMainWindow):
         self._prepare_audio(msg.seq, tl)
         self.timeline.set_timeline(self._with_plugin_events(self._with_silent_clips(tl)))
         self.sections_panel.set_timeline(tl)
+        self._update_renderer_badge()
         sel = self.timeline.canvas.selected
         if sel:  # stable event IDs: keep the selection across re-renders
             self.timeline.canvas.select(sel)
@@ -717,6 +723,35 @@ class MainWindow(QMainWindow):
         start = pb.range.start if pb.range else 0
         pb.set_range(start, pb.frame + 1)
         self._sync_transport()
+
+    # -- camera & renderer (MF.8) --------------------------------------------------------
+
+    def _on_camera(self, state) -> None:
+        """Camera readout for the shown frame (moved, zoomed or 3D cameras only)."""
+        fw = (self.viewport.scene_frame or (14.2222, 8.0))[0]
+        text = "" if camera_info.is_default(state, fw) else camera_info.describe(state, fw)
+        self.camera_label.setText(f"📷 {text}" if text else "")
+        self.camera_label.setToolTip(json.dumps(state, indent=1) if state else "")
+
+    def _update_renderer_badge(self) -> None:
+        """Say what the preview is: Cairo frames, the scene type and camera, and when
+        exports would use another renderer (never substituted silently, spec §2.7)."""
+        scene = self.current_scene()
+        info = next((s for s in getattr(self, "scenes", []) if s["name"] == scene), None)
+        base = info["bases"][0] if info and info.get("bases") else "Scene"
+        cameras = {"ThreeDScene": "ThreeDCamera", "SpecialThreeDScene": "ThreeDCamera"}
+        camera = cameras.get(base, "MultiCamera" if base == "ZoomedScene" else "Camera")
+        export_renderer = manimcfg.read(self.cfg_path()).get("renderer", "cairo")
+        text = f" Renderer: Cairo · {base} ({camera}) · preview from cached frames "
+        tip = (
+            "Frames are rendered by Manim's Cairo renderer and cached for scrubbing.\n"
+            f"Scene type {base}; camera {camera}."
+        )
+        if export_renderer == "opengl":
+            text += "· exports: OpenGL "
+            tip += "\nmanim.cfg sets renderer = opengl: exports use OpenGL, the preview Cairo."
+        self.renderer_badge.setText(text)
+        self.renderer_badge.setToolTip(tip)
 
     # -- sections (MF.7) and manim.cfg (MF.6) -------------------------------------------
 
@@ -1030,6 +1065,7 @@ class MainWindow(QMainWindow):
             self.project_panel.reload()
         if path == self.cfg_path():
             self.config_panel.reload()
+            self._update_renderer_badge()
         self.status_label.setText(f"{label} — saved to {path.name}; re-rendering…")
         self.render()
 

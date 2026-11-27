@@ -68,7 +68,7 @@ The editor must cover every Motion Canvas editor capability **and** surface Mani
 | MF.5 | Scene-tree inspector for any frame: `scene.mobjects` families (class, name, bounds, colour, opacity, z-index, updaters), read-only by default; opt-in editable via `expose()` (F08) | ☑ | F08 |
 | MF.6 | Manim config panel: quality presets (`-ql…-qk`), fps, resolution, background colour, renderer, format (mp4/mov/webm/gif/png), transparent, sections export | ☑ | F10. Edits `manim.cfg` [CLI]; quality presets live in the toolbar and Export dialog |
 | MF.7 | Sections navigator: Manim `next_section` names/types, `skip_animations`, per-section export (`--save_sections`) | ☑ | F02, F10 |
-| MF.8 | Camera-aware preview: `MovingCameraScene` frame overlay, `ZoomedScene`, `ThreeDScene` orientation readout; renderer capability labels (Cairo/OpenGL) | ☐ | spec §2.7 |
+| MF.8 | Camera-aware preview: `MovingCameraScene` frame overlay, `ZoomedScene`, `ThreeDScene` orientation readout; renderer capability labels (Cairo/OpenGL) | ☑ | spec §2.7. In this Manim every scene's camera frame is animatable (MovingCameraScene deprecated): readout + click/selection mapping instead of an overlay |
 | MF.9 | Environment health: LaTeX availability, fonts (`manimpango.list_fonts()`), FFmpeg/PyAV codecs, installed Manim plugins (`manim.plugins` entry points) | ☑ | F10. `manim-stage doctor` + Studio Assets tab |
 | MF.10 | Text/LaTeX helpers: font picker, `MathTex` substring colouring preview, `Tex` template selection | ☐ | F07 |
 
