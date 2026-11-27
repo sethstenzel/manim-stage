@@ -29,6 +29,9 @@ studio = [
     "PySide6-Essentials>=6.8; python_version >= '3.12'",
 ]
 
+[project.scripts]
+manim-stage = "manim_stage.cli:main"
+
 [project.urls]
 repository = "https://github.com/sethstenzel/manim-stage"
 

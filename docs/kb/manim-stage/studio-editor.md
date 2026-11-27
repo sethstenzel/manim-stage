@@ -1,6 +1,6 @@
 # Studio editor
 
-- **Status:** Partial. Scene picker, viewport, playback, [timeline](timeline.md), live reload and errors are available. [Export and snapshots](export.md) are available. The `manim-stage studio` CLI (1.6) is Planned.
+- **Status:** Partial. Scene picker, viewport, playback, [timeline](timeline.md), live reload and errors are available. [Export and snapshots](export.md) are available. Start it with [`manim-stage studio`](cli.md).
 - **Renderer:** Cairo (OpenGL scenes are labelled unsupported)
 - **Since:** PR #12 (timeline: PR #14)
 - **Spec:** F01 · **ADRs:** ADR-0010, ADR-0012, ADR-0013 · **Source:** `src/manim_stage/studio/ui/`, `studio/app.py`, `studio/playback.py`
@@ -18,9 +18,11 @@ Install the `studio` extra, then open a scene file:
 
 ```bash
 pip install "manim-stage[studio]"
-python -m manim_stage.studio lesson.py            # first Scene in the file
-python -m manim_stage.studio lesson.py Intro -q medium_quality
+manim-stage studio lesson.py                      # first Scene in the file
+manim-stage studio lesson.py Intro -q medium_quality
 ```
+
+`python -m manim_stage.studio …` does the same.
 
 From Python, for example to embed or automate it:
 
@@ -76,7 +78,7 @@ Timeline-specific keys: see [Timeline → keyboard](timeline.md#keyboard-timelin
 
 ## Options
 
-| `python -m manim_stage.studio` | Default | Meaning |
+| `manim-stage studio` | Default | Meaning |
 |---|---|---|
 | `file` | required | Python file with Manim `Scene` classes |
 | `scene` | first in file | Scene class to open |

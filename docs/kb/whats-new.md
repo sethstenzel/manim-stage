@@ -2,6 +2,17 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-27 — `manim-stage` command (backlog 1.6)
+
+- **New:** [`manim-stage`](manim-stage/cli.md) console script with these commands:
+  - `studio`;
+  - `scenes`;
+  - `timeline` (text or JSON);
+  - `doctor`, which checks Manim, Cairo, fonts, LaTeX, FFmpeg encoders, Qt and plugins;
+  - `cache`.
+- **New:** a packaging smoke test in CI, which builds the wheel, installs it cleanly with the studio extra and runs the command.
+- **Changed:** the editor checks that the installed Manim build is supported before starting.
+
 ## 2026-11-27 — export and snapshots (backlog 1.5)
 
 - **New:** [Export](manim-stage/export.md) through `manim render`, covering:

@@ -52,7 +52,7 @@ A local, offline knowledge base in `docs/kb/` covering **every feature and how t
 | 1.3 | Editor shell (Python/PySide6): scene picker, viewport, play/pause/step/speed, timecode, zoom/fit, dark/light, keyboard shortcuts, accessibility | ☑ | F01, ADR-0012, ADR-0013 |
 | 1.4 | Timeline UI: ruler (s/frames), zoom, range, play/wait/section/sound tracks, nested children, jump-to-source | ☑ | F02 |
 | 1.5 | Snapshot + range/full export through Manim CLI with progress/cancel | ☑ | F01, F10 |
-| 1.6 | `manim-stage studio` CLI; `[studio]` extra; packaging smoke test | ☐ | ADR-0009 |
+| 1.6 | `manim-stage studio` CLI; `[studio]` extra; packaging smoke test | ☑ | ADR-0009 |
 
 ## Manim feature coverage in the editor (continuous, requested by owner 2026-11-27)
 
@@ -68,7 +68,7 @@ The editor must cover every Motion Canvas editor capability **and** surface Mani
 | MF.6 | Manim config panel: quality presets (`-ql…-qk`), fps, resolution, background colour, renderer, format (mp4/mov/webm/gif/png), transparent, sections export | ☐ | F10 |
 | MF.7 | Sections navigator: Manim `next_section` names/types, `skip_animations`, per-section export (`--save_sections`) | ☐ | F02, F10 |
 | MF.8 | Camera-aware preview: `MovingCameraScene` frame overlay, `ZoomedScene`, `ThreeDScene` orientation readout; renderer capability labels (Cairo/OpenGL) | ☐ | spec §2.7 |
-| MF.9 | Environment health: LaTeX availability, fonts (`manimpango.list_fonts()`), FFmpeg/PyAV codecs, installed Manim plugins (`manim.plugins` entry points) | ☐ | F10 |
+| MF.9 | Environment health: LaTeX availability, fonts (`manimpango.list_fonts()`), FFmpeg/PyAV codecs, installed Manim plugins (`manim.plugins` entry points) | ◐ | F10. `manim-stage doctor` (CLI) done; editor panel pending |
 | MF.10 | Text/LaTeX helpers: font picker, `MathTex` substring colouring preview, `Tex` template selection | ☐ | F07 |
 
 ## M2 — Teaching workflow (P1)
