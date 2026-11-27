@@ -2,6 +2,14 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-27 — assets, render presets, environment panel (backlog 3.5, MF.9)
+
+- **New:** [`manim-stage assets`](manim-stage/assets.md) and the Studio **Assets** tab:
+  - images, SVGs, sounds, narration files, audio clips and fonts, resolved the way Manim resolves them, with missing ones flagged;
+  - **Add asset…**, which copies the file into `assets/<kind>/` and the Manim call to the clipboard;
+  - the environment checks from `doctor`.
+- **New:** export presets: 1080p30, 4K30, transparent MOV and GIF, via `-r`/`--fps`. Export checks assets first.
+
 ## 2026-11-27 — flow helpers and scene transitions (backlog 3.4)
 
 - **New:** [flow helpers](manim-stage/transitions.md): `all_of`, `sequence` (exact second offsets), `chain`, `delay`, `loop` and `tween`. They are Motion Canvas's names for Manim groups.

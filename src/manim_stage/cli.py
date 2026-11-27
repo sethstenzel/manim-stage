@@ -9,6 +9,7 @@ never replaces ``manim render``: exports are plain Manim renders (see ``export``
     manim-stage doctor                     check Manim, Qt, FFmpeg/PyAV, LaTeX, fonts
     manim-stage validate lesson.py [Scene] check named cues (exit 1 on errors)
     manim-stage bake lesson.py [Scene]     write resolved cue times to .manim-stage/cues.json
+    manim-stage assets lesson.py ...       check images, SVGs, sounds, fonts (exit 1 if missing)
     manim-stage compose lesson.sequence.json  render scenes, join them with transitions
     manim-stage cache [--clear]            frame-cache size / clear it
 """
@@ -159,6 +160,18 @@ def cmd_bake(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_assets(args: argparse.Namespace) -> int:
+    from .assets import format_report, inventory
+
+    for f in args.files:
+        if not f.is_file():
+            print(f"error: {f} is not a file", file=sys.stderr)
+            return 2
+    inv = inventory(args.files)
+    print(json.dumps(inv.to_dict(), indent=2) if args.json else format_report(inv))
+    return 1 if inv.missing or inv.fonts_missing else 0
+
+
 def cmd_compose(args: argparse.Namespace) -> int:
     from .compose import compose, load_spec, render_parts
 
@@ -206,6 +219,10 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("file", type=Path)
     p.add_argument("scene", nargs="*", help="scenes to bake (default: every StageScene)")
     p.set_defaults(func=cmd_bake)
+    p = sub.add_parser("assets", help="list and check the assets scenes use (exit 1 if missing)")
+    p.add_argument("files", type=Path, nargs="+", help="scene files")
+    p.add_argument("--json", action="store_true")
+    p.set_defaults(func=cmd_assets, file=None)
     p = sub.add_parser("compose", help="render scenes and join them with transitions")
     p.add_argument("spec", type=Path, help="a .sequence.json file (see docs)")
     p.add_argument("-q", "--quality", default=None, help="Manim quality preset (default: spec's)")

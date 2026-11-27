@@ -69,7 +69,7 @@ The editor must cover every Motion Canvas editor capability **and** surface Mani
 | MF.6 | Manim config panel: quality presets (`-ql…-qk`), fps, resolution, background colour, renderer, format (mp4/mov/webm/gif/png), transparent, sections export | ☐ | F10 |
 | MF.7 | Sections navigator: Manim `next_section` names/types, `skip_animations`, per-section export (`--save_sections`) | ☐ | F02, F10 |
 | MF.8 | Camera-aware preview: `MovingCameraScene` frame overlay, `ZoomedScene`, `ThreeDScene` orientation readout; renderer capability labels (Cairo/OpenGL) | ☐ | spec §2.7 |
-| MF.9 | Environment health: LaTeX availability, fonts (`manimpango.list_fonts()`), FFmpeg/PyAV codecs, installed Manim plugins (`manim.plugins` entry points) | ◐ | F10. `manim-stage doctor` (CLI) done; editor panel pending |
+| MF.9 | Environment health: LaTeX availability, fonts (`manimpango.list_fonts()`), FFmpeg/PyAV codecs, installed Manim plugins (`manim.plugins` entry points) | ☑ | F10. `manim-stage doctor` + Studio Assets tab |
 | MF.10 | Text/LaTeX helpers: font picker, `MathTex` substring colouring preview, `Tex` template selection | ☐ | F07 |
 
 ## M2 — Teaching workflow (P1)
@@ -92,7 +92,7 @@ The editor must cover every Motion Canvas editor capability **and** surface Mani
 | 3.2 | Project config / variables / themes (`project.json` settings, `stage.theme`) resolved identically in CLI and Studio | ☑ | F07 |
 | 3.3 | `expose()` editable properties + inspector editing, sidecar persistence, undo/redo, copy-as-Python | ☑ | F08 |
 | 3.4 | Transitions + choreography helpers; multi-scene sequence with cross-scene transitions | ☑ | F09 |
-| 3.5 | Asset manager + validator; render presets; range export; export metadata inspection | ☐ | F10 |
+| 3.5 | Asset manager + validator; render presets; range export; export metadata inspection | ☑ | F10 (range export and metadata inspection since 1.5) |
 | 3.6 | M3 gate: multi-scene lesson with configurable visuals, deterministic exports | ☐ | |
 
 ## M4 — Ecosystem and polish (P2/P3)

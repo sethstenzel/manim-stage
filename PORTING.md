@@ -27,6 +27,7 @@ Newest first. One line per decision; details in the linked ADR or PR.
 
 | Date | Decision | Why | Where |
 |---|---|---|---|
+| 2026-11-27 | Asset validation = static scan resolved with Manim's rules + audio clips + fonts; presets map to Manim CLI flags | Fail before rendering; no second path resolver to drift from Manim | PR #30 |
 | 2026-11-27 | Flow helpers return Manim groups (`sequence` in exact seconds); cross-scene transitions composed after `manim render` with overlap semantics | MC vocabulary, Manim objects; Manim renders scenes separately | PR #29 |
 | 2026-11-27 | Inspector = replay-to-frame snapshot of Mobject families; `expose()` opt-in edits saved to `properties.json`, previews via env-redirected temp file (always a cache dependency) | F08 with headless reproduction; no source mutation; correct cache invalidation | PR #28 |
 | 2026-11-27 | Theme + typed variables in `project.json`; `var()` read = opt-in to editing; StageScene applies background/font and restores; runner reports used variables | F07 in Manim terms; deterministic across CLI/Studio; no source edits to restyle | PR #27 |
@@ -197,6 +198,20 @@ One record per Motion Canvas feature. Status: **Ported** (implemented and tested
 - **Manim mapping:** the `manim-stage` console script (`studio`, `scenes`, `timeline`, `doctor`, `cache`) sits beside `manim`, which stays the renderer. There is no project scaffolding step: any folder with Manim scenes works (project sidecars arrive in M2/M3).
 - **Improvements over MC:** `doctor` explains in Manim terms what the machine can render (LaTeX for `Tex`, Pango fonts for `Text`, encoders per export format). `timeline` exposes event capture headlessly.
 - **Implementation:** `src/manim_stage/cli.py`, `doctor.py`. Tests: `tests/test_cli.py`; CI `package` job. KB: `docs/kb/manim-stage/cli.md`.
+
+### Media assets (MC: imported images/audio/video in the project)
+- **Status:** Ported (3.5).
+- **MC behaviour:** a Vite project imports media files; a missing file fails when the scene runs.
+- **Manim mapping:**
+  - a static scan of the scene for `ImageMobject`, `SVGMobject`, `add_sound`, narration files and fonts, resolved with Manim's own rules;
+  - audio-workspace clips are included;
+  - `manim-stage assets` (CI-friendly exit code) and the Studio Assets tab;
+  - Add asset… copies into `assets/<kind>/` and offers the Manim call;
+  - render presets map onto `-q`/`-r`/`--fps`/`--format`/`-t`.
+- **Improvements over MC:**
+  - missing assets and fonts are caught before rendering;
+  - environment checks explain what this machine can render.
+- **Implementation:** `src/manim_stage/assets.py`, `export.py` (`PRESETS`), `studio/ui/assets_panel.py`, `export_dialog.py`. Tests: `tests/test_assets.py`, `tests/test_studio_ui.py`. KB: `docs/kb/manim-stage/assets.md`.
 
 ### Audio (MC: one audio track with offset)
 - **Status:** Ported (2.3a core, 2.3b editing). The voiceover adapter (2.4) is next.

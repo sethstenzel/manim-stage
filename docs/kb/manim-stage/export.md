@@ -63,6 +63,10 @@ print(png.name, frame)  # frame.png 3
   - audio streams (`add_sound` audio is mixed in by Manim).
 - **Save frame** runs the scene in a [runner](runner.md) child at the chosen quality and draws just that frame. At the same quality it is pixel-identical to the preview frame.
 
+## Presets
+
+The **Preset** list holds Manim's quality presets, 1080p30 and 4K30 (`-r W,H --fps N`), transparent MOV 1080p30 and GIF 480p15; see [Assets → render presets](assets.md#render-presets). Before rendering, the dialog checks the scene's assets and warns about missing files or fonts.
+
 ## Options
 
 | `ExportSettings` | Manim flag | Default |
@@ -75,6 +79,8 @@ print(png.name, frame)  # frame.png 3
 | `media_dir` | `--media_dir` | `media` next to the scene |
 | `output_name` | `-o` | scene name |
 | `seed` | `--seed` | 0 (same as preview) |
+| `resolution` | `-r W,H` | quality's size |
+| `fps` | `--fps` | quality's rate |
 
 ## Limitations and unsupported cases
 
