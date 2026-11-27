@@ -17,7 +17,7 @@ How Motion Canvas features map to manim-stage. Behaviour is described in our own
 | Signals | Lazy computed values with dependency tracking | [`Signal`](../manim-stage/signals.md) *is* a `ValueTracker`; `computed`, `bind`, `effect` are cached updaters | Available |
 | Project variables | Reactive variables, untyped, no editor UI | [Typed, validated `project.var()` + theme](../manim-stage/project.md) with a Studio Project panel | Available |
 | Inspector | Read-only node inspection | [Inspector](../manim-stage/inspector.md): any Mobject read-only; `expose()`d properties editable with preview, save (sidecar), undo, copy as Python | Available |
-| Transitions | Slide/fade/zoom between scenes | File-level transitions between scenes | Planned (M3) |
+| Transitions | Slide/fade/zoom between scenes | [`manim-stage compose`](../manim-stage/transitions.md): overlapping fade/slide/wipe between rendered scenes, frame-exact with audio; in-scene `enter`/`exit` | Available |
 | Rendering | In the browser tab only; image sequence or FFmpeg | Manim CLI stays the renderer; headless and reproducible | Available (Manim) |
 | (none; Manim ecosystem) manim-voiceover `self.voiceover()` + bookmarks | TTS narration with text bookmarks | [`self.narration()`](../manim-stage/narration.md): recorded audio, bookmarks as draggable cues, word timings, cache import | Available |
 | Plugins | Three layers, no version handshake | Versioned editor plugin API with handshake | Planned (M4) |
@@ -30,8 +30,8 @@ Motion Canvas concepts are ported into Manim's model. They stay available under 
 |---|---|---|---|
 | Scene (generator function) | unchanged: `Scene` subclass, `construct()` | `Scene` | Available (Manim) |
 | Node, scene graph | unchanged: `Mobject` families (`submobjects`) | `Mobject` | Available (Manim) |
-| `yield* tween(...)` | `self.play(...)`; `tween(run_time, fn)` | `Animation` | Planned (M3) |
-| `all(...)` / `sequence(...)` / `chain(...)` / `delay` / `loop` | `all_of`, `sequence`, `chain`, `delay`, `loop` | `AnimationGroup` / `LaggedStart` / `Succession` | Planned (M3) |
+| `yield* tween(...)` | `self.play(...)`; [`tween(run_time, fn)`](../manim-stage/transitions.md) | `Animation` | Available |
+| `all(...)` / `sequence(...)` / `chain(...)` / `delay` / `loop` | [`all_of`, `sequence`, `chain`, `delay`, `loop`](../manim-stage/transitions.md) | `AnimationGroup` / `Succession` / `Wait` | Available |
 | `waitFor(s)` | unchanged: `self.wait(s)` | `Scene.wait` | Available (Manim) |
 | `waitUntil("name")`, time events | [`self.cue("name", at=, after=)`](../manim-stage/cues.md) | `Scene.wait` | Available (incl. timeline dragging, ripple, undo) |
 | Timing functions / easing | unchanged: `rate_func` | `manim.rate_functions` | Available (Manim) |
@@ -39,7 +39,7 @@ Motion Canvas concepts are ported into Manim's model. They stay available under 
 | Project variables | [`project.var()`, `project.theme()`](../manim-stage/project.md) | `config`, `camera.background_color`, `Text.set_default` | Available |
 | Slides | unchanged: sections (`next_section`) | `Scene.next_section` | Available (Manim) |
 | Code block, `lines()`, `word()`, ranges | [`AnimatedCode`](../manim-stage/animated-code.md), `CodeRange`, `lines()`, `word()`, `find()` | `VGroup` of token Mobjects | Available |
-| Scene transitions | `slide_transition`, `fade_transition`, `zoom_transition` | `Animation` | Planned (M3) |
+| Scene transitions | [`enter`/`exit`; `manim-stage compose`](../manim-stage/transitions.md) | `FadeIn`/`FadeOut`; rendered videos | Available |
 | References (`createRef`) | ordinary Python attributes | — | n/a |
 | Editor plugins | Studio plugins (`manim_stage.plugins` entry points) | — | Planned (M4) |
 

@@ -11,6 +11,7 @@ These are the JSON contracts between the runner, the editor and project files. E
 |---|---|---|
 | Timeline (`manim_stage.timeline` v1) | runner → editor; `SceneTimeline.to_dict()` | Available |
 | Runner messages (protocol `v: 1`) | runner stdout, one JSON per line | Available |
+| Scene sequence (v1) | `*.sequence.json` | Available ([scene transitions](../manim-stage/transitions.md)) |
 | Exposed properties (`manim_stage.properties` v1) | `.manim-stage/properties.json` | Available ([inspector](../manim-stage/inspector.md)) |
 | Project (`manim_stage.project` v1) | `.manim-stage/project.json` | Available ([project theme and variables](../manim-stage/project.md)) |
 | Audio clips (`manim_stage.audio` v1) | `.manim-stage/audio.json` | Available ([audio workspace](../manim-stage/audio.md)) |

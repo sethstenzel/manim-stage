@@ -22,6 +22,14 @@ _LAZY = {
     "computed": ("manim_stage.signals", "computed"),
     "bind": ("manim_stage.signals", "bind"),
     "effect": ("manim_stage.signals", "effect"),
+    "all_of": ("manim_stage.flow", "all_of"),
+    "chain": ("manim_stage.flow", "chain"),
+    "delay": ("manim_stage.flow", "delay"),
+    "sequence": ("manim_stage.flow", "sequence"),
+    "loop": ("manim_stage.flow", "loop"),
+    "tween": ("manim_stage.flow", "tween"),
+    "enter": ("manim_stage.flow", "enter"),
+    "exit": ("manim_stage.flow", "exit"),
     "CodeRange": ("manim_stage.code", "CodeRange"),
 }
 

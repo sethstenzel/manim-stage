@@ -27,6 +27,7 @@ Newest first. One line per decision; details in the linked ADR or PR.
 
 | Date | Decision | Why | Where |
 |---|---|---|---|
+| 2026-11-27 | Flow helpers return Manim groups (`sequence` in exact seconds); cross-scene transitions composed after `manim render` with overlap semantics | MC vocabulary, Manim objects; Manim renders scenes separately | PR #29 |
 | 2026-11-27 | Inspector = replay-to-frame snapshot of Mobject families; `expose()` opt-in edits saved to `properties.json`, previews via env-redirected temp file (always a cache dependency) | F08 with headless reproduction; no source mutation; correct cache invalidation | PR #28 |
 | 2026-11-27 | Theme + typed variables in `project.json`; `var()` read = opt-in to editing; StageScene applies background/font and restores; runner reports used variables | F07 in Manim terms; deterministic across CLI/Studio; no source edits to restyle | PR #27 |
 | 2026-11-27 | `Signal` is a `ValueTracker` (values flattened into points); `computed` lazy+cached with tracking stack; `bind`/`effect` change-only updaters disposed at scene end | Manim concept kept (ADR-0013); `.animate` works for free; no per-frame recompute | PR #26 |
@@ -169,8 +170,15 @@ One record per Motion Canvas feature. Status: **Ported** (implemented and tested
 - **Implementation:** `src/manim_stage/signals.py`, `scene.py`. Tests: `tests/test_signals.py` (including the F06 acceptance array scene). KB: `docs/kb/manim-stage/signals.md`.
 
 ### Flow helpers (MC: `all`, `sequence`, `chain`, `delay`, `loop`, `tween`)
-- **Status:** Designed (ADR-0013). Backlog 3.4.
-- **Manim mapping:** `all_of` → `AnimationGroup`, `sequence` → `LaggedStart`, `chain` → `Succession`, `tween(run_time, fn)` → custom `Animation`.
+- **Status:** Ported (3.4).
+- **Manim mapping:**
+  - `all_of` → `AnimationGroup`; `chain` → `Succession`;
+  - `delay` → `Succession(Wait, anim)`;
+  - `sequence(interval, ...)` → `AnimationGroup` of delayed members. It uses exact seconds, like MC, rather than `LaggedStart`'s ratio of run time;
+  - `loop` → `Succession`;
+  - `tween(run_time, fn)` → a small `Animation` calling `fn(rate_func(alpha))`.
+  - Everything returns plain Manim animations, so they nest and show on the timeline.
+- **Implementation:** `src/manim_stage/flow.py`. Tests: `tests/test_flow.py`. KB: `docs/kb/manim-stage/transitions.md`.
 
 ### Rendering / export (MC: Render panel, image sequence or FFmpeg exporter in the browser)
 - **Status:** Ported (1.5).
@@ -244,8 +252,17 @@ One record per Motion Canvas feature. Status: **Ported** (implemented and tested
 - **Implementation:** `src/manim_stage/inspector.py`, `scene.py`, `runner.py`, `capture.py` (`with_scene`), `studio/service.py` (`inspect_at`, render `env`), `studio/ui/inspector_panel.py`, `viewport.py`. Tests: `tests/test_inspector.py` (F08 acceptance), `tests/test_studio_ui.py`. KB: `docs/kb/manim-stage/inspector.md`.
 
 ### Scene transitions (MC: slide/fade/zoom transitions)
-- **Status:** Designed (ADR-0013). Backlog 3.4.
-- **Manim mapping:** `slide_transition`, `fade_transition`, `zoom_transition` as Manim `Animation`s.
+- **Status:** Ported (3.4).
+- **MC behaviour:** a scene starts with a transition animated over the previous scene's last frame.
+- **Manim mapping:**
+  - Manim renders each scene to its own video, so cross-scene transitions are composed after rendering. `manim-stage compose` renders every scene with `manim render`, then overlaps adjacent scenes (fade, slide, wipe) frame by frame with PyAV, places and cross-fades audio, and encodes H.264 + AAC;
+  - in-scene `enter`/`exit` cover the "transition as an animation" case.
+- **Improvements over MC:**
+  - the total length is exactly `sum − overlaps`, tested for no dropped or duplicated frames;
+  - audio alignment is tested to a frame;
+  - one JSON sequence file plus one command.
+- **Deviation:** shared-element transitions are expressed in Manim's way (both moments in one scene with `Transform`), not inferred.
+- **Implementation:** `src/manim_stage/compose.py`, `flow.py` (`enter`/`exit`), `cli.py`. Tests: `tests/test_flow.py` (F09 acceptance with three rendered scenes). KB: `docs/kb/manim-stage/transitions.md`.
 
 ### Editor plugins (MC: editor/runtime plugins)
 - **Status:** Not started. Backlog 4.1.

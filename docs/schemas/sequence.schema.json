@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/sethstenzel/manim-stage/docs/schemas/sequence.schema.json",
+  "title": "manim-stage scene sequence v1",
+  "description": "`*.sequence.json`: scenes rendered with manim render and joined by overlapping transitions (spec F09; manim-stage compose). Status: implemented (manim_stage.compose).",
+  "type": "object",
+  "required": [
+    "scenes"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "output": {
+      "$ref": "#/$defs/RelPath"
+    },
+    "quality": {
+      "type": "string"
+    },
+    "media_dir": {
+      "$ref": "#/$defs/RelPath"
+    },
+    "scenes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "file",
+          "scene"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "file": {
+            "$ref": "#/$defs/RelPath"
+          },
+          "scene": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+          },
+          "transition": {
+            "enum": [
+              "cut",
+              "fade",
+              "slide_left",
+              "slide_right",
+              "slide_up",
+              "slide_down",
+              "wipe_left",
+              "wipe_right",
+              "wipe_up",
+              "wipe_down"
+            ]
+          },
+          "duration": {
+            "type": "number",
+            "minimum": 0
+          },
+          "video": {
+            "$ref": "#/$defs/RelPath"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "RelPath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?![A-Za-z]:)(?!/)(?!.*(^|/)\\.\\.(/|$))[^\\\\]+$"
+    }
+  }
+}
