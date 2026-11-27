@@ -13,7 +13,7 @@ Feature IDs refer to `spec.md` §5. ADRs are in `architecture-decisions.md`.
 | 0.3a | Spike: `Manager.evaluate` timeline + frame parity on Manim main (`spikes/`) | ☑ | frames pixel-identical to CLI; see spikes/README.md |
 | 0.4 | Python package skeleton: `pyproject.toml` (hatchling, uv-pinned Manim), `manim_stage/_compat.py`, pytest, ruff, CI matrix (Win/Linux/macOS × py3.11–3.13) against pinned Manim | ☑ | ADR-0009 |
 | 0.5 | **Executable proof — event capture:** runner that evaluates an unmodified scene in a child process, emits JSON-lines `SceneEvent`s with frame indices, nested group children and stable IDs. Tests: `AnimationGroup`, `LaggedStart`, waits, sounds, sections, zero-duration, loops (spec F02 accept). | ☑ | ADR-0004/0005. `manim_stage.events/capture/runner`; nested spans cross-checked against observed Manim frames. Cue markers and stable IDs across source edits come with F03. |
-| 0.6 | **Executable proof — frame cache seek:** `evaluate(on_frame)` → bounded disk cache. Measure first-preview latency and seek latency on a reference 10 s scene (spec §9). Golden test: cached frame == CLI render frame. | ☐ | ADR-0007 |
+| 0.6 | **Executable proof — frame cache seek:** `evaluate(on_frame)` → bounded disk cache. Measure first-preview latency and seek latency on a reference 10 s scene (spec §9). Golden test: cached frame == CLI render frame. | ☑ | ADR-0007. `docs/benchmarks.md`: 1080p 10 s scene cached in 8.0 s with 4 workers (17.9 s with 1); seek 8.5 ms median; frames pixel-identical to CLI. |
 | 0.7 | **Regression baseline:** golden-frame tests for representative unmodified scenes with Studio disabled; confirm CLI output byte/pixel-identical with manim-stage installed. | ☐ | spec §10.1 |
 | 0.8 | `docs/schemas/` v1 JSON Schemas: `ProjectManifest`, `SceneEvent`, `Cue`, `PreviewMessage`, `EditableProperty`; time model doc (frame index, half-open ranges, 48 kHz audio mapping). | ☐ | spec §8 |
 | 0.9 | M0 gate report: measurements, unsupported scene classes, go/no-go on deterministic replay | ☐ | spec §11 gate |
@@ -78,6 +78,7 @@ A local, offline knowledge base in `docs/kb/` covering **every feature and how t
 
 ## Upstream contributions to propose (spec §12.5)
 
+- Manim: `media_dir/texts` SVG cache is not safe for concurrent processes (0-byte file after parallel runs; see docs/benchmarks.md).
 - Manim: public run-loop listener registration (replace private `_use_loop` subclassing).
 - Manim: `evaluate()` early stop after the last requested frame.
 - Manim: timeline entries with frame indices and nested children.
