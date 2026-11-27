@@ -76,7 +76,7 @@ The editor must cover every Motion Canvas editor capability **and** surface Mani
 
 | # | Item | Status | Notes |
 |---|---|---|---|
-| 2.1 | `StageScene.cue()` + resolver + `cues.json` (atomic, versioned) + `validate` + `bake` | ☐ | F03, ADR-0006 |
+| 2.1 | `StageScene.cue()` + resolver + `cues.json` (atomic, versioned) + `validate` + `bake` | ☑ | F03, ADR-0006 |
 | 2.2 | Timeline cue drag with ripple/hold, undo/redo, downstream preview | ☐ | F03 |
 | 2.3 | Audio workspace: multi-clip import, PyAV peaks → waveform, offset/trim/gain/fade/mute/solo, mixdown via pre-processed assets + `add_sound` | ☐ | F04 |
 | 2.4 | manim-voiceover adapter (+ upstream PRs: 0.30 compat, manual bookmark times #113, pre-recorded audio #100) | ☐ | F04 |

@@ -233,3 +233,20 @@ def animation_spans(play: PlayRecord, frame_rate: float) -> tuple[AnimationSpan,
         alphas = np.minimum(offsets / rt, 1.0) if rt > 0 else np.ones(play.frame_count)
         spans.append(_spans(animation, alphas, np.ones(play.frame_count, dtype=bool)))
     return tuple(spans)
+
+
+# --- Scene clock and play counter (for cues) -------------------------------------------
+
+
+def scene_frame(scene: Any, fps: float) -> int:
+    """Frame index the scene's clock is at (Manim 0.30's clock is frame-quantized)."""
+    return max(0, math.floor(float(scene.time) * fps + 0.5))
+
+
+def scene_play_count(scene: Any) -> int:
+    """Number of completed play/wait calls = index the next play will get.
+
+    Uses ``Scene.manager.num_plays`` (public attribute + property on MAIN).
+    """
+    manager = getattr(scene, "manager", None)
+    return int(manager.num_plays) if manager is not None else 0

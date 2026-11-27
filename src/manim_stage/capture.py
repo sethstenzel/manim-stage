@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import math
 from collections import Counter
 from collections.abc import Callable, Sequence
@@ -82,6 +83,63 @@ def _child_events(
     return events
 
 
+def _cue_events(
+    scene: Any, scene_name: str, events: list[SceneEvent]
+) -> tuple[list[SceneEvent], list[str]]:
+    """Add one ``cue`` marker per ``self.cue(...)`` of a StageScene (spec F03).
+
+    The ``wait`` a cue issued is attributed to the user's ``cue(...)`` line (Manim
+    records the first frame outside Manim, which is manim-stage's wrapper) and tagged
+    with the cue name. Cue IDs are name-based (``Scene:cue:name#0``) so they stay
+    stable across edits that move the call.
+    """
+    records = list(getattr(scene, "stage_cues", []) or [])
+    if not records:
+        return events, []
+    by_play = {e.meta.get("play_index"): i for i, e in enumerate(events) if e.kind == "wait"}
+    out = list(events)
+    for rec in records:
+        src = SourceRef(rec.source["path"], int(rec.source["line"])) if rec.source else None
+        if rec.play_index is not None and rec.play_index in by_play:
+            i = by_play[rec.play_index]
+            out[i] = dataclasses.replace(
+                out[i],
+                id=f"{scene_name}:wait:cue:{rec.name}#0",
+                source=src or out[i].source,
+                label=f"cue {rec.name}",
+                meta={**out[i].meta, "cue": rec.name},
+            )
+        out.append(
+            SceneEvent(
+                id=f"{scene_name}:cue:{rec.name}#0",
+                kind="cue",
+                scene=scene_name,
+                start_frame=rec.target_frame,
+                end_frame=rec.target_frame,
+                track="cues",
+                label=rec.name,
+                source=src,
+                meta={
+                    "name": rec.name,
+                    "description": rec.description,
+                    "call_frame": rec.call_frame,
+                    "default_frame": rec.default_frame,
+                    "target_frame": rec.target_frame,
+                    "overridden": rec.overridden,
+                    "wait_frames": rec.wait_frames,
+                    "play_index": rec.play_index,
+                },
+            )
+        )
+    orphans = scene.stage_orphan_cues() if hasattr(scene, "stage_orphan_cues") else []
+    warnings = [
+        f"cue {n!r} has a sidecar override but is no longer reached (orphan; renamed or "
+        "removed?). It is kept until you dismiss it."
+        for n in orphans
+    ]
+    return out, warnings
+
+
 def capture(
     scene_cls: type,
     *,
@@ -96,7 +154,8 @@ def capture(
 
     frame_rate = float(config.frame_rate)
     scene_name = scene_cls.__name__
-    result = _compat.evaluate(scene_cls(), frame_times=frame_times, on_frame=on_frame)
+    scene = scene_cls()
+    result = _compat.evaluate(scene, frame_times=frame_times, on_frame=on_frame)
     tl = result.timeline
     ids = _Ids(scene_name)
     warnings: list[str] = []
@@ -212,6 +271,9 @@ def capture(
             )
         else:
             warnings.append(f"Ignored unknown Manim timeline entry kind {kind!r}.")
+
+    events, cue_warnings = _cue_events(scene, scene_name, events)
+    warnings += cue_warnings
 
     # Manim lists entries in call order; a sound offset can start after later plays.
     events.sort(key=lambda e: e.start_frame)

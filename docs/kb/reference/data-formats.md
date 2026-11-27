@@ -11,7 +11,7 @@ These are the JSON contracts between the runner, the editor and project files. E
 |---|---|---|
 | Timeline (`manim_stage.timeline` v1) | runner → editor; `SceneTimeline.to_dict()` | Available |
 | Runner messages (protocol `v: 1`) | runner stdout, one JSON per line | Available |
-| Cues (`manim_stage.cues` v1) | `.manim-stage/cues.json` | Planned (draft) |
+| Cues (`manim_stage.cues` v1) | `.manim-stage/cues.json` | Available ([named cues](../manim-stage/cues.md)) |
 | Project (`manim_stage.project` v1) | `.manim-stage/project.json` | Planned (draft) |
 | Editable property | inspector | Planned (draft) |
 

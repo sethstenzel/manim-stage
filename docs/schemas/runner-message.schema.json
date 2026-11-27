@@ -201,6 +201,10 @@
             "type": "string"
           },
           "description": "nearest Manim base classes, e.g. Scene, MovingCameraScene"
+        },
+        "stage": {
+          "type": "boolean",
+          "description": "subclass of manim_stage StageScene/StageMixin (has cues)"
         }
       }
     }

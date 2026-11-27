@@ -119,6 +119,7 @@ class EventPanel(QWidget):
             return
         e = html.escape
         call = {
+            "cue": "self.cue(…)",
             "play": "self.play(…)",
             "wait": "self.wait(…)",
             "section": "self.next_section(…)",
@@ -158,6 +159,14 @@ class EventPanel(QWidget):
             rows.append(("Animations", ", ".join(classes)))
         if box.kind == "wait":
             rows.append(("Frozen frame", "yes" if box.meta.get("frozen") else "no (updaters run)"))
+        if box.kind == "cue":
+            m = box.meta
+            rows.append(("Reached at", f"{m['call_frame'] / fps:.3f} s"))
+            rows.append(("Default", f"{m['default_frame'] / fps:.3f} s"))
+            rows.append(("Override", "yes (cues.json)" if m.get("overridden") else "no"))
+            rows.append(("Waits", f"{m['wait_frames'] / fps:.3f} s"))
+            if m.get("description"):
+                rows.append(("Description", m["description"]))
         if box.kind == "section":
             rows.append(("Type", str(box.meta.get("type") or "default")))
             rows.append(("skip_animations", str(bool(box.meta.get("skip_animations")))))
