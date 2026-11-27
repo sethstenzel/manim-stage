@@ -19,6 +19,10 @@ classifiers = [
 # so capability is checked at runtime in manim_stage._compat, not by version.
 dependencies = ["manim"]
 
+[project.optional-dependencies]
+# The Studio editor (ADR-0012). Headless features need none of this.
+studio = ["PySide6-Essentials>=6.8"]
+
 [project.urls]
 repository = "https://github.com/sethstenzel/manim-stage"
 
@@ -26,6 +30,8 @@ repository = "https://github.com/sethstenzel/manim-stage"
 dev = [
     "jsonschema>=4.23",
     "pytest>=8",
+    "pytest-qt>=4.4",
+    "PySide6-Essentials>=6.8",
     "ruff>=0.8",
 ]
 

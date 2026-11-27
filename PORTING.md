@@ -27,6 +27,7 @@ Newest first. One line per decision; details in the linked ADR or PR.
 
 | Date | Decision | Why | Where |
 |---|---|---|---|
+| 2026-11-27 | Editor shell: QMainWindow + custom QPainter widgets; own drawn icons; preview quality = Manim quality presets; preferences in an INI file | Python-only (ADR-0012); Manim vocabulary (ADR-0013); no third-party icon assets | PR #12 |
 | 2026-11-27 | Live reload by polling `stat()` of the scene + dependencies (no watchdog dependency), 0.3 s debounce | Small watched set; identical behaviour on all OSes; handles atomic-rename saves | PR #11 |
 | 2026-11-27 | Revision key includes every local module/asset the scene opened (audit hook, PEP 578); service drops messages from superseded revisions | MC's Vite HMR knows the module graph; Manim scenes need an equivalent so edits to helpers invalidate cached frames | ADR-0010, PR #10 |
 | 2026-11-27 | Port MC concepts as Python APIs on Manim primitives (`Signal` is a `ValueTracker`, `all_of`/`sequence`/`chain` return Manim groups, `self.cue` is a named `wait`) | Owner: keep Manim's abstractions and terms, keep MC concepts accessible | ADR-0013 |
@@ -95,12 +96,13 @@ One record per Motion Canvas feature. Status: **Ported** (implemented and tested
 - **Manim mapping:** `manim_stage.plugins` entry points with a version handshake; bridges Manim's own plugins.
 
 ### Editor shell (MC: browser editor with live project preview)
-- **Status:** In progress. Engine ported (1.1); UI next (1.3).
+- **Status:** In progress. Engine (1.1), live reload (1.2) and the PySide6 shell (1.3) ported; timeline (1.4) and export (1.5) next.
 - **MC behaviour:** the editor runs the project in the page; Vite hot-reloads changed modules and the player re-runs the scene, keeping the playhead.
 - **Manim mapping:** `PreviewService` (no Qt, no socket) runs each revision in fresh runner children; frames come from the cache; PySide6 UI subscribes to typed `PreviewMessage`s.
 - **Improvements over MC:** a crashing or hanging scene can't take down the editor (separate process, killable tree); dependency-aware cache keys; stale results can never overwrite current ones (integer `seq`).
+- **Shell (1.3):** MC's viewport + playback bar + settings become a `QMainWindow`: scene picker (MC's scene list → Manim `Scene` classes found by importing the file in a child), a viewport that only displays cached frames, transport with speed/loop/range, and a scrub bar showing which frames are rendered. Preview resolution uses Manim's quality presets (`-ql`…`-qk`) instead of MC's resolution/scale settings. Playback is a Qt-free `Playback` model (wall clock × speed; holds on unrendered frames instead of skipping), so it is unit-tested.
 - **Hot reload:** MC relies on Vite's HMR. Ported as `PreviewService.watch()`: a stdlib polling watcher over the scene file and its recorded dependencies, debounced (default 0.3 s), which starts a new revision (the old one is killed). Syntax errors point at their line.
-- **Implementation:** `src/manim_stage/studio/service.py`, `watcher.py`, `deps.py`, `runner.py` (`RunnerProcess`, `--list`). Tests: `tests/test_service.py`, `tests/test_watcher.py`. KB: `docs/kb/manim-stage/preview-service.md`.
+- **Implementation:** `src/manim_stage/studio/service.py`, `watcher.py`, `playback.py`, `app.py`, `ui/` (main window, viewport, transport, log, theme, icons); `deps.py`, `runner.py` (`RunnerProcess`, `--list`). Tests: `test_service.py`, `test_watcher.py`, `test_playback.py`, `test_studio_ui.py` (pytest-qt, offscreen on all CI OSes). KB: `preview-service.md`, `studio-editor.md`.
 
 ## 4. Processes in use
 

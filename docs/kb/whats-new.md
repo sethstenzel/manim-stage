@@ -2,6 +2,12 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-27 — Studio editor shell (backlog 1.3)
+
+- **New:** [Studio editor](manim-stage/studio-editor.md) (PySide6): scene picker, viewport with zoom, play/pause/step/speed/loop/range, scrub bar with render progress, live reload, errors with jump-to-source, dark/light themes, keyboard shortcuts.
+- **New:** `pip install "manim-stage[studio]"` and `python -m manim_stage.studio FILE [SCENE]`.
+- Preview quality uses Manim's own presets (`-ql` … `-qk`).
+
 ## 2026-11-27 — live reload (backlog 1.2)
 
 - **New:** [live reload](manim-stage/preview-service.md#live-reload): `PreviewService.watch()` re-renders when the scene or a dependency is saved (debounced, polling, cross-platform).
