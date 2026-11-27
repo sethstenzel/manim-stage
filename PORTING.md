@@ -27,6 +27,7 @@ Newest first. One line per decision; details in the linked ADR or PR.
 
 | Date | Decision | Why | Where |
 |---|---|---|---|
+| 2026-11-27 | Code diff = patience lines → token LCS + moved lines + overrides + ambiguity warnings; `CodeEdit` interpolates raw arrays; line-glyph cache | MC behaviour plus explicit control; deterministic and fast enough for many edits | PR #24 |
 | 2026-11-27 | AnimatedCode: token = VGroup of glyphs; one MarkupText per line; marker glyph for exact grid; VectorizedPoint anchors; bundled JetBrains Mono; 1-based lines/cols | Fast, exact, OS-independent layout that survives transforms; editor-style coordinates | PR #23 |
 | 2026-11-27 | Voiceover = `self.narration()` on add_sound/add_subcaption/cues; bookmarks are cues `<name>.<mark>`; no TTS in core; manim-voiceover cache importer instead of a runtime dependency | manim-voiceover breaks on 0.30; keep concepts (ADR-0013); draggable bookmarks | PR #22 |
 | 2026-11-27 | Clip edits store the whole clip list per undo step; imports copied into `assets/audio/`; silent clips shown on the timeline | Exact undo; portable project-relative paths (§8); muted clips stay editable | PR #21 |
@@ -115,7 +116,7 @@ One record per Motion Canvas feature. Status: **Ported** (implemented and tested
 - **Implementation:** `src/manim_stage/voiceover.py`, `scene.py` (`narration`), `capture.py` (narration tagging). Tests: `tests/test_voiceover.py`. KB: `docs/kb/manim-stage/narration.md`.
 
 ### Code block and code animation (MC: `Code` node, token diff)
-- **Status:** In progress. Layout and ranges are ported (2.5); diff edits are next (2.6).
+- **Status:** Ported (2.5 layout and ranges; 2.6 animated edits).
 - **MC behaviour:**
   - `Code` renders highlighted code with a monospace grid;
   - `lines()`, `word()` and `findFirstRange()` address ranges;
@@ -132,7 +133,17 @@ One record per Motion Canvas feature. Status: **Ported** (implemented and tested
   - any Pygments language and style;
   - a bundled font (JetBrains Mono, OFL), so layout is identical across OSes;
   - ranges plug into any Manim animation (`code.get(range)`).
-- **Implementation:** `src/manim_stage/code.py`, `src/manim_stage/fonts/`. Tests: `tests/test_code.py`. KB: `docs/kb/manim-stage/animated-code.md`.
+- **Edits (2.6):**
+  - MC tweens code with a token-level patience diff: unchanged tokens slide, others cross-fade. Ported as `CodeEdit(Animation)`:
+    - a line-level patience diff first, then a token LCS inside changed regions;
+    - moved-line detection;
+    - `mapping=` overrides and ambiguity warnings;
+    - `replace`/`insert`/`remove` pin tokens outside the edit.
+  - New versions lay out on the old grid, so unchanged tokens are pixel-stable.
+  - Kept tokens keep their highlight level.
+  - On finish the mobject *becomes* the new code (tokens, source, glyphs).
+  - **Performance:** interpolation works on raw point and RGBA arrays (no `Mobject.copy()`, which deep-copies SVG state), and line glyphs are cached as arrays (10 edits: 44 s → 5 s).
+- **Implementation:** `src/manim_stage/code.py`, `code_diff.py`, `src/manim_stage/fonts/`. Tests: `tests/test_code.py`, `tests/test_code_diff.py`. KB: `docs/kb/manim-stage/animated-code.md`.
 
 ### Signals (MC: `createSignal`, computed, effects)
 - **Status:** Designed (ADR-0013). Backlog 3.1.
