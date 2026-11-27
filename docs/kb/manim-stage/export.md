@@ -82,6 +82,14 @@ The **Preset** list holds Manim's quality presets, 1080p30 and 4K30 (`-r W,H --f
 | `resolution` | `-r W,H` | quality's size |
 | `fps` | `--fps` | quality's rate |
 
+## Demo parameters
+
+Exports are linear videos rendered with the scene's [demo parameter](demo-params.md) defaults. When the Demo tab has changed values, the dialog offers **Bake demo values**, which renders with the current values instead.
+
+## Web player
+
+Tick **Also build a web player with chapters** to write a static [player site](web-player.md) to `<output name>_web/` beside the video.
+
 ## Limitations and unsupported cases
 
 - **Ranges snap to whole calls.** Cutting inside an animation would need re-encoding, which the Studio deliberately doesn't do.

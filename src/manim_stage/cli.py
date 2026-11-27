@@ -160,6 +160,32 @@ def cmd_bake(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_web(args: argparse.Namespace) -> int:
+    from . import web
+    from .export import ExportJob, ExportSettings, probe_media
+    from .runner import RunnerError, run_capture
+
+    video = args.video
+    if video is None:
+        print(f"rendering {args.scene} ({args.quality})…")
+        r = ExportJob(args.file, args.scene, ExportSettings(quality=args.quality)).start().wait()
+        if not r.ok:
+            print(f"error: render failed: {r.error}", file=sys.stderr)
+            return 1
+        video = r.output
+    fps = float(probe_media(video).get("fps") or 30)
+    try:
+        tl = run_capture(args.file, args.scene, fps=fps, width=160, height=90).timeline
+    except RunnerError as e:
+        print(f"error: {e} ({e.file}:{e.line})", file=sys.stderr)
+        return 1
+    out = args.out or video.with_name(video.stem + "_web")
+    index = web.build(video, tl.to_dict(), out, title=args.title or args.scene)
+    chs = web.chapters(tl.to_dict())
+    print(f"wrote {index} ({len(chs)} chapter{'s' * (len(chs) != 1)})")
+    return 0
+
+
 def cmd_plugins(args: argparse.Namespace) -> int:
     from .plugins import API_VERSION, discover, manim_plugins
 
@@ -235,6 +261,19 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("file", type=Path)
     p.add_argument("scene", nargs="*", help="scenes to bake (default: every StageScene)")
     p.set_defaults(func=cmd_bake)
+    p = sub.add_parser("web", help="build a static web player with chapters for a scene")
+    p.add_argument("file", type=Path)
+    p.add_argument("scene")
+    p.add_argument(
+        "-q",
+        "--quality",
+        default="high_quality",
+        help="Manim quality when rendering (default high_quality)",
+    )
+    p.add_argument("--video", type=Path, help="use this rendered video instead of rendering")
+    p.add_argument("-o", "--out", type=Path, help="output folder (default <video>_web)")
+    p.add_argument("--title", help="page title (default: the scene name)")
+    p.set_defaults(func=cmd_web)
     p = sub.add_parser("plugins", help="list Studio plugins (and why any are disabled)")
     p.set_defaults(func=cmd_plugins)
     p = sub.add_parser("assets", help="list and check the assets scenes use (exit 1 if missing)")

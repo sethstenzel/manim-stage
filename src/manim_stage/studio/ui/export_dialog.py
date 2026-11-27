@@ -65,6 +65,7 @@ class ExportDialog(QDialog):
         fps: float,
         parent: QWidget | None = None,
         after_export: list | None = None,
+        demo_env: dict[str, str] | None = None,
     ) -> None:
         super().__init__(parent)
         self.setWindowTitle(f"Export {scene}")
@@ -101,6 +102,14 @@ class ExportDialog(QDialog):
         self.sections = QCheckBox("Also save each section as its own video (--save_sections)")
         self.sections.setAccessibleName("Save sections")
         form.addRow("", self.sections)
+        self.demo_env = dict(demo_env or {})
+        self.bake_demo = QCheckBox("Bake demo values (default: export uses parameter defaults)")
+        self.bake_demo.setAccessibleName("Bake demo values into the export")
+        self.bake_demo.setVisible(bool(self.demo_env))
+        form.addRow("", self.bake_demo)
+        self.web = QCheckBox("Also build a web player with chapters (<name>_web/index.html)")
+        self.web.setAccessibleName("Build web player")
+        form.addRow("", self.web)
 
         self.whole = QRadioButton("Whole scene")
         self.whole.setChecked(True)
@@ -285,6 +294,7 @@ class ExportDialog(QDialog):
             on_progress=lambda f, m: self._queue.append(("progress", (f, m))),
             on_log=lambda line: self._queue.append(("log", line)),
             on_done=lambda r: self._queue.append(("done", r)),
+            env=self.demo_env if self.bake_demo.isChecked() else None,
         ).start()
 
     def _drain(self) -> None:
@@ -313,6 +323,9 @@ class ExportDialog(QDialog):
             self.log_btn.setChecked(True)
             return
         self.open_btn.setEnabled(True)
+        self.web_index = None
+        if self.web.isChecked() and self.timeline and r.output:
+            self.web_index = self.build_web(r.output)
         for b in self.plugin_buttons:
             b.setEnabled(True)
         p = r.probe
@@ -329,6 +342,19 @@ class ExportDialog(QDialog):
                 f"{p.get('duration_s', 0):.2f} s · {p.get('video_codec')} · {audio}{vfr}"
             )
         self.status.setText("✔ Done: " + "\n".join(bits))
+
+    def build_web(self, video: Path) -> Path | None:
+        """Write the chapters player next to the video (spec F12)."""
+        from ... import web
+
+        tl = self.timeline
+        if self.ranged.isChecked() and self.range_frames:
+            tl = web.slice_timeline(tl, *self.range_frames)
+        try:
+            return web.build(video, tl, video.with_name(video.stem + "_web"), title=self.scene)
+        except OSError as e:
+            self.log.appendPlainText(f"web player: {e}")
+            return None
 
     def _run_after(self, fn) -> None:
         try:

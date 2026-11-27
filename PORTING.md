@@ -27,6 +27,7 @@ Newest first. One line per decision; details in the linked ADR or PR.
 
 | Date | Decision | Why | Where |
 |---|---|---|---|
+| 2026-11-27 | Demo parameters are a separate, never-saved channel (`demo.param`, `MANIM_STAGE_DEMO` override file) reusing project-variable types; exports use defaults unless baked. Web playback = static page over the rendered MP4; chapters from Manim sections; captions embedded as VTTCues so it works from file:// | F12: distinguish editor-time preview from linear export; no server, no scene code in the browser | PR #34 |
 | 2026-11-27 | Educational helpers are Manim VGroups whose methods return animations; tree layout feeds Manim's `Graph` instead of a new graph class; traces recorded first (trusted function, JSON) then replayed with `play_trace` | F12; audit: Manim has `Graph`/`Table` but no array/stack/sequence helpers; no live execution in the viewer | PR #33 |
 | 2026-11-27 | Plugin SDK v1: entry points + api_version handshake; hooks for lanes/panels/inspector/commands/exporters through a narrow StudioAPI; per-hook failure isolation | F11; MC has no handshake; keep editor stable | PR #32 |
 | 2026-11-27 | M3 gate passed (themed three-scene lesson; deterministic compose; restyle via project only) | Spec §11 M3 | PR #31 |

@@ -37,7 +37,7 @@ Motion Canvas concepts are ported into Manim's model. They stay available under 
 | Timing functions / easing | unchanged: `rate_func` | `manim.rate_functions` | Available (Manim) |
 | `createSignal`, computed, effects | [`Signal`, `computed`, `effect`, `bind`](../manim-stage/signals.md) | `ValueTracker`, updaters | Available |
 | Project variables | [`project.var()`, `project.theme()`](../manim-stage/project.md) | `config`, `camera.background_color`, `Text.set_default` | Available |
-| Slides | unchanged: sections (`next_section`) | `Scene.next_section` | Available (Manim) |
+| Slides | unchanged: sections (`next_section`); shown as chapters in the [web player](../manim-stage/web-player.md) | `Scene.next_section` | Available |
 | Code block, `lines()`, `word()`, ranges | [`AnimatedCode`](../manim-stage/animated-code.md), `CodeRange`, `lines()`, `word()`, `find()` | `VGroup` of token Mobjects | Available |
 | Scene transitions | [`enter`/`exit`; `manim-stage compose`](../manim-stage/transitions.md) | `FadeIn`/`FadeOut`; rendered videos | Available |
 | References (`createRef`) | ordinary Python attributes | — | n/a |

@@ -37,6 +37,7 @@ from PySide6.QtWidgets import (
 
 from ... import audio as audio_core
 from ... import cues as cue_store
+from ... import demo as demo_core
 from ... import inspector as inspector_core
 from ... import plugins as plugins_core
 from ... import project as project_core
@@ -49,6 +50,7 @@ from ..service import PreviewMessage, PreviewService, RenderSettings
 from ..timeline_model import resolve_source
 from .assets_panel import AssetsPanel
 from .bridge import ServiceBridge
+from .demo_panel import DemoPanel
 from .event_panel import EventPanel
 from .export_dialog import ExportDialog
 from .inspector_panel import InspectorPanel
@@ -188,6 +190,14 @@ class MainWindow(QMainWindow):
         self.inspector_dock.setWidget(self.inspector_panel)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.inspector_dock)
         self.tabifyDockWidget(self.project_dock, self.inspector_dock)
+        self.demo_panel = DemoPanel()
+        self.demo_dock = QDockWidget("Demo", self)
+        self.demo_dock.setObjectName("demo_dock")
+        self.demo_dock.setWidget(self.demo_panel)
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.demo_dock)
+        self.tabifyDockWidget(self.project_dock, self.demo_dock)
+        self._demo_values: dict = {}
+        self.demo_panel.valuesChanged.connect(self.set_demo_values)
         self.assets_panel = AssetsPanel()
         self.assets_dock = QDockWidget("Assets", self)
         self.assets_dock.setObjectName("assets_dock")
@@ -414,7 +424,7 @@ class MainWindow(QMainWindow):
         if not scene:
             return
         self.log.clear_error()
-        self.service.render(scene, self.render_settings(), env=self._properties_env())
+        self.service.render(scene, self.render_settings(), env=self._render_env())
 
     # -- service events ---------------------------------------------------------------
 
@@ -473,6 +483,7 @@ class MainWindow(QMainWindow):
     def _on_timeline(self, msg: PreviewMessage) -> None:
         tl = msg.data["timeline"]
         self.project_panel.set_project(self.project_path(), msg.data.get("variables", []))
+        self.demo_panel.set_params(msg.data.get("params", []))
         self._prepare_audio(msg.seq, tl)
         self.timeline.set_timeline(self._with_plugin_events(self._with_silent_clips(tl)))
         sel = self.timeline.canvas.selected
@@ -689,7 +700,14 @@ class MainWindow(QMainWindow):
         pb = self.playback
         rng = (pb.range.start, pb.range.end) if pb.range else None
         dlg = ExportDialog(
-            self.service.file, scene, tl, rng, pb.fps, self, after_export=self.plugin_exporters()
+            self.service.file,
+            scene,
+            tl,
+            rng,
+            pb.fps,
+            self,
+            after_export=self.plugin_exporters(),
+            demo_env=self._demo_env(),
         )
         dlg.show()
         self.export_dialog = dlg
@@ -748,6 +766,28 @@ class MainWindow(QMainWindow):
     def properties_path(self) -> Path:
         return inspector_core.sidecar_path(self.service.file)
 
+    def _render_env(self) -> dict[str, str]:
+        """Env for preview renders: unsaved property edits and live demo values."""
+        return {**self._properties_env(), **self._demo_env()}
+
+    def _demo_env(self) -> dict[str, str]:
+        if not self._demo_values:
+            return {}
+        tmp = self.service.cache_dir / ".demo" / "demo-params.json"
+        demo_core.write_overrides(tmp, self._demo_values)
+        return {demo_core.ENV: str(tmp)}
+
+    def set_demo_values(self, values: dict) -> None:
+        """Live demo parameters from the Demo tab (editor-time only; never saved)."""
+        self._demo_values = dict(values)
+        self.render()
+        n = len(values)
+        self.status_label.setText(
+            f"Demo: {n} parameter{'s' * (n != 1)} changed (not exported)"
+            if n
+            else "Demo parameters at their defaults"
+        )
+
     def _properties_env(self) -> dict[str, str]:
         """Env for a render that shows unsaved property edits (a temp overrides file)."""
         if not self._preview_props:
@@ -766,7 +806,7 @@ class MainWindow(QMainWindow):
         if not scene:
             return
         seconds = self.playback.frame / max(self.playback.fps, 1e-9)
-        settings, env = self.render_settings(), self._properties_env()
+        settings, env = self.render_settings(), self._render_env()
         self.inspector_panel.status.setText(f"Inspecting {scene} at {seconds:.2f} s…")
 
         def work() -> None:
@@ -800,9 +840,7 @@ class MainWindow(QMainWindow):
 
     def preview_properties(self, name: str, props: dict) -> None:
         self._preview_props[name] = props
-        self.service.render(
-            self.current_scene(), self.render_settings(), env=self._properties_env()
-        )
+        self.service.render(self.current_scene(), self.render_settings(), env=self._render_env())
         self.status_label.setText(f"Previewing edits to {name!r} (not saved)")
 
     def discard_properties(self) -> None:

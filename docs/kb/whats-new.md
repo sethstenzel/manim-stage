@@ -2,6 +2,15 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-27 — demo parameters and web player (backlog 4.3)
+
+- **New:** [`demo.param(...)`](manim-stage/demo-params.md) and the Studio **Demo** tab:
+  - sliders, check boxes, lists and colours re-render the preview live;
+  - exports use the defaults unless **Bake demo values** is ticked.
+- **New:** [web player](manim-stage/web-player.md):
+  - `manim-stage web` and an Export option build a static page with chapters (from sections), captions, poster and WebVTT files.
+- **Example:** the gallery's `BubblePass` has a `size` demo parameter and three sections.
+
 ## 2026-11-27 — educational helpers (backlog 4.2)
 
 - **New:** [`manim_stage.edu`](manim-stage/edu.md):

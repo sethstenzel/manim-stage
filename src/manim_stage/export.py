@@ -296,8 +296,10 @@ class ExportJob:
         on_log: Callable[[str], None] | None = None,
         on_done: Callable[[ExportResult], None] | None = None,
         python: str = sys.executable,
+        env: dict[str, str] | None = None,
     ) -> None:
         self.file = Path(file).resolve()
+        self.extra_env = dict(env or {})  # e.g. MANIM_STAGE_DEMO when baking demo values
         self.scene, self.settings = scene, settings
         media = Path(settings.media_dir) if settings.media_dir else Path("media")
         # Relative folders are relative to the scene, like Manim run from the scene folder.
@@ -322,7 +324,7 @@ class ExportJob:
             kw["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
         else:
             kw["start_new_session"] = True
-        env = {**child_env(), "COLUMNS": "200", "TERM": "dumb"}
+        env = {**child_env(), "COLUMNS": "200", "TERM": "dumb", **self.extra_env}
         self._started = time.time()
         self._proc = subprocess.Popen(
             self.cmd,

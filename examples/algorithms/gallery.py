@@ -5,6 +5,7 @@ manim-stage studio gallery.py Recursion
 
 from manim import DOWN, LEFT, RIGHT, UP, Create, FadeIn, Graph, Scene, Text, Write
 
+from manim_stage import demo
 from manim_stage.edu import (
     Array,
     CallStack,
@@ -36,10 +37,15 @@ class Recursion(Scene):
 
 
 class BubblePass(Scene):
-    """One bubble-sort pass, recorded as algorithm steps and replayed."""
+    """One bubble-sort pass, recorded as algorithm steps and replayed.
+
+    ``size`` is a demo parameter: drag it in the Studio's Demo tab; exports use 5.
+    """
 
     def construct(self):
-        data = [5, 2, 4, 1, 3]
+        size = demo.param("size", 5, min=3, max=9, description="array length")
+        values = [(7 * k + 3) % 10 for k in range(size)]
+        data = list(values)
         steps = Trace()
         for j in range(len(data) - 1):
             steps.step("compare", i=j, j=j + 1)
@@ -47,25 +53,26 @@ class BubblePass(Scene):
                 data[j], data[j + 1] = data[j + 1], data[j]
                 steps.step("swap", i=j, j=j + 1)
 
-        arr = Array([5, 2, 4, 1, 3])
-        i = arr.pointer(0, "j")
-        self.play(Create(arr), FadeIn(i))
+        arr = Array(values)
+        ptr = arr.pointer(0, "j")
+        self.next_section("Setup")  # sections become chapters in the web player
+        self.play(Create(arr), FadeIn(ptr))
+
+        def compare(e):
+            anims = [ptr.move_to_index(e["i"]), arr.highlight([e["i"], e["j"]], opacity=0.4)]
+            if e["i"] > 0:  # un-highlight the cell the pair just left
+                anims.append(arr.highlight(e["i"] - 1, opacity=0))
+            return anims
+
+        self.next_section("Compare and swap")
         play_trace(
             self,
             steps,
-            {
-                "compare": lambda e: [
-                    i.move_to_index(e["i"]),
-                    arr.highlight([e["i"], e["j"]], opacity=0.4),
-                ],
-                "swap": lambda e: [
-                    arr.swap(e["i"], e["j"]),
-                    arr.highlight([e["i"], e["j"]], opacity=0),
-                ],
-            },
+            {"compare": compare, "swap": lambda e: arr.swap(e["i"], e["j"])},
             run_time=0.4,
         )
-        self.play(arr.highlight(4, "#83C167"))
+        self.next_section("Largest value in place")
+        self.play(arr.highlight(size - 2, opacity=0), arr.highlight(size - 1, "#83C167"))
         self.wait(0.5)
 
 

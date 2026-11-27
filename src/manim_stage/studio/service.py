@@ -407,6 +407,7 @@ class PreviewService:
                             "timeline": m["timeline"],
                             "dependencies": m.get("dependencies", []),
                             "variables": m.get("variables", []),
+                            "params": m.get("params", []),
                         },
                     )
                 )
