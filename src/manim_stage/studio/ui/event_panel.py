@@ -9,6 +9,7 @@ open its source line.
 from __future__ import annotations
 
 import html
+from pathlib import Path
 from typing import Any
 
 from PySide6.QtCore import QPointF, QRectF, Qt, Signal
@@ -203,8 +204,23 @@ class EventPanel(QWidget):
         if box.kind == "section":
             rows.append(("Type", str(box.meta.get("type") or "default")))
             rows.append(("skip_animations", str(bool(box.meta.get("skip_animations")))))
-        if box.kind == "sound":
-            rows.append(("File", str(box.meta.get("file", ""))))
+        if box.kind == "sound" and box.meta.get("clip"):
+            cs = box.meta.get("clip_settings", {})
+            rows.append(("Audio clip", f"{box.meta['clip']} (audio workspace)"))
+            rows.append(("Source", str(cs.get("file", ""))))
+            trim_out = cs.get("trim_out")
+            rows.append(
+                (
+                    "Trim",
+                    f"{cs.get('trim_in', 0):g}–{'end' if trim_out is None else f'{trim_out:g}'} s",
+                )
+            )
+            rows.append(("Gain", f"{cs.get('gain_db', 0):+g} dB"))
+            rows.append(
+                ("Fades", f"in {cs.get('fade_in', 0):g} s, out {cs.get('fade_out', 0):g} s")
+            )
+        elif box.kind == "sound":
+            rows.append(("File", Path(str(box.meta.get("file", ""))).name))
             if box.meta.get("gain") is not None:
                 rows.append(("Gain", f"{box.meta['gain']}"))
         if box.source:

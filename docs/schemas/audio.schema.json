@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/sethstenzel/manim-stage/docs/schemas/audio.schema.json",
+  "title": "manim-stage audio workspace sidecar v1",
+  "description": "`.manim-stage/audio.json`: per-scene audio clips (spec F04; backlog 2.3). A StageScene adds each active clip with Scene.add_sound(processed copy, time_offset=start). Times in seconds. Status: implemented (manim_stage.audio).",
+  "type": "object",
+  "required": [
+    "schema",
+    "version",
+    "scenes"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "manim_stage.audio"
+    },
+    "version": {
+      "const": 1
+    },
+    "scenes": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "clips"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "clips": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Clip"
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "Clip": {
+      "type": "object",
+      "required": [
+        "id",
+        "file"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]{1,64}$"
+        },
+        "file": {
+          "$ref": "#/$defs/RelPath"
+        },
+        "start": {
+          "type": "number",
+          "description": "seconds from scene start; may be negative (cut)"
+        },
+        "trim_in": {
+          "type": "number",
+          "minimum": 0
+        },
+        "trim_out": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "gain_db": {
+          "type": "number",
+          "minimum": -96,
+          "maximum": 24
+        },
+        "fade_in": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fade_out": {
+          "type": "number",
+          "minimum": 0
+        },
+        "mute": {
+          "type": "boolean"
+        },
+        "solo": {
+          "type": "boolean"
+        },
+        "label": {
+          "type": "string"
+        }
+      }
+    },
+    "RelPath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?![A-Za-z]:)(?!/)(?!.*(^|/)\\.\\.(/|$))[^\\\\]+$"
+    }
+  }
+}

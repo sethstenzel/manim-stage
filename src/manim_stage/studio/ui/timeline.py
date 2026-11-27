@@ -124,6 +124,7 @@ class TimelineCanvas(QWidget):
         self._drag_seek = False
         self._drag_cue: str | None = None
         self.drag_plan: MovePlan | None = None
+        self.waveforms: dict[str, Any] = {}  # event id -> peaks (100/s)
         fm = QFontMetrics(self.font())
         self.row_h = max(22, fm.height() + 8)
 
@@ -348,6 +349,8 @@ class TimelineCanvas(QWidget):
         if cat == "wait":
             hatch = QBrush(QColor(c["muted"]), Qt.BrushStyle.BDiagPattern)
             p.fillRect(rect.adjusted(1, 1, -1, -1), hatch)
+        if box.kind == "sound" and box.id in self.waveforms:
+            self._paint_waveform(p, rect, self.waveforms[box.id])
         anim = box.animation
         if anim and anim.get("rate_curve") and rect.width() > 24:
             self._paint_curve(p, rect, anim["rate_curve"])
@@ -368,6 +371,27 @@ class TimelineCanvas(QWidget):
             p.setBrush(Qt.BrushStyle.NoBrush)
             p.setPen(QPen(QColor(c["playhead"]), 2))
             p.drawRoundedRect(rect.adjusted(-1, -1, 1, 1), 3, 3)
+
+    def _paint_waveform(self, p: QPainter, rect: QRectF, peaks: Any) -> None:
+        """Peaks (100 per second from the clip start) as a mirrored envelope."""
+        n = len(peaks)
+        if not n or rect.width() < 3:
+            return
+        mid, half = rect.center().y(), rect.height() / 2 - 2
+        col = QColor("#ffffff")
+        col.setAlpha(120)
+        p.setPen(QPen(col, 1))
+        px_per_s = self.ppf * self.fps
+        x0 = max(rect.left(), LABEL_W)
+        x1 = min(rect.right(), self.width())
+        x = x0
+        while x < x1:
+            i = int((x - rect.left()) / px_per_s * 100)
+            if i >= n:
+                break
+            a = float(peaks[i]) * half
+            p.drawLine(QPointF(x, mid - a), QPointF(x, mid + a))
+            x += 1.0
 
     def _paint_curve(self, p: QPainter, rect: QRectF, curve: list[float]) -> None:
         lo, hi = min(0.0, *curve), max(1.0, *curve)

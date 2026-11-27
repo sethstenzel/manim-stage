@@ -7,7 +7,7 @@ in both dark and light themes and scale with the display.
 from __future__ import annotations
 
 from PySide6.QtCore import QPointF, QRectF, Qt
-from PySide6.QtGui import QColor, QIcon, QPainter, QPainterPath, QPen, QPixmap
+from PySide6.QtGui import QColor, QIcon, QPainter, QPainterPath, QPen, QPixmap, QPolygonF
 
 SIZE = 64
 
@@ -40,6 +40,28 @@ def make_icon(name: str, color: str) -> QIcon:
     p = QPainter(pm)
     p.setRenderHint(QPainter.RenderHint.Antialiasing)
     c = QColor(color)
+    if name == "audio":
+        path = QPainterPath()
+        path.addPolygon(
+            QPolygonF(
+                [
+                    QPointF(10, 24),
+                    QPointF(22, 24),
+                    QPointF(36, 12),
+                    QPointF(36, 52),
+                    QPointF(22, 40),
+                    QPointF(10, 40),
+                ]
+            )
+        )
+        p.fillPath(path, c)
+        pen = QPen(c, 4)
+        pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+        p.setPen(pen)
+        p.drawArc(QRectF(30, 20, 16, 24), -60 * 16, 120 * 16)
+        p.drawArc(QRectF(30, 12, 26, 40), -60 * 16, 120 * 16)
+        p.end()
+        return QIcon(pm)
     if name == "loop":
         pen = QPen(c, 6)
         pen.setCapStyle(Qt.PenCapStyle.RoundCap)

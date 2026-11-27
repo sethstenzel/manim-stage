@@ -1,0 +1,13 @@
+{
+  "schema": "manim_stage.audio",
+  "version": 1,
+  "scenes": {
+    "BubbleSortLesson": {
+      "clips": [
+        {"id": "narration", "file": "audio/narration-take2.wav", "start": 0.5, "fade_out": 0.3, "label": "narration take 2"},
+        {"id": "music", "file": "audio/bed.mp3", "start": 0, "trim_in": 4.0, "gain_db": -18, "fade_in": 1.0, "fade_out": 2.0},
+        {"id": "click", "file": "audio/click.wav", "start": 3.2, "mute": true}
+      ]
+    }
+  }
+}

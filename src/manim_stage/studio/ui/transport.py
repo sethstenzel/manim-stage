@@ -121,6 +121,7 @@ class TransportBar(QWidget):
     speedChanged = Signal(float)
     loopToggled = Signal(bool)
     frameEntered = Signal(int)
+    audioToggled = Signal(bool)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -134,6 +135,10 @@ class TransportBar(QWidget):
         self.btn_end = _button("end", "Go to end", "Go to end (End)")
         self.btn_loop = _button("loop", "Loop", "Loop playback (L)", checkable=True)
         self.btn_loop.setChecked(True)
+        self.btn_audio = _button(
+            "audio", "Preview audio", "Play the scene's sound while previewing", checkable=True
+        )
+        self.btn_audio.setChecked(True)
         self.speed = QComboBox()
         self.speed.setAccessibleName("Playback speed")
         self.speed.setToolTip("Playback speed")
@@ -154,7 +159,14 @@ class TransportBar(QWidget):
         for w in (self.btn_start, self.btn_back, self.btn_play, self.btn_fwd, self.btn_end):
             lay.addWidget(w)
         lay.addWidget(self.scrub, 1)
-        for w in (self.timecode, self.frame_box, self.total_label, self.speed, self.btn_loop):
+        for w in (
+            self.timecode,
+            self.frame_box,
+            self.total_label,
+            self.speed,
+            self.btn_loop,
+            self.btn_audio,
+        ):
             lay.addWidget(w)
 
         self.btn_play.clicked.connect(self.playToggled)
@@ -163,6 +175,7 @@ class TransportBar(QWidget):
         self.btn_start.clicked.connect(lambda: self.jumpRequested.emit("start"))
         self.btn_end.clicked.connect(lambda: self.jumpRequested.emit("end"))
         self.btn_loop.toggled.connect(self.loopToggled)
+        self.btn_audio.toggled.connect(self.audioToggled)
         self.speed.currentIndexChanged.connect(
             lambda i: self.speedChanged.emit(float(self.speed.itemData(i)))
         )
@@ -179,6 +192,15 @@ class TransportBar(QWidget):
             if name and (b.property("icon_drawn") != (name, color)):
                 b.setIcon(make_icon(name, color))
                 b.setProperty("icon_drawn", (name, color))
+
+    def set_audio_state(self, available: bool, reason: str = "") -> None:
+        self.btn_audio.setEnabled(available)
+        if not available:
+            self.btn_audio.setChecked(False)
+            self.btn_audio.setToolTip(f"Preview audio unavailable: {reason}")
+
+    def audio_on(self) -> bool:
+        return self.btn_audio.isChecked()
 
     def _frame_typed(self, value: int) -> None:
         if not self._updating:

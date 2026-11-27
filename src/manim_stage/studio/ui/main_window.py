@@ -37,6 +37,7 @@ from PySide6.QtWidgets import (
 
 from ... import cues as cue_store
 from ...export import snapshot
+from ..audio_player import AudioPlayer
 from ..cue_edit import CueEdit, edit_for_plan, edit_reset, plan_move
 from ..playback import Playback
 from ..service import PreviewMessage, PreviewService, RenderSettings
@@ -141,6 +142,11 @@ class MainWindow(QMainWindow):
         self.statusBar().addWidget(self.status_label, 1)
 
         # wiring
+        self.audio = AudioPlayer()
+        self._audio_results: deque = deque()  # (seq, mix, waveforms) from worker threads
+        self.audio_seq = 0  # revision whose mix is loaded
+        self.transport.set_audio_state(self.audio.available, self.audio.reason)
+        self.transport.audioToggled.connect(self._set_audio_enabled)
         self.bridge = ServiceBridge(service, self)
         self.bridge.message.connect(self.on_message)
         self.transport.playToggled.connect(self.toggle_play)
@@ -360,6 +366,7 @@ class MainWindow(QMainWindow):
 
     def _on_timeline(self, msg: PreviewMessage) -> None:
         tl = msg.data["timeline"]
+        self._prepare_audio(msg.seq, tl)
         self.timeline.set_timeline(tl)
         sel = self.timeline.canvas.selected
         if sel:  # stable event IDs: keep the selection across re-renders
@@ -427,14 +434,87 @@ class MainWindow(QMainWindow):
     def _tick(self) -> None:
         if self._snapshot_results:
             self._drain_snapshots()
+        if self._audio_results:
+            self._drain_audio()
         if not self.playback.playing:
+            if self.audio.playing:
+                self.audio.stop()
             return
         before = self.playback.frame
         after = self.playback.tick(self._frames())
         if after != before or self.playback.buffering:
             self._show_frame()
+        self._sync_audio(jumped=after < before)
         if not self.playback.playing:
             self._sync_transport()
+
+    # -- audio ------------------------------------------------------------------------
+
+    def _audio_wanted(self) -> bool:
+        return (
+            self.audio.available
+            and self.transport.audio_on()
+            and self.playback.playing
+            and not self.playback.buffering
+            and self.playback.speed == 1.0
+        )
+
+    def _sync_audio(self, *, jumped: bool = False) -> None:
+        """Keep audio within one frame of the playhead; silent while buffering or not 1×."""
+        t = self.playback.frame / max(self.playback.fps, 1e-9)
+        if not self._audio_wanted():
+            if self.audio.playing:
+                self.audio.stop()
+            return
+        if not self.audio.playing:
+            self.audio.play(t)
+        elif jumped or abs(self.audio.drift(t)) > 1.5 / max(self.playback.fps, 1e-9):
+            self.audio.seek(t)
+
+    def _set_audio_enabled(self, on: bool) -> None:
+        self._sync_audio()
+
+    def _prepare_audio(self, seq: int, timeline: dict) -> None:
+        """Mix the scene's sounds and compute waveforms off the GUI thread."""
+        from ... import audio as audio_core
+
+        scene_dir = self.service.file.parent
+        peaks_dir = self.service.cache_dir / ".audio-peaks"
+
+        def work() -> None:
+            try:
+                sounds = audio_core.sounds_from_timeline(timeline, scene_dir)
+                waves = {}
+                for e in timeline.get("events", []):
+                    if e["kind"] != "sound":
+                        continue
+                    f = Path(str(e["meta"].get("file", "")))
+                    f = f if f.is_absolute() else scene_dir / f
+                    try:
+                        waves[e["id"]] = audio_core.file_peaks(f, peaks_dir)
+                    except Exception:
+                        continue
+                duration = timeline["duration_frames"] / float(timeline["frame_rate"])
+                buf = audio_core.mix(sounds, duration) if sounds else None
+                self._audio_results.append((seq, buf, waves))
+            except Exception as exc:  # reported in the log
+                self._audio_results.append((seq, None, {"error": str(exc)}))
+
+        threading.Thread(target=work, daemon=True).start()
+
+    def _drain_audio(self) -> None:
+        while self._audio_results:
+            seq, buf, waves = self._audio_results.popleft()
+            cur = self.service.current
+            if cur is None or seq != cur.seq:
+                continue  # stale revision
+            if "error" in waves:
+                self.log.append(f"audio: {waves['error']}")
+                continue
+            self.audio_seq = seq
+            self.audio.set_mix(buf if buf is not None else self.audio._mix[:0])
+            self.timeline.canvas.waveforms = waves
+            self.timeline.canvas.update()
 
     def open_event_source(self, box) -> None:
         if box is None or not box.source:
@@ -444,6 +524,7 @@ class MainWindow(QMainWindow):
 
     def toggle_play(self) -> None:
         self.playback.toggle()
+        self._sync_audio(jumped=True)
         self._sync_transport()
 
     def step(self, frames: int) -> None:
@@ -456,6 +537,8 @@ class MainWindow(QMainWindow):
     def seek(self, frame: int) -> None:
         self.playback.seek(frame)
         self._show_frame()
+        if self.playback.playing:
+            self._sync_audio(jumped=True)
 
     def jump(self, where: str) -> None:
         b = self.playback.bounds
@@ -584,6 +667,7 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event) -> None:  # noqa: N802
         self.timer.stop()
+        self.audio.stop()
         self.bridge.detach()
         self.service.close()
         super().closeEvent(event)

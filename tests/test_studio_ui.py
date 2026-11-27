@@ -342,3 +342,31 @@ def test_drag_cue_saves_sidecar_rerenders_and_undoes(qtbot, tmp_path):
     qtbot.waitUntil(rerendered(seq), timeout=TIMEOUT)
     assert cue("intro").start == 2 * fps and not cue("intro").meta["overridden"]
     dispose(win)
+
+
+def test_audio_lane_gets_waveforms_and_a_mix(qtbot, tmp_path, test_sound):
+    import shutil
+
+    from manim_stage import audio
+
+    proj = tmp_path / "p"
+    (proj / ".manim-stage").mkdir(parents=True)
+    shutil.copy(SCENES / "audio_scene.py", proj / "lesson.py")
+    shutil.copy(test_sound, proj / "voice.wav")
+    audio.save(
+        proj / ".manim-stage" / "audio.json",
+        audio.AudioFile({"Voiced": [audio.AudioClip("n", "voice.wav", start=0.5)]}),
+    )
+    win, _ = create_window(
+        proj / "lesson.py", "Voiced", workers=1, cache_dir=tmp_path / "c", watch=False
+    )
+    win.show()
+    wait_done(qtbot, win, "Voiced")
+    qtbot.waitUntil(lambda: bool(win.timeline.canvas.waveforms), timeout=TIMEOUT)
+    sound_id = next(iter(win.timeline.canvas.waveforms))
+    assert sound_id == "Voiced:sound:clip:n#0"
+    assert win.audio_seq == win.service.current.seq
+    assert not win.audio.available  # tests run silent (MANIM_STAGE_NO_AUDIO)
+    assert not win.transport.btn_audio.isEnabled()
+    assert win.audio.duration == pytest.approx(win.playback.total / win.playback.fps, abs=0.05)
+    dispose(win)

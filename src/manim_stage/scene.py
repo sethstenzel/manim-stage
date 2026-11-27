@@ -117,6 +117,48 @@ class StageMixin:
             return []
         return self._stage_resolver_obj.orphans()
 
+    # -- audio clips (.manim-stage/audio.json) -------------------------------------------
+
+    def setup(self) -> None:  # Manim hook, called before construct()
+        super().setup()  # type: ignore[misc]
+        self._stage_add_audio_clips()
+
+    def _stage_add_audio_clips(self) -> None:
+        """Add the scene's audio-workspace clips as plain ``add_sound`` calls.
+
+        Each clip is trimmed/faded/gained into a cached copy first, so Manim mixes
+        exactly what the Studio previews. Muted clips are skipped; if any clip is
+        soloed, only soloed clips play.
+        """
+        from . import audio
+
+        try:
+            anchor = Path(inspect.getfile(type(self)))
+        except (OSError, TypeError):
+            anchor = Path.cwd() / "__scene__.py"
+        side = audio.sidecar_path(anchor)
+        self._stage_audio_clips: list[dict[str, Any]] = []
+        if not side.exists():
+            return
+        root = side.parent.parent
+        for clip in audio.load(side).active(type(self).__name__):
+            processed = audio.render_clip(clip, root)
+            self.add_sound(str(processed), time_offset=clip.start)  # type: ignore[attr-defined]
+            info = {k: v for k, v in clip.to_dict().items() if k != "id"}
+            self._stage_audio_clips.append(
+                {
+                    "id": clip.id,
+                    "processed": str(processed),
+                    "label": clip.label or Path(clip.file).name,
+                    **info,
+                }
+            )
+
+    @property
+    def stage_audio_clips(self) -> list[dict[str, Any]]:
+        """Audio-workspace clips added to this run: id, processed file, label, settings."""
+        return list(getattr(self, "_stage_audio_clips", []))
+
     def tear_down(self) -> None:  # Manim hook, called after construct()
         for name in self.stage_orphan_cues():
             log.warning(

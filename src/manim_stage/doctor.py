@@ -114,6 +114,18 @@ def _qt() -> Check:
     return Check("Studio (PySide6)", "ok", f"PySide6 {v}")
 
 
+def _audio_out() -> Check:
+    try:
+        import sounddevice as sd
+
+        dev = sd.query_devices(kind="output")
+        return Check("Preview audio", "ok", f"sounddevice {sd.__version__}; output: {dev['name']}")
+    except ImportError:
+        return Check("Preview audio", "warn", "sounddevice not installed: the preview is silent")
+    except Exception as e:  # no PortAudio library or no output device
+        return Check("Preview audio", "warn", f"silent preview ({type(e).__name__}: {e})")
+
+
 def _plugins() -> Check:
     from importlib.metadata import entry_points
 
@@ -127,5 +139,5 @@ def run_checks() -> list[Check]:
     checks += _manim()
     checks += [_cairo(), _fonts(), _latex()]
     checks += _codecs()
-    checks += [_qt(), _plugins()]
+    checks += [_qt(), _audio_out(), _plugins()]
     return checks

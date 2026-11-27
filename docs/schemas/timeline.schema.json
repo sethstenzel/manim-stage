@@ -138,7 +138,7 @@
         },
         "meta": {
           "type": "object",
-          "description": "Kind-specific details. play/wait: play_index, run_time, frozen, skipped; play also animations (AnimationInfo per top-level animation). animation: animation (AnimationInfo). section: type, skip_animations. sound: file, start_seconds, duration_seconds, gain. cue: name, description, call_frame, default_frame, target_frame, overridden, wait_frames, play_index; a wait issued by a cue has meta.cue = name.",
+          "description": "Kind-specific details. play/wait: play_index, run_time, frozen, skipped; play also animations (AnimationInfo per top-level animation). animation: animation (AnimationInfo). section: type, skip_animations. sound: file, start_seconds, duration_seconds, gain. cue: name, description, call_frame, default_frame, target_frame, overridden, wait_frames, play_index; a wait issued by a cue has meta.cue = name. A sound from an audio-workspace clip has meta.clip = clip id (id scene:sound:clip:<id>#0).",
           "properties": {
             "animations": {
               "type": "array",
