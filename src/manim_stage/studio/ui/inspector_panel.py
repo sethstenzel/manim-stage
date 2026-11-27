@@ -185,6 +185,14 @@ class InspectorPanel(QWidget):
         host.setLayout(row)
         self.props.addRow(host)
 
+    def add_rows(self, title: str, rows: list[tuple[str, str]]) -> None:
+        """Extra read-only rows, e.g. from Studio plugins."""
+        if not rows:
+            return
+        self.props.addRow(QLabel(f"<b>{title}</b>"))
+        for k, v in rows:
+            self.props.addRow(str(k), QLabel(str(v)))
+
     def _editor(self, key: str, kind: str, value: Any) -> QWidget:
         if kind == "color":
             w: Any = ColorButton(str(value), f"Property {key}")

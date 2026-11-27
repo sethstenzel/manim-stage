@@ -38,6 +38,7 @@ from PySide6.QtWidgets import (
 from ... import audio as audio_core
 from ... import cues as cue_store
 from ... import inspector as inspector_core
+from ... import plugins as plugins_core
 from ... import project as project_core
 from ...export import snapshot
 from .. import audio_edit
@@ -52,6 +53,7 @@ from .event_panel import EventPanel
 from .export_dialog import ExportDialog
 from .inspector_panel import InspectorPanel
 from .log_panel import LogPanel, open_in_editor
+from .plugins_panel import PluginsPanel
 from .project_panel import ProjectPanel
 from .quality import manim_qualities, quality_label
 from .theme import apply_theme, is_dark
@@ -82,6 +84,38 @@ class _SidecarCommand(QUndoCommand):
         path = self.path_fn()
         self.edit.undo(path)
         self.window._sidecar_written(path, f"Undo: {self.edit.label}")
+
+
+class _WindowAPI(plugins_core.StudioAPI):
+    """The narrow editor API Studio plugins get (no file system / network access)."""
+
+    def __init__(self, window: MainWindow) -> None:
+        self._w = window
+
+    def scene(self) -> str | None:
+        return self._w.current_scene()
+
+    def timeline(self) -> dict | None:
+        cur = self._w.service.current
+        return cur.timeline.to_dict() if cur and cur.timeline else None
+
+    def frame(self) -> int:
+        return self._w.playback.frame
+
+    def total_frames(self) -> int:
+        return self._w.playback.total
+
+    def fps(self) -> float:
+        return self._w.playback.fps
+
+    def seek(self, frame: int) -> None:
+        self._w.seek(int(frame))
+
+    def status(self, text: str) -> None:
+        self._w.status_label.setText(str(text))
+
+    def log(self, text: str) -> None:
+        self._w.log.append(str(text))
 
 
 class MainWindow(QMainWindow):
@@ -160,6 +194,12 @@ class MainWindow(QMainWindow):
         self.assets_dock.setWidget(self.assets_panel)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.assets_dock)
         self.tabifyDockWidget(self.inspector_dock, self.assets_dock)
+        self.plugins_panel = PluginsPanel()
+        self.plugins_dock = QDockWidget("Plugins", self)
+        self.plugins_dock.setObjectName("plugins_dock")
+        self.plugins_dock.setWidget(self.plugins_panel)
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.plugins_dock)
+        self.tabifyDockWidget(self.assets_dock, self.plugins_dock)
         self.event_dock.raise_()
         self.event_dock.raise_()
         self.resizeDocks([self.event_dock], [340], Qt.Orientation.Horizontal)
@@ -201,12 +241,15 @@ class MainWindow(QMainWindow):
         ip.nodeSelected.connect(
             lambda n: self.viewport.set_selection(n.get("bounds") if n else None)
         )
+        ip.nodeSelected.connect(self._plugin_inspector_rows)
         ip.previewRequested.connect(self.preview_properties)
         ip.saveRequested.connect(self.save_properties)
         ip.discardRequested.connect(self.discard_properties)
         ip.copyRequested.connect(self.copy_properties)
         self.viewport.sceneClicked.connect(self.pick_at)
         self.assets_panel.refreshRequested.connect(self.check_assets)
+        self.plugin_api = _WindowAPI(self)
+        self.load_plugins()
         self.assets_panel.addRequested.connect(lambda: self.add_asset())
         self._assets_results: deque = deque()
         self._inspect_results: deque = deque()
@@ -431,7 +474,7 @@ class MainWindow(QMainWindow):
         tl = msg.data["timeline"]
         self.project_panel.set_project(self.project_path(), msg.data.get("variables", []))
         self._prepare_audio(msg.seq, tl)
-        self.timeline.set_timeline(self._with_silent_clips(tl))
+        self.timeline.set_timeline(self._with_plugin_events(self._with_silent_clips(tl)))
         sel = self.timeline.canvas.selected
         if sel:  # stable event IDs: keep the selection across re-renders
             self.timeline.canvas.select(sel)
@@ -645,7 +688,9 @@ class MainWindow(QMainWindow):
         tl = cur.timeline.to_dict() if cur and cur.timeline and cur.scene == scene else None
         pb = self.playback
         rng = (pb.range.start, pb.range.end) if pb.range else None
-        dlg = ExportDialog(self.service.file, scene, tl, rng, pb.fps, self)
+        dlg = ExportDialog(
+            self.service.file, scene, tl, rng, pb.fps, self, after_export=self.plugin_exporters()
+        )
         dlg.show()
         self.export_dialog = dlg
         return dlg
@@ -777,6 +822,65 @@ class MainWindow(QMainWindow):
     def copy_properties(self, name: str, props: dict) -> None:
         QGuiApplication.clipboard().setText(inspector_core.as_python(name, props))
         self.status_label.setText(f"Copied Python for {name!r} to the clipboard")
+
+    # -- Studio plugins (F11) ---------------------------------------------------------
+
+    def load_plugins(self) -> None:
+        """Discover plugins and mount their panels and commands (hooks are sandboxed:
+        a failing hook disables only that plugin)."""
+        self.plugins = plugins_core.discover()
+        self.plugin_docks: list[QDockWidget] = []
+        for lp in self.plugins:
+            for title, factory in lp.call("panels", self.plugin_api, log=self.log.append) or []:
+                try:
+                    widget = factory()
+                except Exception as e:
+                    self.log.append(f"plugin {lp.name!r} panel {title!r} failed: {e}")
+                    continue
+                dock = QDockWidget(f"{title}", self)
+                dock.setObjectName(f"plugin_{lp.name}_{title}")
+                dock.setWidget(widget)
+                self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, dock)
+                self.tabifyDockWidget(self.plugins_dock, dock)
+                self.plugin_docks.append(dock)
+            for label, shortcut, callback in (
+                lp.call("commands", self.plugin_api, log=self.log.append) or []
+            ):
+                action = QAction(f"{label}", self)
+                if shortcut:
+                    action.setShortcut(QKeySequence(shortcut))
+                action.triggered.connect(lambda _=False, cb=callback, p=lp: self._run_plugin(p, cb))
+                self.addAction(action)
+                self.shortcuts[f"plugin:{lp.name}:{label}"] = action
+        self.plugins_panel.show(self.plugins, plugins_core.manim_plugins())
+        self.event_dock.raise_()
+
+    def _run_plugin(self, lp, callback) -> None:
+        try:
+            callback()
+        except Exception as e:
+            lp.enabled, lp.reason = False, f"disabled after a command failed: {e}"
+            self.log.append(f"plugin {lp.name!r} command failed: {e}")
+            self.plugins_panel.show(self.plugins, plugins_core.manim_plugins())
+
+    def _plugin_inspector_rows(self, node) -> None:
+        if node is None:
+            return
+        for lp in self.plugins:
+            rows = lp.call("inspector_rows", node, self.plugin_api, log=self.log.append)
+            if rows:
+                self.inspector_panel.add_rows(f"{lp.name} (plugin)", list(rows))
+
+    def plugin_exporters(self) -> list:
+        out = []
+        for lp in self.plugins:
+            for label, fn in lp.call("exporters", self.plugin_api, log=self.log.append) or []:
+                out.append((f"{label}", fn))
+        return out
+
+    def _with_plugin_events(self, tl: dict) -> dict:
+        extra = plugins_core.plugin_events(self.plugins, tl, self.plugin_api, log=self.log.append)
+        return {**tl, "events": [*tl["events"], *extra]} if extra else tl
 
     # -- assets & environment (F10, MF.9) ----------------------------------------------
 

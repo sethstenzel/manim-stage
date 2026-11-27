@@ -51,6 +51,7 @@ assert main(["timeline", "cli_demo.py", "Hello"]) == 0
 | `doctor [--json]` | Checks Python, the Manim build and required APIs, Cairo, Pango fonts (`Text`), LaTeX + dvisvgm (`Tex`/`MathTex`), FFmpeg/PyAV encoders for each export format, PySide6, preview audio output, and installed Manim plugins. Exits 1 if something essential fails. |
 | `validate FILE [SCENE…]` | Checks the [named cues](cues.md) of every StageScene (or the ones named): each cue's reach time, default, target and override; errors (duplicates, negative waits) and orphaned overrides. Exits 1 on errors. |
 | `bake FILE [SCENE…]` | Writes every resolved cue target into `.manim-stage/cues.json` and marks orphans as tombstones. Writes nothing if any scene fails. |
+| `plugins` | Lists [Studio plugins](plugins.md) (enabled, or disabled with the reason) and Manim plugins. |
 | `assets FILE… [--json]` | Lists the [assets](assets.md) the scene files use (images, SVGs, sounds, narration files, audio clips, fonts), resolved like Manim does. Exits 1 if any are missing. |
 | `compose SPEC.sequence.json [-q QUALITY]` | Renders each scene of a [sequence](transitions.md#quick-start-joining-scenes) with `manim render` and joins them with overlapping transitions (fade, slide, wipe); frame-exact, audio aligned. |
 | `cache [--clear] [--cache-dir DIR]` | Shows the preview frame cache's size, or empties it. |

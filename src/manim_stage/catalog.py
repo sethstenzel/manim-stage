@@ -35,6 +35,7 @@ CATEGORY_LABELS = {key: label for key, label in ANIMATION_CATEGORIES.values()} |
     "animate": ".animate",
     "wait": "Wait",
     "cue": "Cue",
+    "plugin": "Plugin",
     "section": "Section",
     "sound": "Sound",
     "caption": "Caption",

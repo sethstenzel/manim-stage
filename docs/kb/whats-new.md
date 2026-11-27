@@ -2,6 +2,14 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-27 — Studio plugin SDK (backlog 4.1)
+
+- **New:** [Studio plugins](manim-stage/plugins.md), API version 1:
+  - registered as `manim_stage.plugins` entry points (or `MANIM_STAGE_PLUGINS` while developing);
+  - hooks for timeline events on their own lane, dock panels, inspector rows, commands and post-export actions;
+  - an API-version handshake. Failing plugins are disabled with the reason.
+- **New:** a **Plugins** tab and `manim-stage plugins`; the sample plugin is `examples/plugins/stage_beats/`.
+
 ## 2026-11-27 — M3 gate passed: themed multi-scene lesson (backlog 3.6)
 
 - **New:** `examples/lesson_series/` and the [tutorial](tutorials/multi-scene-lesson.md): three scenes using theme, variables, signals, flow helpers, an exposed property and a composed sequence.
