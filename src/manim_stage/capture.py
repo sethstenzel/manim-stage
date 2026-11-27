@@ -107,6 +107,10 @@ def _clip_events(scene: Any, scene_name: str, events: list[SceneEvent]) -> list[
     return out
 
 
+def _src(d: dict[str, Any] | None) -> SourceRef | None:
+    return SourceRef(d["path"], int(d["line"])) if d and d.get("line") else None
+
+
 def _narration_events(scene: Any, scene_name: str, events: list[SceneEvent]) -> list[SceneEvent]:
     """Tag the sound and caption of each ``self.narration(...)`` with its name/words."""
     narrs = getattr(scene, "stage_narrations", []) or []
@@ -123,6 +127,7 @@ def _narration_events(scene: Any, scene_name: str, events: list[SceneEvent]) -> 
                 out[i] = dataclasses.replace(
                     e,
                     id=f"{scene_name}:sound:narration:{n['name']}#0",
+                    source=_src(n.get("source")) or e.source,
                     label=n["name"],
                     meta={**e.meta, "narration": n["name"], "bookmarks": n["bookmarks"]},
                 )
@@ -132,6 +137,7 @@ def _narration_events(scene: Any, scene_name: str, events: list[SceneEvent]) -> 
                 out[i] = dataclasses.replace(
                     e,
                     id=f"{scene_name}:caption:narration:{n['name']}#0",
+                    source=_src(n.get("source")) or e.source,
                     meta={**e.meta, "narration": n["name"], "words": n["words"]},
                 )
     return out

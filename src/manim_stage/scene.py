@@ -33,6 +33,7 @@ from manim import Scene, config
 
 from . import _compat
 from .cues import CueRecord, CueResolver, load, sidecar_path
+from .deps import _system_roots
 
 if TYPE_CHECKING:
     from .voiceover import Narration
@@ -50,7 +51,8 @@ def _user_source() -> dict[str, Any] | None:
             p = Path(frame.f_code.co_filename)
             if not str(p).startswith("<"):
                 resolved = p.resolve()
-                if not resolved.is_relative_to(_PKG) and not resolved.is_relative_to(_MANIM):
+                skip = (_PKG, _MANIM, *_system_roots())
+                if not any(resolved.is_relative_to(r) for r in skip):
                     return {"path": resolved.name, "line": frame.f_lineno, "file": str(resolved)}
             frame = frame.f_back
         return None
@@ -200,6 +202,7 @@ class StageMixin:
                 "name": name,
                 "file": str(path),
                 "start_frame": start,
+                "source": _user_source(),
                 "duration": duration,
                 "text": clean,
                 "bookmarks": marks,

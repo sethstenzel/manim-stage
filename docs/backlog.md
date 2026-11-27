@@ -82,7 +82,7 @@ The editor must cover every Motion Canvas editor capability **and** surface Mani
 | 2.4 | manim-voiceover adapter (+ upstream PRs: 0.30 compat, manual bookmark times #113, pre-recorded audio #100) | ☑ | `self.narration()`; bookmarks = cues; cache import. Upstream PRs still to propose | F04 |
 | 2.5 | `AnimatedCode` layout: Pygments tokens, token IDs, anchored grid, bundled font, `CodeRange`, `highlight_lines` | ☑ | F05, ADR-0008 |
 | 2.6 | Diff engine (patience line→token, moves, overrides) + `animate_to`; tests: repeated tokens, multi-line, non-ASCII, 500+ lines | ☑ | F05 |
-| 2.7 | End-to-end narrated bubble-sort demo + headless reproducibility test | ☐ | M2 gate |
+| 2.7 | End-to-end narrated bubble-sort demo + headless reproducibility test | ☑ | M2 gate PASSED: `docs/m2-gate-report.md` |
 
 ## M3 — Composition and customization (P2)
 

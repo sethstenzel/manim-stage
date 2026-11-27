@@ -181,12 +181,12 @@ class AnimatedCode(VGroup):
         by_line: dict[int, list[Token]] = {}
         for t in self.tokens:
             by_line.setdefault(t.line, []).append(t)
-        mobs: list[VGroup] = []
-        for line_no in sorted(by_line):
-            toks = by_line[line_no]
+        line_nos = sorted(by_line)
+        markups = []
+        for line_no in line_nos:
             markup = [_MARKER]
             last = 1
-            for t in toks:
+            for t in by_line[line_no]:
                 markup.append(" " * (t.col - last))
                 attrs = f'foreground="{t.color}"'
                 if t.bold:
@@ -195,16 +195,18 @@ class AnimatedCode(VGroup):
                     attrs += ' font_style="italic"'
                 markup.append(f"<span {attrs}>{html.escape(t.text, quote=False)}</span>")
                 last = t.end_col
+            counts = tuple(len(re.sub(r"\s", "", t.text)) for t in by_line[line_no])
+            markups.append(("".join(markup), counts))
+        layouts = _layout_lines(markups, self.font, self.font_size, self.cell_width)
+        mobs: list[VGroup] = []
+        for line_no, layout in zip(line_nos, layouts, strict=True):
             line_y = (line_no - 1) * self.line_height
             glyphs = [
                 _glyph(points, fill, stroke, width, line_y)
-                for points, fill, stroke, width in _line_glyphs(
-                    "".join(markup), self.font, self.font_size, self.cell_width
-                )
+                for points, fill, stroke, width in layout
             ]
             i = 0
-            for t in toks:
-                n = len(re.sub(r"\s", "", t.text))
+            for n in (len(re.sub(r"\s", "", t.text)) for t in by_line[line_no]):
                 mobs.append(VGroup(*glyphs[i : i + n]))
                 i += n
         return mobs
@@ -379,22 +381,58 @@ class AnimatedCode(VGroup):
         return f"AnimatedCode({first[:30]!r}…, {len(self.tokens)} tokens)"
 
 
-@lru_cache(maxsize=4096)
-def _line_glyphs(
-    markup: str, font: str, font_size: float, cell_width: float
-) -> tuple[tuple[Any, Any, Any, float], ...]:
-    """Glyph outlines and colours of one line, in grid space (column 1 at x=0,
-    baseline-centre at y=0), as plain arrays. Cached: an edit re-lays-out only the
-    lines whose text or colours changed, and glyphs never drag Pango/SVG state along."""
-    text = MarkupText(markup, font=font, font_size=font_size)
-    marker, *glyphs = text.submobjects
-    shift = np.array([-marker.get_left()[0] - cell_width, -marker.get_center()[1], 0.0])
-    out = []
-    for g in glyphs:
-        out.append(
-            (g.points + shift, g.fill_rgbas.copy(), g.stroke_rgbas.copy(), float(g.stroke_width))
+# Glyph outlines + colours per laid-out line, in grid space (column 1 at x=0, the line's
+# baseline-centre at y=0), as plain arrays. Keyed by (markup, font, size).
+_LINE_CACHE: dict[tuple[str, str, float], tuple[tuple[Any, Any, Any, float], ...]] = {}
+_NO_LIGATURES = '<span font_features="liga=0, clig=0, dlig=0, calt=0">'
+
+
+def _layout_lines(
+    lines: list[tuple[str, tuple[int, ...]]], font: str, font_size: float, cell_width: float
+) -> list[tuple[tuple[Any, Any, Any, float], ...]]:
+    """Lay out code lines, reusing cached lines and sending all the others to Pango in
+    **one** call (a Pango call has a large fixed cost, about 3 s cold on Windows).
+
+    Each line starts with a full-block marker glyph that pins its column 0 and baseline.
+    Ligatures are off, so every non-space character is exactly one glyph.
+    """
+    keys = [(markup, font, float(font_size)) for markup, _ in lines]
+    missing = [k for k in dict.fromkeys(keys) if k not in _LINE_CACHE]
+    if missing:
+        counts = {k: c for k, (_, c) in zip(keys, lines, strict=True)}
+        body = "\n".join(k[0] for k in missing)
+        text = MarkupText(
+            _NO_LIGATURES + body + "</span>",
+            font=font,
+            font_size=font_size,
+            warn_missing_font=False,
         )
-    return tuple(out)
+        glyphs = list(text.submobjects)
+        expected = sum(1 + sum(counts[k]) for k in missing)
+        if len(glyphs) != expected:
+            raise RuntimeError(
+                f"AnimatedCode: Pango produced {len(glyphs)} glyphs for {expected} characters; "
+                "the font may be substituting characters it lacks"
+            )
+        pos = 0
+        for k in missing:
+            n = sum(counts[k])
+            marker, line = glyphs[pos], glyphs[pos + 1 : pos + 1 + n]
+            pos += 1 + n
+            shift = np.array([-marker.get_left()[0] - cell_width, -marker.get_center()[1], 0.0])
+            _LINE_CACHE[k] = tuple(
+                (
+                    g.points + shift,
+                    g.fill_rgbas.copy(),
+                    g.stroke_rgbas.copy(),
+                    float(g.stroke_width),
+                )
+                for g in line
+            )
+        if len(_LINE_CACHE) > 20000:  # bound memory in very long sessions
+            for old in list(_LINE_CACHE)[:5000]:
+                _LINE_CACHE.pop(old, None)
+    return [_LINE_CACHE[k] for k in keys]
 
 
 def _glyph(points: Any, fill: Any, stroke: Any, width: float, line_y: float) -> VMobject:
@@ -410,7 +448,7 @@ def _cell_size(font: str, font_size: float) -> tuple[float, float]:
     """Advance width and height of one monospace cell at this size."""
     if font == DEFAULT_FONT:
         register_bundled_fonts()
-    probe = MarkupText(_MARKER * 10, font=font, font_size=font_size)
+    probe = MarkupText(_MARKER * 10, font=font, font_size=font_size, warn_missing_font=False)
     width = (probe.get_right()[0] - probe.get_left()[0]) / 10
     return width, probe.height
 

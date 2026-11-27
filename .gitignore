@@ -29,3 +29,5 @@ spikes/frames/
 spikes/*.wav
 spikes/timeline.json
 .venv311/
+examples/**/narration*.wav
+examples/**/media/

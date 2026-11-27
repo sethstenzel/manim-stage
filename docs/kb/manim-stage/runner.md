@@ -79,6 +79,7 @@ Anything the scene or Manim prints goes to **stderr**, so stdout carries only th
 | — | `--media-dir` | Manim default (`./media`) | Manim's media folder (text/SVG caches); set per worker automatically |
 | `timeout` | — | 300 s | Kill the child after this long |
 | `python` | — | current interpreter | Interpreter for the child |
+| `cwd` | — | the scene file's folder | Working directory of the children (relative asset paths resolve here, as when running `manim` there) |
 
 ## Determinism warnings
 

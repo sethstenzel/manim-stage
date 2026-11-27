@@ -132,7 +132,8 @@ print(d.warnings)   # ["token 'a' repeats (2x) where code changed …; pass mapp
 
 ## Limitations and unsupported cases
 
-- **Performance:** laying out a line costs about 0.2 s the first time (Pango); lines are cached, so edits only lay out changed lines. Very long listings (hundreds of lines) take a while to build the first time. Diffing itself is fast (600 lines in well under a second).
+- **Performance:** all not-yet-seen lines of a code version are laid out in **one** Pango call. That costs about 3 s cold on Windows and much less on Linux and macOS. Laid-out lines are cached, so edits only lay out changed lines. Diffing is fast (600 lines in well under a second).
+- **Ligatures** are switched off (`liga`/`calt`) so every character is one glyph. Code shows `==`, not a merged symbol.
 - **Fonts:** a non-monospace `font=` breaks the grid; use a monospace font.
 - **Unicode:** characters that Pango renders as several glyphs (rare combining sequences) can upset the token-to-glyph split. Common accented letters and Greek work.
 - **No background panel or line numbers yet.** Add a `SurroundingRectangle` behind the code if you need one.
