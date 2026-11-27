@@ -27,6 +27,7 @@ Newest first. One line per decision; details in the linked ADR or PR.
 
 | Date | Decision | Why | Where |
 |---|---|---|---|
+| 2026-11-27 | Compatibility suite = corpus of unmodified Manim scenes per feature family, each pixel-compared with `manim render`, plus StageMixin opt-in no-op check; third-party examples use public API only | M4 gate; spec §2.1/§2.5 | PR #39 |
 | 2026-11-27 | Text/LaTeX helpers generate Manim-native calls (`Text(font=)`, `MathTex(tex_to_color_map=, tex_template=)`); project TeX template applied with Manim's `set_default` and restored at tear_down; LaTeX preview in a child process | MF.10; Manim terminology and mechanisms; never block the editor on LaTeX | PR #38 |
 | 2026-11-27 | Camera state recorded per rendered frame as a PNG text chunk (survives the frame cache; no protocol change); viewport maps clicks/selection through the camera frame; badge names scene type + camera | Manim 0.30: every camera frame is animatable; spec §2.7 no silent renderer substitution | PR #37 |
 | 2026-11-27 | Config panel edits Manim's own `manim.cfg` [CLI] (not a new sidecar), so plain Manim, preview and export agree; `manim.cfg` joins the preview cache key. Sections navigator is built on `next_section`/`--save_sections`; a section export is an in/out range | Manim methodology first; no parallel config format | PR #36 |

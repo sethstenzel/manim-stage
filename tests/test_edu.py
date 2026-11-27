@@ -131,3 +131,14 @@ def test_gallery_example_scenes_capture(scene):
     with tempconfig(LOW):
         tl = capture(getattr(mod, scene))
     assert tl.duration_frames > 0 and any(e.kind == "play" for e in tl.events)
+
+
+def test_sequence_diagram_rows_follow_a_moved_and_scaled_diagram():
+    sd = SequenceDiagram(["a", "b"])
+    sd.scale(0.5).shift(np.array([-3, -1, 0]))
+    sd.message("a", "b", "hi")
+    arrow = sd.messages[0][0]
+    head_bottom = sd.heads["a"].get_bottom()[1]
+    assert arrow.get_center()[1] < head_bottom  # below the heads, not on them
+    assert abs((head_bottom - arrow.get_center()[1]) - 0.8 * sd.step * 0.5) < 0.05
+    assert sd.messages[0][1].height < 0.5 * 0.4  # label scaled with the diagram

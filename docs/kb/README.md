@@ -68,6 +68,7 @@ A local, offline reference for **every manim-stage feature and how to use it**. 
 | Page | What |
 |---|---|
 | [Motion Canvas equivalents](reference/motion-canvas-equivalents.md) | Motion Canvas feature → manim-stage status; MC → Manim terminology |
+| [Compatibility](reference/compatibility.md) | What is guaranteed (preview = `manim render`, opt-in changes nothing), the tested Manim feature families, platforms, gaps |
 | [Data formats and the time model](reference/data-formats.md) | JSON contracts (timeline, runner messages, cues, project) and frame/time rules |
 | [Upstream sync](workflow/upstream-sync.md) | How new Manim / Motion Canvas changes are brought in |
 | [Regression tests and golden frames](workflow/regression-tests.md) | Proving manim-stage never changes Manim output; catching upstream rendering changes |
@@ -123,6 +124,8 @@ A local, offline reference for **every manim-stage feature and how to use it**. 
 | Render frames faster on a multi-core machine | [Frame cache → parallel drawing](manim-stage/frame-cache.md#parallel-drawing) |
 | Understand why durations round up | [Evaluate and timeline export → frame quantization](manim/evaluate-and-timeline.md#frame-quantization) |
 | Check a Manim upgrade didn't change rendering | [Regression tests](workflow/regression-tests.md#after-a-manim-upgrade) |
+| Know whether my Manim scenes preview exactly as they render | [Compatibility](reference/compatibility.md) |
+| See complete examples written like a user would | [`examples/third_party/`](../../examples/third_party/) |
 | Read or validate timeline / runner JSON | [Data formats](reference/data-formats.md) |
 | Know what changed since the last update | [whats-new.md](whats-new.md) |
 

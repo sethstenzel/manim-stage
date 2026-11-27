@@ -499,12 +499,24 @@ class SequenceDiagram(VGroup):
             lines.add(line)
         self.messages = VGroup()
         self.add(lines, heads, self.messages)
-        self._y = min(h.get_bottom()[1] for h in self.heads.values()) - step * 0.8
+        self._rows = 0.0  # rows used, in units of ``step`` below the heads
+        self._first = participants[0]
+        self._head_height = self.heads[self._first].height
 
     def _x(self, name: str) -> float:
         if name not in self.heads:
             raise KeyError(f"SequenceDiagram: unknown participant {name!r}")
         return float(self.heads[name].get_center()[0])
+
+    def _scale(self) -> float:
+        """How much the diagram was scaled since construction (rows and text follow)."""
+        return self.heads[self._first].height / self._head_height
+
+    def _row_y(self, rows: float) -> float:
+        """y of a row in the diagram's *current* position (it may have been moved or
+        scaled after construction)."""
+        top = min(h.get_bottom()[1] for h in self.heads.values())
+        return top - (0.8 + rows) * self.step * self._scale()
 
     def message(
         self,
@@ -518,19 +530,20 @@ class SequenceDiagram(VGroup):
     ) -> AnimationGroup:
         """Draw the next message from ``src`` to ``dst`` (``reply=True`` draws it faded,
         like a dashed return arrow)."""
-        y = self._y
+        s = self._scale()
+        y = self._row_y(self._rows)
         color = color or self.color_
         xs, xd = self._x(src), self._x(dst)
         if src == dst:
             arrow: Mobject = CurvedArrow(
                 [xs, y, 0],
-                [xs, y - self.step * 0.5, 0],
+                [xs, y - self.step * 0.5 * s, 0],
                 angle=-PI,
                 color=color,
                 stroke_width=3,
-                tip_length=0.14,
+                tip_length=0.14 * s,
             )
-            self._y -= self.step * 0.5
+            self._rows += 0.5
         else:
             arrow = Arrow(
                 [xs, y, 0],
@@ -544,12 +557,12 @@ class SequenceDiagram(VGroup):
             arrow.set_stroke(opacity=0.55)
         parts = [arrow]
         if label:
-            text = _text(label, self.font_size * 0.75, color)
-            text.next_to(arrow, UP if src != dst else RIGHT, buff=0.06)
+            text = _text(label, self.font_size * 0.75 * s, color)
+            text.next_to(arrow, UP if src != dst else RIGHT, buff=0.06 * s)
             parts.append(text)
         msg = VGroup(*parts)
         self.messages.add(msg)
-        self._y -= self.step
+        self._rows += 1
         anims = [GrowArrow(arrow) if src != dst else FadeIn(arrow)]
         if label:
             anims.append(FadeIn(parts[1]))
