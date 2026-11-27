@@ -2,7 +2,7 @@
 
 Motion Canvas–class authoring for [Manim Community Edition](https://github.com/ManimCommunity/manim): a local Studio editor, seekable timeline, named timing cues for narration, audio workspace, and semantic code-diff animations — all as an **optional Python layer on top of Manim**, not a fork or a new renderer.
 
-> Status: **pre-M0**. Nothing is implemented yet. The full product spec is in [`spec.md`](spec.md). The first task is the baseline audit (spec §3, milestone M0).
+> Status: **M0 (audit + technical proof)**. No product code yet. Spec: [`spec.md`](spec.md) · Audit: [`docs/capability-audit.md`](docs/capability-audit.md) · Decisions: [`docs/architecture-decisions.md`](docs/architecture-decisions.md) · Plan: [`docs/backlog.md`](docs/backlog.md)
 
 ## Relationship to upstream projects
 

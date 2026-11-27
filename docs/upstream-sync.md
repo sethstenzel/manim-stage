@@ -65,4 +65,5 @@ Newest first. Each entry: date, upstream, old pin → new pin, summary of Adopt/
   - Play calls through one loop with listeners (#5004)
   - PyAV sound mixer placing audio in movie time (#5059)
   - Saved sections embedded as MP4 chapters (#5125)
+- Noted — Motion Canvas docs moved to https://motion-canvas.io (spec §14 links are stale); project effectively dormant since Feb 2025.
 - Noted — Motion Canvas `main` has unreleased sound waveforms (#1158), programmable sounds (#1082), audio offset editing (#1166).
