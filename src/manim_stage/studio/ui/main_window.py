@@ -490,6 +490,7 @@ class MainWindow(QMainWindow):
             return
         pick = keep if keep in names else names[0]
         self.scene_box.setCurrentIndex(names.index(pick))
+        self._update_renderer_badge()  # the timeline may have arrived before the scene list
         if self.service.current is None or self.service.current.scene != pick:
             self.render()
 
