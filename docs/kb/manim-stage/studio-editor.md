@@ -46,6 +46,8 @@ app.exec()
 - **Live reload.** Saving the scene file or any file it uses (helper modules, images, data) starts a new render; the old one is cancelled. The playhead stays where it was if that frame still exists. Otherwise it resets to the start and the status bar says so.
 - **Errors.** The message and file:line show on the viewport and in the log, with the traceback. **Open file:line** jumps to it in your code editor: set `MANIM_STAGE_EDITOR`, e.g. `code -g {file}:{line}` or `subl {file}:{line}`. Without it, VS Code (`code`) is used if found, else the system default app.
 - **Timeline and Event panel.** Under the viewport; see [Timeline](timeline.md). The Event and Log panels share the right dock as tabs; an error brings the Log forward.
+- **Sections tab.** It lists the Manim sections; click to jump, **Loop**, **Export section…**, **Export all…**. See [Sections](sections.md).
+- **Config tab.** It edits the scene folder's `manim.cfg` `[CLI]` defaults; see [Config](config.md).
 - **Library tab.** A searchable catalog of Manim and manim-stage features, with signatures, rate-function curves, colour swatches and **Copy Python**; see [Library](library.md).
 - **Demo tab.** It shows live controls for the scene's `demo.param(...)` values; moving one re-renders the preview. These values aren't saved or exported by default; see [Demo parameters](demo-params.md).
 - **Assets tab.** It shows the scene's assets with a found/missing mark, **Add asset…**, and the environment checks; see [Assets](assets.md).

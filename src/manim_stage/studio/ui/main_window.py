@@ -39,6 +39,7 @@ from ... import audio as audio_core
 from ... import cues as cue_store
 from ... import demo as demo_core
 from ... import inspector as inspector_core
+from ... import manimcfg
 from ... import plugins as plugins_core
 from ... import project as project_core
 from ...export import snapshot
@@ -50,6 +51,7 @@ from ..service import PreviewMessage, PreviewService, RenderSettings
 from ..timeline_model import resolve_source
 from .assets_panel import AssetsPanel
 from .bridge import ServiceBridge
+from .config_panel import ConfigPanel
 from .demo_panel import DemoPanel
 from .event_panel import EventPanel
 from .export_dialog import ExportDialog
@@ -59,6 +61,7 @@ from .log_panel import LogPanel, open_in_editor
 from .plugins_panel import PluginsPanel
 from .project_panel import ProjectPanel
 from .quality import manim_qualities, quality_label
+from .sections_panel import SectionsPanel
 from .theme import apply_theme, is_dark
 from .timeline import TimelineView
 from .transport import TransportBar
@@ -179,12 +182,24 @@ class MainWindow(QMainWindow):
         self.log_dock.setWidget(self.log)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.log_dock)
         self.tabifyDockWidget(self.event_dock, self.log_dock)
+        self.sections_panel = SectionsPanel()
+        self.sections_dock = QDockWidget("Sections", self)
+        self.sections_dock.setObjectName("sections_dock")
+        self.sections_dock.setWidget(self.sections_panel)
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.sections_dock)
+        self.tabifyDockWidget(self.log_dock, self.sections_dock)
         self.project_panel = ProjectPanel()
         self.project_dock = QDockWidget("Project", self)
         self.project_dock.setObjectName("project_dock")
         self.project_dock.setWidget(self.project_panel)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.project_dock)
         self.tabifyDockWidget(self.log_dock, self.project_dock)
+        self.config_panel = ConfigPanel()
+        self.config_dock = QDockWidget("Config", self)
+        self.config_dock.setObjectName("config_dock")
+        self.config_dock.setWidget(self.config_panel)
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.config_dock)
+        self.tabifyDockWidget(self.project_dock, self.config_dock)
         self.inspector_panel = InspectorPanel()
         self.inspector_dock = QDockWidget("Inspector", self)
         self.inspector_dock.setObjectName("inspector_dock")
@@ -268,6 +283,15 @@ class MainWindow(QMainWindow):
         ip.copyRequested.connect(self.copy_properties)
         self.viewport.sceneClicked.connect(self.pick_at)
         self.assets_panel.refreshRequested.connect(self.check_assets)
+        self.config_panel.set_path(self.cfg_path())
+        self.config_panel.applyRequested.connect(
+            lambda edit: self.undo_stack.push(_SidecarCommand(self, edit, self.cfg_path))
+        )
+        sp = self.sections_panel
+        sp.seekRequested.connect(self.seek)
+        sp.loopRequested.connect(self.loop_section)
+        sp.exportRequested.connect(self.export_section)
+        sp.exportAllRequested.connect(self.export_all_sections)
         self.plugin_api = _WindowAPI(self)
         self.load_plugins()
         self.assets_panel.addRequested.connect(lambda: self.add_asset())
@@ -496,6 +520,7 @@ class MainWindow(QMainWindow):
         self.demo_panel.set_params(msg.data.get("params", []))
         self._prepare_audio(msg.seq, tl)
         self.timeline.set_timeline(self._with_plugin_events(self._with_silent_clips(tl)))
+        self.sections_panel.set_timeline(tl)
         sel = self.timeline.canvas.selected
         if sel:  # stable event IDs: keep the selection across re-renders
             self.timeline.canvas.select(sel)
@@ -692,6 +717,29 @@ class MainWindow(QMainWindow):
         start = pb.range.start if pb.range else 0
         pb.set_range(start, pb.frame + 1)
         self._sync_transport()
+
+    # -- sections (MF.7) and manim.cfg (MF.6) -------------------------------------------
+
+    def loop_section(self, start: int, end: int) -> None:
+        self.playback.set_range(start, end)
+        self.seek(start)
+        self._sync_transport()
+
+    def export_section(self, start: int, end: int) -> ExportDialog | None:
+        """Export one section: its frames become the in/out range."""
+        self.loop_section(start, end)
+        return self.open_export()
+
+    def export_all_sections(self) -> ExportDialog | None:
+        """Whole scene with Manim's --save_sections (one video per section)."""
+        dlg = self.open_export()
+        if dlg:
+            dlg.whole.setChecked(True)
+            dlg.sections.setChecked(True)
+        return dlg
+
+    def cfg_path(self) -> Path:
+        return manimcfg.path_for(self.service.file)
 
     def clear_range(self) -> None:
         self.playback.set_range(None, None)
@@ -980,6 +1028,8 @@ class MainWindow(QMainWindow):
         self.service.acknowledge([path])
         if path == self.project_path():
             self.project_panel.reload()
+        if path == self.cfg_path():
+            self.config_panel.reload()
         self.status_label.setText(f"{label} — saved to {path.name}; re-rendering…")
         self.render()
 
