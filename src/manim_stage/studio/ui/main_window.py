@@ -35,8 +35,10 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from ... import audio as audio_core
 from ... import cues as cue_store
 from ...export import snapshot
+from .. import audio_edit
 from ..audio_player import AudioPlayer
 from ..cue_edit import CueEdit, edit_for_plan, edit_reset, plan_move
 from ..playback import Playback
@@ -58,20 +60,23 @@ def studio_settings() -> QSettings:
     return QSettings(QSettings.Format.IniFormat, QSettings.Scope.UserScope, "manim-stage", "studio")
 
 
-class _CueCommand(QUndoCommand):
-    """One cue edit on the undo stack; redo/undo write the sidecar and re-render."""
+class _SidecarCommand(QUndoCommand):
+    """One sidecar edit (cues or audio) on the undo stack; redo/undo write the file and
+    re-render."""
 
-    def __init__(self, window: MainWindow, edit: CueEdit) -> None:
+    def __init__(self, window: MainWindow, edit, path_fn) -> None:
         super().__init__(edit.label)
-        self.window, self.edit = window, edit
+        self.window, self.edit, self.path_fn = window, edit, path_fn
 
     def redo(self) -> None:
-        self.edit.do(self.window.cue_sidecar())
-        self.window._cue_written(self.edit.label)
+        path = self.path_fn()
+        self.edit.do(path)
+        self.window._sidecar_written(path, self.edit.label)
 
     def undo(self) -> None:
-        self.edit.undo(self.window.cue_sidecar())
-        self.window._cue_written(f"Undo: {self.edit.label}")
+        path = self.path_fn()
+        self.edit.undo(path)
+        self.window._sidecar_written(path, f"Undo: {self.edit.label}")
 
 
 class MainWindow(QMainWindow):
@@ -164,6 +169,9 @@ class MainWindow(QMainWindow):
         self.event_panel.seekRequested.connect(self.seek)
         self.event_panel.sourceRequested.connect(self.open_event_source)
         tc.cueMoved.connect(self.apply_cue_plan)
+        tc.clipDragged.connect(self.drag_clip)
+        self.event_panel.clipChangeRequested.connect(self.change_clip)
+        self.event_panel.clipRemoveRequested.connect(self.remove_clip)
         self.event_panel.cueResetRequested.connect(self.reset_cue)
         self.event_panel.cueTimeRequested.connect(self.set_cue_time)
 
@@ -221,6 +229,13 @@ class MainWindow(QMainWindow):
         tb.addAction(self.act_undo)
         tb.addAction(self.act_redo)
         tb.addSeparator()
+        self.act_add_audio = QAction("Add audio…", self)
+        self.act_add_audio.setShortcut(QKeySequence("Ctrl+Shift+A"))
+        self.act_add_audio.setToolTip(
+            "Add a sound file to the scene at the playhead (Ctrl+Shift+A)"
+        )
+        self.act_add_audio.triggered.connect(lambda: self.add_audio())
+        tb.addAction(self.act_add_audio)
         self.act_export = QAction("Export…", self)
         self.act_export.setShortcut(QKeySequence("Ctrl+E"))
         self.act_export.setToolTip("Render with Manim's CLI: video, GIF or PNGs (Ctrl+E)")
@@ -367,7 +382,7 @@ class MainWindow(QMainWindow):
     def _on_timeline(self, msg: PreviewMessage) -> None:
         tl = msg.data["timeline"]
         self._prepare_audio(msg.seq, tl)
-        self.timeline.set_timeline(tl)
+        self.timeline.set_timeline(self._with_silent_clips(tl))
         sel = self.timeline.canvas.selected
         if sel:  # stable event IDs: keep the selection across re-renders
             self.timeline.canvas.select(sel)
@@ -624,15 +639,102 @@ class MainWindow(QMainWindow):
 
     def _push_cue_edit(self, edit: CueEdit) -> None:
         try:
-            self.undo_stack.push(_CueCommand(self, edit))
+            self.undo_stack.push(_SidecarCommand(self, edit, self.cue_sidecar))
         except (cue_store.CueError, OSError) as e:
             self.status_label.setText(f"⚠ Could not save cues: {e}")
 
-    def _cue_written(self, label: str) -> None:
+    def _sidecar_written(self, path: Path, label: str) -> None:
         """After a sidecar write: suppress the watcher's echo and re-render now."""
-        self.service.acknowledge([self.cue_sidecar()])
-        self.status_label.setText(f"{label} — saved to {self.cue_sidecar().name}; re-rendering…")
+        self.service.acknowledge([path])
+        self.status_label.setText(f"{label} — saved to {path.name}; re-rendering…")
         self.render()
+
+    # -- audio clip editing (undoable) ------------------------------------------------
+
+    def audio_sidecar(self) -> Path:
+        return audio_core.sidecar_path(self.service.file)
+
+    def _project_root(self) -> Path:
+        return self.audio_sidecar().parent.parent
+
+    def _push_audio_edit(self, edit) -> None:
+        try:
+            self.undo_stack.push(_SidecarCommand(self, edit, self.audio_sidecar))
+        except (ValueError, OSError) as e:
+            self.status_label.setText(f"⚠ Could not save audio clips: {e}")
+
+    def add_audio(self, path: str | None = None, start: float | None = None) -> None:
+        scene = self.current_scene()
+        if not scene:
+            return
+        if path is None:
+            path, _ = QFileDialog.getOpenFileName(
+                self,
+                "Add audio",
+                str(self._project_root()),
+                "Audio (*.wav *.mp3 *.ogg *.flac *.m4a *.aac);;All files (*)",
+            )
+            if not path:
+                return
+        at = self.playback.frame / max(self.playback.fps, 1e-9) if start is None else start
+        self._push_audio_edit(
+            audio_edit.add_clip(self.audio_sidecar(), self._project_root(), scene, Path(path), at)
+        )
+
+    def _clip_settings(self, clip_id: str) -> dict:
+        lay = self.timeline.canvas.layout_
+        for b in lay.by_id.values() if lay else []:
+            if b.meta.get("clip") == clip_id:
+                return b.meta.get("clip_settings", {})
+        return {}
+
+    def drag_clip(self, clip_id: str, mode: str, delta: float) -> None:
+        scene = self.current_scene()
+        cs = self._clip_settings(clip_id)
+        if not scene or not cs:
+            return
+        try:
+            dur = audio_edit.source_duration(
+                audio_core.resolve_file(cs["file"], self._project_root())
+            )
+        except Exception:
+            dur = float("inf")
+        changes = audio_edit.drag_changes(cs, mode, delta, dur)
+        label = {"move": "Move", "trim_in": "Trim start of", "trim_out": "Trim end of"}[mode]
+        self._push_audio_edit(
+            audio_edit.change_clip(
+                self.audio_sidecar(), scene, clip_id, f"{label} audio clip {clip_id!r}", **changes
+            )
+        )
+
+    def change_clip(self, clip_id: str, changes: dict) -> None:
+        scene = self.current_scene()
+        if scene:
+            self._push_audio_edit(
+                audio_edit.change_clip(
+                    self.audio_sidecar(), scene, clip_id, f"Edit audio clip {clip_id!r}", **changes
+                )
+            )
+
+    def remove_clip(self, clip_id: str) -> None:
+        scene = self.current_scene()
+        if scene:
+            self._push_audio_edit(audio_edit.remove_clip(self.audio_sidecar(), scene, clip_id))
+
+    def _with_silent_clips(self, tl: dict) -> dict:
+        """Add muted / not-soloed clips to the timeline so they stay visible."""
+        side = self.audio_sidecar()
+        if not side.exists():
+            return tl
+        present = {e["meta"].get("clip") for e in tl["events"] if e["kind"] == "sound"}
+        try:
+            extra = audio_edit.muted_events(
+                side, self._project_root(), tl["scene"], float(tl["frame_rate"]), present
+            )
+        except Exception as e:
+            self.log.append(f"audio: {e}")
+            return tl
+        return {**tl, "events": [*tl["events"], *extra]} if extra else tl
 
     def apply_cue_plan(self, plan) -> None:
         scene = self.current_scene()

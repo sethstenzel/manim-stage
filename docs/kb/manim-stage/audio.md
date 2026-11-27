@@ -1,10 +1,11 @@
 # Audio workspace
 
-- **Status:** Partial.
-  - **Available:** audio clips via `.manim-stage/audio.json` (start, trim, gain, fades, mute, solo), waveforms on the timeline, preview playback in sync with the playhead, and preview = render mixdown.
-  - **Planned:** editing clips in the editor (import, drag, trim, property panel, undo; backlog 2.3b) and the voiceover adapter (2.4).
+- **Status:** Available.
+  - **Clips:** import, drag, trim, gain, fades, mute and solo, with undo, plus waveforms.
+  - **Playback:** synced to the playhead; the preview mixdown is the render mixdown.
+  - **Planned:** the voiceover adapter (2.4).
 - **Renderer:** Both (audio only)
-- **Since:** PR #20
+- **Since:** PR #20 (editing: PR #21)
 - **Spec:** F04 · **Backlog:** 2.3 · **Source:** `src/manim_stage/audio.py`, `scene.py` (`StageMixin.setup`), `studio/audio_player.py`
 - **Motion Canvas origin:** the project's audio track: one file, an offset, and a waveform under the timeline. **Built on:** Manim's `Scene.add_sound(file, time_offset, gain)` and Manim's own audio mixer, with PyAV for decoding.
 
@@ -56,6 +57,18 @@ print(sound.label, sound.start_frame, sound.meta["clip"])   # voice.wav 7 narrat
 
 Then `manim render voice_lesson.py Voiced` renders the clip into the video exactly as the Studio previews it.
 
+## Editing clips in the Studio
+
+- **Add audio…** (toolbar, Ctrl+Shift+A) adds a file at the playhead. A file outside the project is copied into `assets/audio/` first, so `audio.json` only holds portable project-relative paths. Same name with different content gets a `-1` suffix.
+- **Drag a clip** on the Audio lane:
+  - drag the body to move it;
+  - drag the left edge to trim the start (the audio stays in place);
+  - drag the right edge to trim the end, back to "end of file" at most.
+  - A dashed outline and the change in seconds preview the drag.
+- **Event panel** (select a clip): start, trim in/out, gain (dB), fade in/out, Mute, Solo, **Apply**, **Remove clip**.
+- **Muted (or not-soloed) clips stay on the timeline**, hatched and labelled `(muted)`, so you can unmute them. They are left out of the render.
+- **Undo:** every change is one undo step (Ctrl+Z / Ctrl+Shift+Z). It writes `audio.json` atomically and re-renders.
+
 ## How it works
 
 - **Clips** live in `.manim-stage/audio.json`, next to `cues.json` (schema: `docs/schemas/audio.schema.json`). Each clip has:
@@ -91,7 +104,7 @@ Then `manim render voice_lesson.py Voiced` renders the clip into the video exact
 
 ## Limitations and unsupported cases
 
-- **No editing UI yet.** Clips are edited in `audio.json`; the in-editor UI (import, drag, trim handles, properties, undo) is backlog 2.3b. Saving `audio.json` re-renders automatically.
+- Clips from code (`self.add_sound(...)` in your scene) are shown with waveforms but are read-only; change them in Python.
 - **Plain StageScene only.** Clips are added in `StageMixin.setup()`. If you override `setup()`, call `super().setup()`.
 - **Ducking.** `gain_to_background` on code `add_sound` calls is applied by Manim at render time but not in the preview mix.
 - **Captions and word timings** come with the voiceover adapter (2.4).

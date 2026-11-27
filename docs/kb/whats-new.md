@@ -2,6 +2,13 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-27 — audio clip editing (backlog 2.3b)
+
+- **New:** Add audio… (Ctrl+Shift+A). External files are copied into `assets/audio/`.
+- **New:** drag clips on the Audio lane to move them; drag their edges to trim.
+- **New:** clip properties in the Event panel (start, trim, gain, fades, mute, solo, remove).
+- **New:** muted clips stay visible on the timeline. Every edit is undoable.
+
 ## 2026-11-27 — audio workspace, part 1 (backlog 2.3a)
 
 - **New:** [audio clips](manim-stage/audio.md) in `.manim-stage/audio.json`, covering:
