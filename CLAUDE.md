@@ -29,6 +29,7 @@
 
 ## Dev commands
 - `uv sync` → venv with Manim pinned to the commit in `pyproject.toml` (`[tool.uv.sources]`)
+- `uv run python -m manim_stage.studio FILE [SCENE]` → Studio editor (PySide6; Qt tests run with `QT_QPA_PLATFORM=offscreen`)
 - `uv run pytest` · `uv run ruff check .` · `uv run ruff format src tests scripts`
 - All Manim-version-specific code goes in `src/manim_stage/_compat.py` (feature-detected, not version-checked).
 

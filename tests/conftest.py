@@ -1,10 +1,14 @@
 import math
+import os
 import struct
 import sys
 import wave
 from pathlib import Path
 
 import pytest
+
+# Qt tests run headless everywhere (CI has no display).
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 TESTS = Path(__file__).parent
 SCENES = TESTS / "scenes"
@@ -59,3 +63,14 @@ def capture_scene_and_class(scene: str, fps: float = 15.0, file: Path = SCENES /
     with tempconfig(cfg):
         cls = load_scene_class(file, scene)
         return capture(cls), cls
+
+
+@pytest.fixture(autouse=True)
+def isolated_qt_settings(tmp_path_factory):
+    """Never write the developer's real Studio preferences from tests."""
+    try:
+        from PySide6.QtCore import QSettings
+    except ImportError:
+        return
+    path = str(tmp_path_factory.mktemp("qsettings"))
+    QSettings.setPath(QSettings.Format.IniFormat, QSettings.Scope.UserScope, path)

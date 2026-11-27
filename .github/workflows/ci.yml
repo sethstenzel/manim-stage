@@ -26,12 +26,15 @@ jobs:
         python: ["3.11", "3.12", "3.13"]
     env:
       PYTHONIOENCODING: utf8
+      QT_QPA_PLATFORM: offscreen
     steps:
       - uses: actions/checkout@v4
 
-      - name: System libraries for pycairo/manimpango (Linux)
+      - name: System libraries for pycairo/manimpango and Qt offscreen (Linux)
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y libcairo2-dev libpango1.0-dev pkg-config
+        run: >-
+          sudo apt-get update && sudo apt-get install -y libcairo2-dev libpango1.0-dev pkg-config
+          libegl1 libgl1 libxkbcommon0 libfontconfig1 libdbus-1-3 libglib2.0-0
 
       - name: System libraries for pycairo/manimpango (macOS)
         if: runner.os == 'macOS'
