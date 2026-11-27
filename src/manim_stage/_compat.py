@@ -8,6 +8,7 @@ reports 0.22.1 while carrying 0.30 APIs (ADR-0003).
 
 from __future__ import annotations
 
+import contextlib
 import inspect
 import math
 from collections.abc import Callable, Sequence
@@ -51,6 +52,25 @@ def capabilities() -> ManimCapabilities:
         timeline_capture="capture_timeline" in params and hasattr(manim, "Timeline"),
         frame_callbacks={"frame_times", "on_frame"} <= params,
     )
+
+
+@cache
+def manim_build_id() -> str:
+    """Version plus VCS commit when Manim was installed from git (main still says 0.22.1)."""
+    import json
+    from importlib import metadata
+
+    try:
+        dist = metadata.distribution("manim")
+    except metadata.PackageNotFoundError:
+        return "unknown"
+    build = dist.version
+    with contextlib.suppress(Exception):
+        direct = json.loads(dist.read_text("direct_url.json") or "{}")
+        commit = direct.get("vcs_info", {}).get("commit_id")
+        if commit:
+            build += f"+g{commit}"
+    return build
 
 
 def require_supported() -> ManimCapabilities:

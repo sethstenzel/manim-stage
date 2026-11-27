@@ -94,6 +94,14 @@ Record of decisions required by the spec (§3, §12.9). Status: Proposed → Acc
   - **P2:** re-evaluate from t=0 in a fresh child on edits, with per-scene invalidation.
   - **P3:** deferred; not feasible with current Manim (no state snapshot/restore).
   - Scenes using wall-clock time, unseeded randomness or `dt`-dependent updaters get a "replay may differ" warning.
+- **Update 2026-11-26 (backlog 0.6, see `docs/benchmarks.md`):**
+  - Implemented as `manim_stage.framecache.FrameCache` plus `runner --cache-dir`.
+  - The timeline is sent before frames.
+  - Frames already cached for the revision are not redrawn.
+  - The revision hashes scene file + scene name + settings + Manim build (version + git commit). Imported modules and assets are not hashed yet.
+  - **Parallel drawing:** `run_capture(workers=N)` runs N children. Each replays the scene and draws every N-th frame. Needed to meet the 10 s/1080p target (8.0 s with 4 workers vs 17.9 s with 1).
+  - Concurrent children must not share Manim's `media_dir` (unlocked Text/SVG caches), so each shard gets its own.
+  - Cached frames are pixel-identical to the CLI `png-sequence` render; tested.
 
 ## ADR-0008 — Code animation engine
 
