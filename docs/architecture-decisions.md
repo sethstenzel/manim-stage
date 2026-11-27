@@ -156,18 +156,20 @@ Record of decisions required by the spec (§3, §12.9). Status: Proposed → Acc
   - Tests: `pytest` with `QT_QPA_PLATFORM=offscreen` on all CI OSes; widget logic kept in plain-Python helpers where possible.
   - No Motion Canvas UI code or assets; layout ideas described in our own words only.
 
-## ADR-0013 — Manim terminology and concepts first
+## ADR-0013 — Port Motion Canvas concepts into Manim's model
 
-- **Status:** Accepted (2026-11-27). Owner direction: keep Manim's abstractions, terminology and methodology; bring Motion Canvas's best features *into* them.
+- **Status:** Accepted (2026-11-27). Owner direction: keep Manim's abstractions, terminology and methodology; port the best Motion Canvas concepts so they fit Manim, keeping those concepts available as APIs.
 - **Decision:**
-  - Every API, UI label, file format and KB page uses Manim's vocabulary: `Scene`, `construct`, `Mobject`/`VMobject`, `Animation`, `play`, `wait`, `run_time`, `rate_func`, `lag_ratio`, `AnimationGroup`/`LaggedStart`, `ValueTracker`, updaters, sections, `config`, renderer, camera.
-  - Motion Canvas concepts are mapped, not imported:
-    - time events / `waitUntil` → **cues** (`self.cue(...)`, a timed `wait`) — ADR-0006;
-    - signals / computed → **`ValueTracker`-based derived values and updaters** (F06 builds on `ValueTracker`, `add_updater`, `always_redraw`; no parallel "signal" object model);
-    - nodes / scene graph → **Mobject families** (`submobjects`);
-    - generator threads → **`AnimationGroup`/`LaggedStart`/`Succession`** and `play` calls;
-    - project variables → **`config` + a project theme** layered on `ManimConfig`;
-    - code block → **`AnimatedCode`**, alongside `manim.Code`;
-    - scene transitions → **Manim `Animation`s** across scene boundaries.
-  - The mapping table lives in `docs/kb/reference/motion-canvas-equivalents.md`. Where Manim has no term, choose a plain English one and record it there.
-
+  - Manim's model is the foundation: `Scene`/`construct`, `Mobject` families, `Animation` + `play`/`wait`, `run_time`/`rate_func`/`lag_ratio`, `ValueTracker` + updaters, sections, `config`, renderer, camera. Nothing replaces these.
+  - Each useful Motion Canvas concept is **ported as a real, documented Python API** in `manim_stage`, built on those Manim primitives, named in `snake_case` Python style, and interoperable with plain Manim:
+    - time events / `waitUntil` → `self.cue("name", ...)`: a named, editable `wait` (ADR-0006);
+    - signals / `createSignal` / computed → `Signal` (a `ValueTracker` subclass, so `.animate`, `get_value`, updaters still work) and `computed(...)` returning a derived read-only `Signal`; `effect(...)` registers an updater;
+    - `all` / `sequence` / `chain` / `delay` / `loop` → `all_of`, `sequence`, `chain`, `delay`, `loop` helpers that return `AnimationGroup` / `LaggedStart` / `Succession` / `Wait`-based animations;
+    - `tween(duration, fn)` → `tween(run_time, fn)` returning an `Animation` (driven by `rate_func`);
+    - code ranges, `lines()`, `word()`, `findFirstRange` → `AnimatedCode` with `CodeRange`, `lines()`, `word()`, `find()`;
+    - references / `makeRef` → ordinary Python attributes (no port needed; documented);
+    - project variables `useScene().variables` → `stage.variables` read from the project sidecar, layered on `config`;
+    - scene transitions (`slideTransition`, `fadeTransition`, `zoomInTransition`) → `slide_transition`, `fade_transition`, `zoom_transition`, built as Manim `Animation`s;
+    - nodes / layout (flexbox) → Mobject families plus Manim's `arrange`/`next_to`; a flex-style `Layout` helper only if needed (M3).
+  - The editor uses Manim's words in the UI (Mobject, Animation, Section, rate_func, …).
+  - Every ported concept has a KB page with the MC concept it comes from, the Manim primitive it is built on, and a tested example. The mapping table lives in `docs/kb/reference/motion-canvas-equivalents.md`.

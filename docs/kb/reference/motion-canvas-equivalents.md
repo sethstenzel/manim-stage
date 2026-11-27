@@ -21,6 +21,27 @@ How Motion Canvas features map to manim-stage. Behaviour is described in our own
 | Rendering | In the browser tab only; image sequence or FFmpeg | Manim CLI stays the renderer; headless and reproducible | Available (Manim) |
 | Plugins | Three layers, no version handshake | Versioned editor plugin API with handshake | Planned (M4) |
 
+## Concepts: Motion Canvas → manim-stage API (ADR-0013)
+
+Motion Canvas concepts are ported into Manim's model. They stay available under Python names and are built on Manim primitives, so they mix freely with plain Manim code.
+
+| Motion Canvas concept | manim-stage API | Built on (Manim) | Status |
+|---|---|---|---|
+| Scene (generator function) | unchanged: `Scene` subclass, `construct()` | `Scene` | Available (Manim) |
+| Node, scene graph | unchanged: `Mobject` families (`submobjects`) | `Mobject` | Available (Manim) |
+| `yield* tween(...)` | `self.play(...)`; `tween(run_time, fn)` | `Animation` | Planned (M3) |
+| `all(...)` / `sequence(...)` / `chain(...)` / `delay` / `loop` | `all_of`, `sequence`, `chain`, `delay`, `loop` | `AnimationGroup` / `LaggedStart` / `Succession` | Planned (M3) |
+| `waitFor(s)` | unchanged: `self.wait(s)` | `Scene.wait` | Available (Manim) |
+| `waitUntil("name")`, time events | `self.cue("name", at=, after=)` | `Scene.wait` | Planned (M2) |
+| Timing functions / easing | unchanged: `rate_func` | `manim.rate_functions` | Available (Manim) |
+| `createSignal`, computed, effects | `Signal`, `computed`, `effect` | `ValueTracker`, updaters | Planned (M3) |
+| Project variables | `stage.variables`, project theme | `config` | Planned (M3) |
+| Slides | unchanged: sections (`next_section`) | `Scene.next_section` | Available (Manim) |
+| Code block, `lines()`, `word()`, ranges | `AnimatedCode`, `CodeRange`, `lines()`, `word()`, `find()` | `VGroup` of token Mobjects | Planned (M2) |
+| Scene transitions | `slide_transition`, `fade_transition`, `zoom_transition` | `Animation` | Planned (M3) |
+| References (`createRef`) | ordinary Python attributes | — | n/a |
+| Editor plugins | Studio plugins (`manim_stage.plugins` entry points) | — | Planned (M4) |
+
 ## Terminology: Motion Canvas → Manim (ADR-0013)
 
 manim-stage keeps Manim's vocabulary. When a Motion Canvas idea is brought in, it gets the Manim name below.
