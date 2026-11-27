@@ -5,7 +5,6 @@ The full CLI (``manim-stage studio``) arrives with backlog 1.6.
 
 from __future__ import annotations
 
-import argparse
 import os
 import sys
 from pathlib import Path
@@ -55,28 +54,19 @@ def create_window(
     return window, service
 
 
-def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(
-        prog="python -m manim_stage.studio", description="manim-stage Studio editor"
-    )
-    parser.add_argument("file", type=Path, help="Python file with Manim Scene classes")
-    parser.add_argument("scene", nargs="?", help="Scene class to open (default: the first)")
-    parser.add_argument(
-        "-q",
-        "--quality",
-        default="low_quality",
-        help="Manim quality preset for the preview (default: low_quality)",
-    )
-    parser.add_argument("--workers", type=int, default=None, help="parallel drawing processes")
-    parser.add_argument("--cache-dir", type=Path, default=None, help="frame cache folder")
-    parser.add_argument("--no-watch", action="store_true", help="don't re-render on save")
-    args = parser.parse_args(argv)
-    if not args.file.is_file():
-        parser.error(f"{args.file} is not a file")
+def run(args) -> int:
+    """Open the editor for parsed ``manim-stage studio`` arguments (see ``manim_stage.cli``)."""
     try:
         from PySide6.QtWidgets import QApplication
     except ImportError:
         print("The Studio editor needs PySide6: pip install 'manim-stage[studio]'", file=sys.stderr)
+        return 2
+    from .. import _compat
+
+    try:
+        _compat.require_supported()
+    except _compat.UnsupportedManimError as e:
+        print(f"error: {e}", file=sys.stderr)
         return 2
     app = QApplication.instance() or QApplication(sys.argv[:1])
     app.setApplicationName("manim-stage Studio")
@@ -90,3 +80,10 @@ def main(argv: list[str] | None = None) -> int:
     )
     window.show()
     return app.exec()
+
+
+def main(argv: list[str] | None = None) -> int:
+    """``python -m manim_stage.studio FILE [SCENE]`` = ``manim-stage studio FILE [SCENE]``."""
+    from ..cli import main as cli_main
+
+    return cli_main(["studio", *(sys.argv[1:] if argv is None else argv)])

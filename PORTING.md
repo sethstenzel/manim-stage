@@ -93,6 +93,12 @@ One record per Motion Canvas feature. Status: **Ported** (implemented and tested
 - **Deviation:** frame-exact range cuts are not offered, because Manim renders whole animations. The range snaps to whole `play`/`wait` calls and the dialog says so.
 - **Implementation:** `src/manim_stage/export.py`, `studio/ui/export_dialog.py`, `runner.py` (`--snapshot-at`). Tests: `tests/test_export.py`, `tests/test_studio_ui.py`. KB: `docs/kb/manim-stage/export.md`.
 
+### Project launcher (MC: `npm init @motion-canvas`, `npm run serve`)
+- **Status:** Ported (1.6).
+- **Manim mapping:** the `manim-stage` console script (`studio`, `scenes`, `timeline`, `doctor`, `cache`) sits beside `manim`, which stays the renderer. There is no project scaffolding step: any folder with Manim scenes works (project sidecars arrive in M2/M3).
+- **Improvements over MC:** `doctor` explains in Manim terms what the machine can render (LaTeX for `Tex`, Pango fonts for `Text`, encoders per export format). `timeline` exposes event capture headlessly.
+- **Implementation:** `src/manim_stage/cli.py`, `doctor.py`. Tests: `tests/test_cli.py`; CI `package` job. KB: `docs/kb/manim-stage/cli.md`.
+
 ### Audio (MC: one audio track with offset)
 - **Status:** Not started. Backlog 2.3–2.4.
 - **Manim mapping:** `Scene.add_sound`, manim-voiceover adapter.
