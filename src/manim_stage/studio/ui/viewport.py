@@ -12,9 +12,10 @@ from pathlib import Path
 from typing import Any
 
 from PySide6.QtCore import QPointF, QRectF, Qt, Signal
-from PySide6.QtGui import QColor, QFont, QPainter, QPixmap, QWheelEvent
+from PySide6.QtGui import QColor, QFont, QImage, QPainter, QPixmap, QWheelEvent
 from PySide6.QtWidgets import QApplication, QSizePolicy, QWidget
 
+from ... import camera_info
 from .theme import colors, is_dark
 
 ZOOMS = (0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0)
@@ -26,6 +27,7 @@ class PixmapCache:
     def __init__(self, capacity: int = 240) -> None:
         self.capacity = capacity
         self._items: OrderedDict[str, QPixmap] = OrderedDict()
+        self._texts: dict[str, str] = {}  # PNG text chunks (camera state, MF.8)
 
     def get(self, path: Path) -> QPixmap | None:
         key = str(path)
@@ -33,21 +35,29 @@ class PixmapCache:
         if pm is not None:
             self._items.move_to_end(key)
             return pm
-        pm = QPixmap(key)
-        if pm.isNull():
+        img = QImage(key)
+        if img.isNull():
             return None
+        pm = QPixmap.fromImage(img)
         self._items[key] = pm
+        self._texts[key] = img.text(camera_info.PNG_KEY)
         if len(self._items) > self.capacity:
-            self._items.popitem(last=False)
+            old, _ = self._items.popitem(last=False)
+            self._texts.pop(old, None)
         return pm
+
+    def text(self, path: Path) -> str:
+        return self._texts.get(str(path), "")
 
     def clear(self) -> None:
         self._items.clear()
+        self._texts.clear()
 
 
 class Viewport(QWidget):
     zoomChanged = Signal(object)  # None = fit, else factor
     sceneClicked = Signal(float, float)  # scene coordinates (Manim units)
+    cameraChanged = Signal(object)  # camera state dict of the shown frame, or None
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -65,6 +75,7 @@ class Viewport(QWidget):
         self.placeholder = "Open a scene to preview it."
         self.scene_frame: tuple[float, float] | None = None  # Manim frame width/height
         self.selection: list[float] | None = None  # bounds [x0, y0, x1, y1] in scene units
+        self.camera: dict | None = None  # camera state of the shown frame (MF.8)
 
     # -- content ----------------------------------------------------------------------
 
@@ -72,7 +83,20 @@ class Viewport(QWidget):
         self._pixmap = self.cache.get(path) if path else None
         if self._pixmap is not None:
             self.frame_size = (self._pixmap.width(), self._pixmap.height())
+            cam = camera_info.decode(self.cache.text(path))
+            if cam != self.camera:
+                self.camera = cam
+                self.cameraChanged.emit(cam)
         self.update()
+
+    def _view(self) -> tuple[float, float, float, float]:
+        """Visible scene rectangle: centre x, y and width, height in Manim units. A
+        moved or zoomed camera frame shifts it; 3D projections keep the default."""
+        fw, fh = self.scene_frame or (14.222, 8.0)
+        cam = self.camera
+        if cam and "center" in cam and not camera_info.is_three_d(cam):
+            return cam["center"][0], cam["center"][1], cam["width"], cam["height"]
+        return 0.0, 0.0, fw, fh
 
     @property
     def has_frame(self) -> bool:
@@ -113,18 +137,19 @@ class Viewport(QWidget):
         self.set_zoom(next((z for z in reversed(ZOOMS) if z < s - 1e-6), ZOOMS[0]))
 
     def scene_to_widget(self, x: float, y: float) -> QPointF:
-        fw, fh = self.scene_frame or (14.222, 8.0)
+        cx, cy, fw, fh = self._view()
         r = self.frame_rect()
         return QPointF(
-            r.left() + (x + fw / 2) / fw * r.width(), r.top() + (fh / 2 - y) / fh * r.height()
+            r.left() + (x - cx + fw / 2) / fw * r.width(),
+            r.top() + (fh / 2 - (y - cy)) / fh * r.height(),
         )
 
     def widget_to_scene(self, px: float, py: float) -> tuple[float, float]:
-        fw, fh = self.scene_frame or (14.222, 8.0)
+        cx, cy, fw, fh = self._view()
         r = self.frame_rect()
         return (
-            (px - r.left()) / r.width() * fw - fw / 2,
-            fh / 2 - (py - r.top()) / r.height() * fh,
+            cx + (px - r.left()) / r.width() * fw - fw / 2,
+            cy + fh / 2 - (py - r.top()) / r.height() * fh,
         )
 
     def mousePressEvent(self, event: Any) -> None:  # noqa: N802 (Qt API)

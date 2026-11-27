@@ -59,8 +59,17 @@ class FrameCache:
             raise ValueError("frame index must be >= 0")
         return self._dir(revision) / f"{int(frame):06d}.png"
 
-    def put(self, revision: str, frame: int, image: Any, *, compress_level: int = 1) -> Path:
-        """Store a PIL image atomically. Low PNG compression keeps writes fast."""
+    def put(
+        self,
+        revision: str,
+        frame: int,
+        image: Any,
+        *,
+        compress_level: int = 1,
+        text: dict[str, str] | None = None,
+    ) -> Path:
+        """Store a PIL image atomically. Low PNG compression keeps writes fast.
+        ``text`` adds PNG text chunks (e.g. the camera state, MF.8)."""
         target = self.path(revision, frame)
         for attempt in range(5):
             # A concurrent trim() may remove the (still empty) revision folder between
@@ -74,7 +83,14 @@ class FrameCache:
                     raise
         try:
             with os.fdopen(fd, "wb") as f:
-                image.save(f, format="PNG", compress_level=compress_level)
+                info = None
+                if text:
+                    from PIL.PngImagePlugin import PngInfo
+
+                    info = PngInfo()
+                    for k, v in text.items():
+                        info.add_text(k, v)
+                image.save(f, format="PNG", compress_level=compress_level, pnginfo=info)
             os.replace(tmp, target)
         except BaseException:
             Path(tmp).unlink(missing_ok=True)

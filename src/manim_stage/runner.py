@@ -308,10 +308,16 @@ def _main(argv: list[str] | None = None) -> int:
                     if i not in have and i % shards == shard
                 ]
                 if missing:
+                    from .camera_info import camera_state, encode
 
-                    def on_frame(frame: Any) -> None:
+                    def on_frame(frame: Any, scene: Any) -> None:
                         nonlocal drawn
-                        path = cache.put(revision, frame.frame_index, frame.image)
+                        path = cache.put(
+                            revision,
+                            frame.frame_index,
+                            frame.image,
+                            text=encode(camera_state(scene)),
+                        )
                         drawn += 1
                         send({"type": "frame", "frame": frame.frame_index, "path": str(path)})
 
@@ -320,6 +326,7 @@ def _main(argv: list[str] | None = None) -> int:
                         scene_cls,
                         frame_times=[i / args.fps for i in missing],
                         on_frame=on_frame,
+                        with_scene=True,
                     )
                 cache.trim(keep=revision)
                 lap("frames")

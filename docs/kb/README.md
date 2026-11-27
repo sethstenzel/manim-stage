@@ -28,6 +28,7 @@ A local, offline reference for **every manim-stage feature and how to use it**. 
 | [Frame cache and preview frames](manim-stage/frame-cache.md) | Cache every frame for scrubbing; parallel drawing | Available | Cairo | F01, §4 P1 |
 | [Studio editor](manim-stage/studio-editor.md) | Python (PySide6) desktop editor: scene picker, viewport, playback, live reload, errors | Partial (export: Planned) | Cairo | F01 |
 | [Command line](manim-stage/cli.md) | `manim-stage studio / scenes / timeline / doctor / cache` | Available | — | F01 |
+| [Camera-aware preview](manim-stage/camera.md) | Per-frame camera readout (moved frame, ThreeDCamera angles, ZoomedScene); clicks and selection map through the camera; renderer badge names scene type and camera | Available | — | MF.8 |
 | [Manim config (manim.cfg)](manim-stage/config.md) | Config tab edits `manim.cfg` [CLI] (background, size, fps, format, transparent, sections, renderer, media dir); undoable; preview follows background | Available | — | MF.6 |
 | [Sections navigator](manim-stage/sections.md) | Sections tab: jump, loop, export one section, export all (`--save_sections`); skipped sections marked | Available | — | MF.7 |
 | [Library and catalog](manim-stage/library.md) | Searchable catalog of every Manim feature (mobjects, animations, rate functions with curves, colours, scene types) plus manim-stage APIs; copy-Python snippets; `manim-stage catalog` | Available | — | MF.1, MF.4 |

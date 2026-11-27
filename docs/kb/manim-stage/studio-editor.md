@@ -51,7 +51,8 @@ app.exec()
 - **Library tab.** A searchable catalog of Manim and manim-stage features, with signatures, rate-function curves, colour swatches and **Copy Python**; see [Library](library.md).
 - **Demo tab.** It shows live controls for the scene's `demo.param(...)` values; moving one re-renders the preview. These values aren't saved or exported by default; see [Demo parameters](demo-params.md).
 - **Assets tab.** It shows the scene's assets with a found/missing mark, **Add asset…**, and the environment checks; see [Assets](assets.md).
-- **Renderer badge.** It says what the preview is: Cairo, from cached frames. OpenGL is not supported in the preview yet, and is never silently substituted (spec §2.7).
+- **Camera readout.** The status bar shows the camera state for the shown frame when it isn't the default; see [Camera-aware preview](camera.md).
+- **Renderer badge.** It says what the preview is: Cairo, from cached frames, plus the scene type and camera (for example `ThreeDScene (ThreeDCamera)`). OpenGL is not supported in the preview yet, and is never silently substituted (spec §2.7).
 
 ## Keyboard shortcuts
 
