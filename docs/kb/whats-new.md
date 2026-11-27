@@ -2,6 +2,16 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-27 — animated code edits (backlog 2.6)
+
+- **New:** [`code.animate_to(new_source)`](manim-stage/animated-code.md#animated-edits): kept tokens slide, others fade, and highlights survive. Also `replace`, `insert` and `remove`.
+- **New:** `manim_stage.code_diff`:
+  - a patience line diff, then a token LCS;
+  - moved-line detection;
+  - `mapping=` overrides;
+  - warnings for ambiguous repeated tokens.
+- **Faster:** line layouts are cached as plain arrays, so edits only lay out changed lines (10 edits of a 26-line listing: 44 s → 5 s).
+
 ## 2026-11-27 — AnimatedCode layout (backlog 2.5)
 
 - **New:** [`AnimatedCode`](manim-stage/animated-code.md) shows code as Pygments tokens, each a Manim `VGroup` of glyphs, on an exact character grid:

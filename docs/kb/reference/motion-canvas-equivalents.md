@@ -13,7 +13,7 @@ How Motion Canvas features map to manim-stage. Behaviour is described in our own
 | Seeking | Replays the scene from its start in JS; no frame cache | [Frame cache](../manim-stage/frame-cache.md): pre-rendered frames, ~9 ms seek | Available |
 | `waitUntil` / time events | Named events; absolute scene-relative times in a `.meta` sidecar; drag ripples later events | `self.cue(...)` with `cues.json` (ADR-0006). Adds validation, orphan detection, atomic writes, undo, headless bake | Planned (M2) |
 | Audio | One audio track per project, offset only (multi-sound unreleased) | [Audio workspace](../manim-stage/audio.md): many clips per scene with start/trim/gain/fades/mute/solo on Manim's `add_sound`; waveforms; synced preview | Available |
-| Code animations | Token-level patience diff; unchanged tokens slide, changed ones cross-fade | [`AnimatedCode`](../manim-stage/animated-code.md): layout, ranges and highlight available; diff edits with move detection and overrides (2.6) | Partial |
+| Code animations | Token-level patience diff; unchanged tokens slide, changed ones cross-fade | [`AnimatedCode`](../manim-stage/animated-code.md): `animate_to` / `replace` / `insert` / `remove`. Line-level patience diff, then a token LCS; adds moved-line detection, override mappings and ambiguity warnings | Available |
 | Signals | Lazy computed values with dependency tracking | Derived values built on `ValueTracker` and updaters (no separate signal model) | Planned (M3) |
 | Project variables | Reactive variables, untyped, no editor UI | Typed, validated project variables and themes | Planned (M3) |
 | Inspector | Read-only node inspection | Opt-in inspector with editing persisted to a sidecar | Planned (M3) |
@@ -38,7 +38,7 @@ Motion Canvas concepts are ported into Manim's model. They stay available under 
 | `createSignal`, computed, effects | `Signal`, `computed`, `effect` | `ValueTracker`, updaters | Planned (M3) |
 | Project variables | `stage.variables`, project theme | `config` | Planned (M3) |
 | Slides | unchanged: sections (`next_section`) | `Scene.next_section` | Available (Manim) |
-| Code block, `lines()`, `word()`, ranges | [`AnimatedCode`](../manim-stage/animated-code.md), `CodeRange`, `lines()`, `word()`, `find()` | `VGroup` of token Mobjects | Available (edits: 2.6) |
+| Code block, `lines()`, `word()`, ranges | [`AnimatedCode`](../manim-stage/animated-code.md), `CodeRange`, `lines()`, `word()`, `find()` | `VGroup` of token Mobjects | Available |
 | Scene transitions | `slide_transition`, `fade_transition`, `zoom_transition` | `Animation` | Planned (M3) |
 | References (`createRef`) | ordinary Python attributes | — | n/a |
 | Editor plugins | Studio plugins (`manim_stage.plugins` entry points) | — | Planned (M4) |

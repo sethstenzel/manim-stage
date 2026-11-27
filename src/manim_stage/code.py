@@ -29,8 +29,10 @@ from typing import Any
 
 import numpy as np
 from manim import (
+    Animation,
     AnimationGroup,
     MarkupText,
+    Mobject,
     VectorizedPoint,
     VGroup,
     VMobject,
@@ -193,19 +195,13 @@ class AnimatedCode(VGroup):
                     attrs += ' font_style="italic"'
                 markup.append(f"<span {attrs}>{html.escape(t.text, quote=False)}</span>")
                 last = t.end_col
-            text = MarkupText("".join(markup), font=self.font, font_size=self.font_size)
-            glyphs = list(text.submobjects)
-            marker, glyphs = glyphs[0], glyphs[1:]
-            # cell (line, col 1) top-left in grid space = (0, -(line-1) * line_height)
-            shift = np.array(
-                [
-                    -marker.get_left()[0] - self.cell_width,  # the marker is column 0
-                    -marker.get_center()[1] - (line_no - 1) * self.line_height,
-                    0,
-                ]
-            )
-            for g in glyphs:
-                g.shift(shift)
+            line_y = (line_no - 1) * self.line_height
+            glyphs = [
+                _glyph(points, fill, stroke, width, line_y)
+                for points, fill, stroke, width in _line_glyphs(
+                    "".join(markup), self.font, self.font_size, self.cell_width
+                )
+            ]
             i = 0
             for t in toks:
                 n = len(re.sub(r"\s", "", t.text))
@@ -295,9 +291,118 @@ class AnimatedCode(VGroup):
 
         return SurroundingRectangle(self.get(rng), buff=buff, **kwargs)
 
+    # -- edits (backlog 2.6) ----------------------------------------------------------------
+
+    def _like(self, source: str) -> AnimatedCode:
+        """A new AnimatedCode for ``source`` laid out on this code's current grid."""
+        new = AnimatedCode(
+            source,
+            self.language,
+            style=self.style,
+            font=self.font,
+            font_size=self.font_size,
+            line_spacing=self.line_spacing,
+            tab_width=self.tab_width,
+        )
+        # map the new grid onto ours: uniform scale from the step points, then translate
+        scale = np.linalg.norm(self.step_point.get_center() - self.origin_point.get_center()) / (
+            np.linalg.norm(new.step_point.get_center() - new.origin_point.get_center())
+        )
+        new.scale(scale, about_point=new.origin_point.get_center())
+        new.shift(self.origin_point.get_center() - new.origin_point.get_center())
+        return new
+
+    def animate_to(
+        self,
+        source: str,
+        *,
+        mapping: dict[int, int | None] | None = None,
+        lag_ratio: float = 0.0,
+        **kwargs: Any,
+    ) -> CodeEdit:
+        """Animation from this code to ``source``: kept tokens slide, others fade.
+
+        ``mapping`` pins old→new token indices (``None`` = fade out) where repeated
+        tokens make the automatic match ambiguous; see :mod:`manim_stage.code_diff`.
+        """
+        return CodeEdit(self, source, mapping=mapping, lag_ratio=lag_ratio, **kwargs)
+
+    def _offset(self, line: int, col: int) -> int:
+        lines = self.source.split("\n")
+        if not 1 <= line <= len(lines):
+            raise IndexError(f"line {line} is outside the code (1..{len(lines)})")
+        return sum(len(x) + 1 for x in lines[: line - 1]) + (col - 1)
+
+    def _token_offsets(self) -> list[int]:
+        return [self._offset(t.line, t.col) for t in self.tokens]
+
+    def replace(self, rng: CodeRange, text: str, **kwargs: Any) -> CodeEdit:
+        """Replace the characters in ``rng`` with ``text`` (Motion Canvas ``replace``).
+
+        Tokens outside the range are pinned to themselves, so nothing else re-matches.
+        """
+        a = self._offset(*rng.start)
+        end_line = min(rng.end[0], len(self.source.split("\n")))
+        end_col = (
+            rng.end[1] if rng.end[1] < 10**9 else len(self.source.split("\n")[end_line - 1]) + 1
+        )
+        b = self._offset(end_line, end_col)
+        new_source = self.source[:a] + text.expandtabs(self.tab_width) + self.source[b:]
+        delta = len(text.expandtabs(self.tab_width)) - (b - a)
+        new_tokens = tokenize(new_source, self.language, self.style, self.tab_width)
+        new_lines = new_source.split("\n")
+        new_off = {
+            sum(len(x) + 1 for x in new_lines[: t.line - 1]) + t.col - 1: k
+            for k, t in enumerate(new_tokens)
+        }
+        mapping: dict[int, int | None] = {}
+        for i, (t, off) in enumerate(zip(self.tokens, self._token_offsets(), strict=True)):
+            if off + len(t.text) <= a:
+                k = new_off.get(off)
+            elif off >= b:
+                k = new_off.get(off + delta)
+            else:
+                continue
+            if k is not None and new_tokens[k].text == t.text:
+                mapping[i] = k
+        return CodeEdit(self, new_source, mapping=mapping, **kwargs)
+
+    def insert(self, line: int, col: int, text: str, **kwargs: Any) -> CodeEdit:
+        """Insert ``text`` before (line, col)."""
+        return self.replace(CodeRange((line, col), (line, col)), text, **kwargs)
+
+    def remove(self, rng: CodeRange, **kwargs: Any) -> CodeEdit:
+        return self.replace(rng, "", **kwargs)
+
     def __repr__(self) -> str:
         first = self.source.splitlines()[0] if self.source else ""
         return f"AnimatedCode({first[:30]!r}…, {len(self.tokens)} tokens)"
+
+
+@lru_cache(maxsize=4096)
+def _line_glyphs(
+    markup: str, font: str, font_size: float, cell_width: float
+) -> tuple[tuple[Any, Any, Any, float], ...]:
+    """Glyph outlines and colours of one line, in grid space (column 1 at x=0,
+    baseline-centre at y=0), as plain arrays. Cached: an edit re-lays-out only the
+    lines whose text or colours changed, and glyphs never drag Pango/SVG state along."""
+    text = MarkupText(markup, font=font, font_size=font_size)
+    marker, *glyphs = text.submobjects
+    shift = np.array([-marker.get_left()[0] - cell_width, -marker.get_center()[1], 0.0])
+    out = []
+    for g in glyphs:
+        out.append(
+            (g.points + shift, g.fill_rgbas.copy(), g.stroke_rgbas.copy(), float(g.stroke_width))
+        )
+    return tuple(out)
+
+
+def _glyph(points: Any, fill: Any, stroke: Any, width: float, line_y: float) -> VMobject:
+    g = VMobject(stroke_width=width)
+    g.points = points - np.array([0.0, line_y, 0.0])
+    g.fill_rgbas = fill.copy()
+    g.stroke_rgbas = stroke.copy()
+    return g
 
 
 @lru_cache(maxsize=32)
@@ -311,3 +416,125 @@ def _cell_size(font: str, font_size: float) -> tuple[float, float]:
 
 
 __all__ = ["AnimatedCode", "CodeRange", "Token", "register_bundled_fonts", "tokenize"]
+
+
+class CodeEdit(Animation):
+    """Animate an :class:`AnimatedCode` to a new source (Motion Canvas code edits).
+
+    Matched tokens slide (and recolour) to their new grid place, removed tokens fade
+    out, new tokens fade in. When it finishes, the ``AnimatedCode`` *is* the new code:
+    its ``source``, ``tokens`` and ``token_mobjects`` describe the new version, so the
+    next ``highlight``/``find``/``animate_to`` works on it.
+
+    ``lag_ratio`` staggers tokens in reading order of the new code (0 = all at once).
+    ``diff`` (after construction) tells what matched, moved, faded and any ambiguity
+    warnings.
+    """
+
+    def __init__(
+        self,
+        code: AnimatedCode,
+        source: str,
+        *,
+        mapping: dict[int, int | None] | None = None,
+        lag_ratio: float = 0.0,
+        **kwargs: Any,
+    ) -> None:
+        from .code_diff import diff_tokens
+
+        self.code = code
+        self.target = code._like(source)
+        self.diff = diff_tokens(code.tokens, self.target.tokens, mapping=mapping)
+        self._lag = lag_ratio
+        super().__init__(code, **kwargs)
+
+    def create_starting_mobject(self) -> Mobject:
+        return Mobject()  # unused: we keep raw arrays, not a deep copy of the whole code
+
+    def begin(self) -> None:
+        code, tgt, d = self.code, self.target, self.diff
+        n_new = max(len(tgt.tokens), 1)
+        n_old = max(len(code.tokens), 1)
+        # Per glyph: (glyph, points0, points1, fill0, fill1, stroke0, stroke1), no copies
+        self._moves: list[tuple[float, list[tuple]]] = []
+        for o, n in d.matches:
+            src = code.token_mobjects[o].family_members_with_points()
+            dst = tgt.token_mobjects[n].family_members_with_points()
+            keep = src[0].fill_rgbas[0, 3] if src else 1.0  # keep the highlight/dim level
+            rows = []
+            for g0, g1 in zip(src, dst, strict=False):
+                f1, s1 = g1.fill_rgbas.copy(), g1.stroke_rgbas.copy()
+                f1[:, 3] *= keep
+                s1[:, 3] *= keep
+                rows.append(
+                    (
+                        g0,
+                        g0.points.copy(),
+                        g1.points.copy(),
+                        g0.fill_rgbas.copy(),
+                        f1,
+                        g0.stroke_rgbas.copy(),
+                        s1,
+                    )
+                )
+            self._moves.append((n / n_new, rows))
+        self._fade_out = [
+            (code.tokens[o].line / n_old, _alpha_rows(code.token_mobjects[o])) for o in d.deleted
+        ]
+        self._fade_in = []
+        for n in d.inserted:
+            mob = tgt.token_mobjects[n]
+            self._fade_in.append((n / n_new, mob, _alpha_rows(mob)))
+        # new tokens join the group now (drawn as part of it, never added to the scene
+        # separately); faded tokens leave it when the edit finishes
+        code.add(*(m for _, m, _ in self._fade_in))
+        super().begin()
+
+    def _local(self, alpha: float, key: float) -> float:
+        if not self._lag:
+            return alpha
+        span = 1.0 / (1.0 + self._lag)
+        start = key * self._lag * span
+        return float(np.clip((alpha - start) / span, 0.0, 1.0))
+
+    def interpolate_mobject(self, alpha: float) -> None:
+        for key, rows in self._moves:
+            a = self._local(alpha, key)
+            for g, p0, p1, f0, f1, s0, s1 in rows:
+                if len(p0) == len(p1):
+                    g.points = p0 + (p1 - p0) * a
+                elif a >= 1:
+                    g.points = p1.copy()
+                if f0.shape == f1.shape:
+                    g.fill_rgbas = f0 + (f1 - f0) * a
+                if s0.shape == s1.shape:
+                    g.stroke_rgbas = s0 + (s1 - s0) * a
+        for key, rows in self._fade_out:
+            a = self._local(alpha, key)
+            for g, fa, sa in rows:
+                g.fill_rgbas[:, 3] = fa * (1.0 - a)
+                g.stroke_rgbas[:, 3] = sa * (1.0 - a)
+        for key, _mob, rows in self._fade_in:
+            a = self._local(alpha, key)
+            for g, fa, sa in rows:
+                g.fill_rgbas[:, 3] = fa * a
+                g.stroke_rgbas[:, 3] = sa * a
+
+    def finish(self) -> None:
+        super().finish()
+        code, tgt, d = self.code, self.target, self.diff
+        old_for_new = {n: code.token_mobjects[o] for o, n in d.matches}
+        fade_in = {n: m for n, (_, m, _) in zip(d.inserted, self._fade_in, strict=True)}
+        new_mobs = [old_for_new.get(n) or fade_in[n] for n in range(len(tgt.tokens))]
+        code.submobjects = [*new_mobs, code.origin_point, code.step_point]
+        code.token_mobjects = new_mobs
+        code.tokens = tgt.tokens
+        code.source = tgt.source
+
+
+def _alpha_rows(mob: VGroup) -> list[tuple[Any, Any, Any]]:
+    """(glyph, fill alphas, stroke alphas) of a token, for fading without copies."""
+    return [
+        (g, g.fill_rgbas[:, 3].copy(), g.stroke_rgbas[:, 3].copy())
+        for g in mob.family_members_with_points()
+    ]

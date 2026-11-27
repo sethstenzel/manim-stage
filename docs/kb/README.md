@@ -33,7 +33,7 @@ A local, offline reference for **every manim-stage feature and how to use it**. 
 | [Named cues (`self.cue`)](manim-stage/cues.md) | Named, adjustable waits for narration; drag on the timeline (hold/ripple, undo); `cues.json`; validate/bake | Available | Both | F03 |
 | [Narration (voiceover adapter)](manim-stage/narration.md) | `with self.narration(...)`: recorded voiceover + subcaption + bookmarks as draggable cues; word timings; manim-voiceover cache import | Available | Both | F04, F03 |
 | [Audio workspace](manim-stage/audio.md) | Import, drag, trim, gain, fade, mute/solo audio clips (undoable); waveforms; preview playback = render mix | Available | Both | F04 |
-| [`AnimatedCode`](manim-stage/animated-code.md) | Syntax-highlighted code as token mobjects; lines/words/find ranges; highlight; selection boxes | Partial (animated edits: Planned 2.6) | Cairo | F05 |
+| [`AnimatedCode`](manim-stage/animated-code.md) | Syntax-highlighted code as token mobjects; ranges; highlight; selection boxes; animated edits (token diff, moves, overrides) | Available | Cairo | F05 |
 
 ### Manim features we build on (pinned `main@8c258a0`)
 
@@ -66,6 +66,7 @@ A local, offline reference for **every manim-stage feature and how to use it**. 
 | Check what my machine can render (LaTeX, fonts, codecs) | [CLI → doctor](manim-stage/cli.md#commands) |
 | Print a scene's timing without opening the editor | [CLI → timeline](manim-stage/cli.md#quick-start) |
 | Make animations wait for the narration without hand-tuned waits | [Named cues](manim-stage/cues.md#quick-start) |
+| Animate a code edit | [AnimatedCode → animated edits](manim-stage/animated-code.md#animated-edits) |
 | Show code and highlight lines or words | [AnimatedCode](manim-stage/animated-code.md#quick-start) |
 | Narrate with a recording and wait for words in it | [Narration](manim-stage/narration.md#quick-start) |
 | Reuse audio from manim-voiceover | [Narration → reusing manim-voiceover output](manim-stage/narration.md#how-it-works) |

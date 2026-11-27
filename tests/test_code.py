@@ -112,7 +112,7 @@ def test_highlight_dims_everything_else():
             self.add(self.code)
             self.play(self.code.highlight_lines(5), run_time=0.2)
 
-    with tempconfig({"frame_rate": 10, "dry_run": True}):
+    with tempconfig({"frame_rate": 10, "dry_run": True, "disable_caching": True}):
         s = S()
         s.render()
     code = s.code
