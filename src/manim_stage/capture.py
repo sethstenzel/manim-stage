@@ -107,6 +107,36 @@ def _clip_events(scene: Any, scene_name: str, events: list[SceneEvent]) -> list[
     return out
 
 
+def _narration_events(scene: Any, scene_name: str, events: list[SceneEvent]) -> list[SceneEvent]:
+    """Tag the sound and caption of each ``self.narration(...)`` with its name/words."""
+    narrs = getattr(scene, "stage_narrations", []) or []
+    if not narrs:
+        return events
+    out = list(events)
+    for n in narrs:
+        for i, e in enumerate(out):
+            if (
+                e.kind == "sound"
+                and str(e.meta.get("file")) == n["file"]
+                and (e.start_frame == n["start_frame"])
+            ):
+                out[i] = dataclasses.replace(
+                    e,
+                    id=f"{scene_name}:sound:narration:{n['name']}#0",
+                    label=n["name"],
+                    meta={**e.meta, "narration": n["name"], "bookmarks": n["bookmarks"]},
+                )
+            elif (
+                e.kind == "caption" and e.start_frame == n["start_frame"] and (e.label == n["text"])
+            ):
+                out[i] = dataclasses.replace(
+                    e,
+                    id=f"{scene_name}:caption:narration:{n['name']}#0",
+                    meta={**e.meta, "narration": n["name"], "words": n["words"]},
+                )
+    return out
+
+
 def _cue_events(
     scene: Any, scene_name: str, events: list[SceneEvent]
 ) -> tuple[list[SceneEvent], list[str]]:
@@ -297,6 +327,7 @@ def capture(
             warnings.append(f"Ignored unknown Manim timeline entry kind {kind!r}.")
 
     events = _clip_events(scene, scene_name, events)
+    events = _narration_events(scene, scene_name, events)
     events, cue_warnings = _cue_events(scene, scene_name, events)
     warnings += cue_warnings
 

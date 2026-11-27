@@ -244,12 +244,12 @@ class EventPanel(QWidget):
         e = html.escape
         call = {
             "cue": "self.cue(…)",
+            "caption": "self.add_subcaption(…)",
             "play": "self.play(…)",
             "wait": "self.wait(…)",
             "section": "self.next_section(…)",
             "sound": "self.add_sound(…)",
             "animation": "animation in a group",
-            "caption": "subcaption",
         }.get(box.kind, box.kind)
         self.title.setText(f"<b>{e(box.label or box.kind)}</b><br><small>{e(call)}</small>")
         fps = self.fps or 15.0
@@ -313,6 +313,15 @@ class EventPanel(QWidget):
             rows.append(("File", Path(str(box.meta.get("file", ""))).name))
             if box.meta.get("gain") is not None:
                 rows.append(("Gain", f"{box.meta['gain']}"))
+        if box.meta.get("narration"):
+            rows.append(("Narration", str(box.meta["narration"])))
+        if box.meta.get("bookmarks"):
+            marks = ", ".join(f"{k} @ {v:.2f} s" for k, v in box.meta["bookmarks"].items())
+            rows.append(("Bookmarks", marks))
+        if box.meta.get("words"):
+            words = box.meta["words"]
+            shown = " ".join(f"{w[0]}({w[1]:.2f})" for w in words[:12])
+            rows.append(("Words", shown + (" …" if len(words) > 12 else "")))
         if box.source:
             rows.append(("Source", f"{box.source.get('path')}:{box.source.get('line')}"))
         rows.append(("ID", box.id))
