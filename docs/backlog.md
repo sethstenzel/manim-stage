@@ -101,7 +101,7 @@ The editor must cover every Motion Canvas editor capability **and** surface Mani
 |---|---|---|---|
 | 4.1 | Editor plugin SDK: `manim_stage.plugins` entry points, handshake, panels/tracks/inspectors/commands/exporters; sample plugin | ☑ | F11 |
 | 4.2 | Educational helpers: call stack, array/linked list/tree layouts, graph edges, sequence diagrams, trace-driven animation | ☑ | F12 |
-| 4.3 | Interactive demo parameters (editor-time) vs linear export; rendered web playback with chapters | ☐ | F12 |
+| 4.3 | Interactive demo parameters (editor-time) vs linear export; rendered web playback with chapters | ☑ | F12 |
 | 4.4 | Performance pass, migration guide, three third-party-style examples, release packaging, compatibility suite | ☐ | M4 gate |
 
 ## Upstream contributions to propose (spec §12.5)

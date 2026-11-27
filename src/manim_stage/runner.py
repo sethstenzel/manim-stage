@@ -110,6 +110,13 @@ def _used_variables() -> list[dict[str, Any]]:
     return [{"name": n, **var.to_dict()} for n, var in sorted(USED.items())]
 
 
+def _used_params() -> list[dict[str, Any]]:
+    """Demo parameters the scene read (``manim_stage.demo.param``), for the Demo tab."""
+    from .demo import used
+
+    return used()
+
+
 def _user_frame(exc: BaseException, scene_file: Path) -> tuple[str | None, int | None]:
     """Where to point the user: a syntax error's own location, else the innermost
     traceback frame in the scene file, else the innermost frame overall."""
@@ -223,6 +230,7 @@ def _main(argv: list[str] | None = None) -> int:
                 "MANIM_STAGE_CUES",
                 "MANIM_STAGE_AUDIO",
                 "MANIM_STAGE_PROJECT",
+                "MANIM_STAGE_DEMO",
             ):
                 p = os.environ.get(var)
                 if p and Path(p).is_file() and Path(p).resolve() not in deps:
@@ -245,6 +253,7 @@ def _main(argv: list[str] | None = None) -> int:
                     "timeline": timeline.to_dict(),
                     "dependencies": [str(f) for f in deps],
                     "variables": _used_variables(),
+                    "params": _used_params(),
                 }
             )
 
