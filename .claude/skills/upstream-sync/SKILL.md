@@ -22,6 +22,7 @@ Follow `docs/upstream-sync.md` exactly. Summary:
    - `manim`: `uv lock`, fix adapters in `src/manim_stage/_compat.py`, run `uv run pytest` (including golden-frame tests). If tests stay red, report the failures verbatim and revert the pin (`git checkout upstreams.json pyproject.toml uv.lock`); don't commit a red pin.
    - `motion-canvas`: create design notes/issues for Inspire items. Never copy code or assets.
    - Update `docs/capability-audit.md`, ADRs and `docs/backlog.md` where status changed.
+   - Update the knowledge base: `docs/kb/` pages for new/changed/removed upstream features we use or mirror, and a `docs/kb/whats-new.md` entry.
 7. Add a sync-log entry at the top of the log in `docs/upstream-sync.md`.
 8. Commit, then ask the user before pushing / opening the PR (unless they already said to). If the weekly `upstream-sync` issue exists, reference it in the PR.
 

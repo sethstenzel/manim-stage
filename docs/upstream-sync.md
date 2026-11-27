@@ -41,6 +41,7 @@ python scripts/upstream_sync.py bump manim v0.30.0   # re-pin after review
    - **Inspire** (Motion Canvas only) – new behavior worth a Python equivalent → open a design note/issue with acceptance criteria. Describe behavior in our own words.
    - **Ignore** – irrelevant; one line saying why.
 4. **Update artifacts:** `docs/capability-audit.md` rows whose Existing/Partial/Missing status changed, ADRs if a decision is affected, the backlog.
+   Update the **knowledge base** (`docs/kb/`): pages for new, changed or removed upstream features we use or mirror, plus a `docs/kb/whats-new.md` entry.
 5. **Re-pin:** `python scripts/upstream_sync.py bump <name> <ref> [--label TEXT]`. For `manim` this also rewrites the pinned commit in `pyproject.toml`. Prereleases (`a`, `b`, `rc`) may be tested on a branch but are not pinned on `main`. **Temporary exception (ADR-0003):** until Manim 0.30.0 final is released, `manim` is pinned to a reviewed upstream `main` commit (`--label main@<shortsha>`). Once 0.30.0 ships, re-pin to it and restore this rule.
 6. **Manim only – verify:** `uv lock`, then `uv run pytest` (unit + golden-frame regression tests). Fix adapters in `src/manim_stage/_compat.py` only. If tests stay red, revert `upstreams.json`, `pyproject.toml` and `uv.lock`; never commit a red pin.
 7. **Record:** add an entry to the sync log below, open a PR containing pin + log + code changes. Never re-pin without a log entry.

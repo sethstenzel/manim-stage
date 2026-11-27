@@ -8,7 +8,7 @@ Feature IDs refer to `spec.md` §5. ADRs are in `architecture-decisions.md`.
 | # | Item | Status | Notes |
 |---|---|---|---|
 | 0.1 | Repo foundation, upstream pins, sync process | ☑ | ADR-0001/0002 |
-| 0.2 | Capability audit, ADRs 0003–0009, backlog | ☑ | this PR |
+| 0.2 | Capability audit, ADRs 0003–0009, backlog | ☑ | PR #2 |
 | 0.3 | **Owner decision on ADR-0003** (target Manim 0.30/MAIN) | ☑ | accepted 2026-11-26; manim re-pinned to main@8c258a0 |
 | 0.3a | Spike: `Manager.evaluate` timeline + frame parity on Manim main (`spikes/`) | ☑ | frames pixel-identical to CLI; see spikes/README.md |
 | 0.4 | Python package skeleton: `pyproject.toml` (hatchling, uv-pinned Manim), `manim_stage/_compat.py`, pytest, ruff, CI matrix (Win/Linux/macOS × py3.11–3.13) against pinned Manim | ☑ | ADR-0009 |
@@ -17,6 +17,31 @@ Feature IDs refer to `spec.md` §5. ADRs are in `architecture-decisions.md`.
 | 0.7 | **Regression baseline:** golden-frame tests for representative unmodified scenes with Studio disabled; confirm CLI output byte/pixel-identical with manim-stage installed. | ☐ | spec §10.1 |
 | 0.8 | `docs/schemas/` v1 JSON Schemas: `ProjectManifest`, `SceneEvent`, `Cue`, `PreviewMessage`, `EditableProperty`; time model doc (frame index, half-open ranges, 48 kHz audio mapping). | ☐ | spec §8 |
 | 0.9 | M0 gate report: measurements, unsupported scene classes, go/no-go on deterministic replay | ☐ | spec §11 gate |
+| 0.10 | **Local knowledge base, first version** (`docs/kb/`, see "Knowledge base" below): structure, page template, index, example smoke-test harness, first pages for what exists (event capture, runner, upstream sync) | ☐ | requested by owner 2026-11-26 |
+
+## Knowledge base (continuous, requested by owner)
+
+A local, offline knowledge base in `docs/kb/` covering **every feature and how to use it**, kept current on every update.
+
+- **Scope:**
+  - **manim-stage features:** every public API, CLI command, editor capability and file format.
+  - **Manim features we build on or expose:** e.g. `Manager.evaluate`, timeline export, `add_sound`, sections, `Code`. Pages note the pinned Manim commit and renderer limits (Cairo vs OpenGL).
+  - **Motion Canvas reference behaviour** where a manim-stage feature mirrors or exceeds it. Described in our own words; no MC code.
+- **Each page:**
+  - what it is and when to use it;
+  - a minimal runnable example;
+  - options, limitations and unsupported cases, with renderer labels;
+  - status (Existing / Partial / Planned) and the version or commit it was introduced or changed in;
+  - links to the spec feature ID, ADRs and source.
+- **Index:**
+  - `docs/kb/README.md`, by feature and by task ("align narration", "animate a code edit");
+  - `docs/kb/whats-new.md`, newest first.
+- **Kept honest:** every fenced Python example in the KB is smoke-tested in CI (spec §10.10), so stale docs fail the build.
+- **Update rules (definition of done):**
+  1. Every feature PR adds or updates its KB page(s) and a `whats-new.md` entry; no KB update, no merge.
+  2. Every upstream sync (`/upstream-sync`) records new, changed or removed upstream features relevant to us in the KB and in `whats-new.md`.
+  3. KB pages for planned features are marked **Planned** and must not describe behaviour as working until it is.
+- **Later (optional):** an offline static site build (e.g. MkDocs) and an editor help panel served from the same pages.
 
 ## M1 — Studio MVP (P1)
 
