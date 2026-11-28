@@ -2,6 +2,15 @@
 
 All notable changes. Detailed, dated notes live in [`docs/kb/whats-new.md`](docs/kb/whats-new.md); the decision log is in [`PORTING.md`](PORTING.md).
 
+## [Unreleased]
+
+### Added
+- **Feature lessons** (`examples/lessons/`): one short lesson per main feature, based on Manim gallery and Motion Canvas guide examples, rendered in CI.
+- **DNS spoofing explainer** (`examples/dns_spoofing/`): an animated walkthrough of DNS cache poisoning and its defenses.
+
+### Fixed
+- The determinism scan no longer flags a seeded `np.random.default_rng(n)`.
+
 ## [0.1.0] — 2026-11-27
 
 First release. Manim stays the renderer and the source of truth; manim-stage adds an editor and opt-in authoring features. It's pinned to Manim `main@8c258a0` (the 0.30 line).

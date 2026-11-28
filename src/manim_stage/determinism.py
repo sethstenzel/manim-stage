@@ -31,6 +31,7 @@ _ENTROPY = {
     "secrets.token_bytes", "secrets.token_hex", "secrets.randbelow", "secrets.choice",
     "np.random.default_rng", "numpy.random.default_rng",
 }  # fmt: skip
+_SEEDABLE = {"np.random.default_rng", "numpy.random.default_rng"}  # unseeded only if no args
 _RANDOM_PREFIXES = ("random.", "np.random.", "numpy.random.")
 
 
@@ -84,6 +85,8 @@ def scan_source(source: str) -> list[Finding]:
             continue
         if name in _CLOCK:
             findings.append(Finding(node.lineno, name, "reads the wall clock"))
+        elif name in _SEEDABLE and (node.args or node.keywords):
+            continue  # seeded, e.g. np.random.default_rng(7): reproducible
         elif name in _ENTROPY or name.startswith("secrets."):
             findings.append(Finding(node.lineno, name, "uses unseeded OS entropy"))
         elif name.startswith(_RANDOM_PREFIXES) and id(node) in at_import:

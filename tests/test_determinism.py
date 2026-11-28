@@ -54,6 +54,7 @@ def f():
     uuid.uuid4()
     secrets.token_hex()
     rng = np.random.default_rng()
+    seeded = np.random.default_rng(7)   # fine: seeded
 """
     got = [(f.line, f.call) for f in scan_source(src)]
     assert got == [

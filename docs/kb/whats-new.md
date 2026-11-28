@@ -2,6 +2,16 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-28 — feature lessons and a DNS spoofing explainer
+
+- **New:** [feature lessons](tutorials/feature-lessons.md) in `examples/lessons/`: thirteen short lessons, one per main feature, each showing how to use the feature and how to animate with it:
+  - signals, flow and tweening, `AnimatedCode`, cues, narration and sound, theme, inspector, transitions, camera, slides, demo parameters, text and formulas, an algorithm with traces;
+  - most rebuild a Manim gallery example or a Motion Canvas guide's example; differences are listed;
+  - one shared project theme; `lessons.sequence.json` joins four lessons with transitions.
+- **New:** [Motion Canvas equivalents → guides as lessons](reference/motion-canvas-equivalents.md#motion-canvas-guides-as-lessons).
+- **New:** [`examples/dns_spoofing/`](../../examples/dns_spoofing/): a 47-second graphical explainer of DNS cache poisoning in four chapters (normal lookup, cache poisoning, victim redirected, defenses), with eight cues, a `Signal`-driven TTL countdown and a project theme. Walkthrough: [DNS spoofing explained](tutorials/dns-spoofing.md).
+- **Fixed:** the determinism scan no longer warns about a seeded `np.random.default_rng(n)`.
+
 ## 2026-11-27 — HTML docs site
 
 - **New:** these docs are an HTML site, <https://sethstenzel.github.io/manim-stage/>. It includes the KB, the guides, the reports, `PORTING.md`, the changelog and the spec, with search and dark mode.

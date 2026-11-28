@@ -27,6 +27,7 @@ Newest first. One line per decision; details in the linked ADR or PR.
 
 | Date | Decision | Why | Where |
 |---|---|---|---|
+| 2026-11-28 | Teach each feature with a lesson that rebuilds a Motion Canvas guide's example (or a Manim gallery example) in manim-stage's Python API: own words, own code, differences listed (camera rotation, slide pauses, ripple key). Lessons share one project theme and are all rendered in CI | Show ported concepts in use, side by side with the MC idea they replace; keep examples from rotting | PR #42 |
 | 2026-11-27 | Perf: PNG encode on a 2-thread pool per runner (copy frame, bounded queue); no warm runner pool (isolation per ADR-0004). Release: GitHub Releases via tag workflow, wheel smoke-tested on 3 OSes; no PyPI until Manim 0.30 is on PyPI | M4 gate; spec §9 targets | PR #40 |
 | 2026-11-27 | Compatibility suite = corpus of unmodified Manim scenes per feature family, each pixel-compared with `manim render`, plus StageMixin opt-in no-op check; third-party examples use public API only | M4 gate; spec §2.1/§2.5 | PR #39 |
 | 2026-11-27 | Text/LaTeX helpers generate Manim-native calls (`Text(font=)`, `MathTex(tex_to_color_map=, tex_template=)`); project TeX template applied with Manim's `set_default` and restored at tear_down; LaTeX preview in a child process | MF.10; Manim terminology and mechanisms; never block the editor on LaTeX | PR #38 |
@@ -324,7 +325,8 @@ One record per Motion Canvas feature. Status: **Ported** (implemented and tested
   - `.github/workflows/docs.yml` builds it strictly on every PR and deploys it to GitHub Pages on every push to `main`;
   - `release.yml` attaches the built site to each release.
   - A new docs page must be added to `nav` in `mkdocs.yml`, or the build fails.
-- **Determinism:** runner enforces a seed; static scan warns about clock/entropy reads.
+- **Determinism:** runner enforces a seed; static scan warns about clock/entropy reads (seeded `default_rng(n)` is not flagged).
+- **Feature lessons:** a ported feature also gets a lesson in `examples/lessons/` (scene + Studio steps), a row in `docs/kb/tutorials/feature-lessons.md`, and a case in `tests/test_lessons.py`.
 
 ## How this file is maintained
 

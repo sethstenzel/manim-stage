@@ -93,6 +93,8 @@ nav:
       - Tutorials:
           - kb/tutorials/narrated-bubble-sort.md
           - kb/tutorials/multi-scene-lesson.md
+          - kb/tutorials/feature-lessons.md
+          - kb/tutorials/dns-spoofing.md
       - What's new: kb/whats-new.md
       - Changelog: changelog.md
   - Features:
