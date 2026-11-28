@@ -1,0 +1,21 @@
+{
+  "schema": "manim_stage.project",
+  "version": 1,
+  "theme": {
+    "colors": {
+      "background": "#14181F",
+      "primary": "#58C4DD",
+      "secondary": "#5CD0B3",
+      "accent": "#FFC857",
+      "highlight": "#F0AC5F",
+      "success": "#83C167",
+      "warning": "#FF862F",
+      "error": "#FC6255",
+      "text": "#ECEFF4",
+      "muted": "#8A93A6"
+    }
+  },
+  "variables": {
+    "speed": {"type": "number", "value": 1.0, "default": 1.0, "min": 0.25, "max": 4, "description": "pacing multiplier for every lesson"}
+  }
+}

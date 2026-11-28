@@ -1,0 +1,15 @@
+{
+  "schema": "manim_stage.project",
+  "version": 1,
+  "theme": {
+    "colors": {
+      "background": "#0F1720",
+      "primary": "#58C4DD",
+      "accent": "#FFC857",
+      "success": "#83C167",
+      "error": "#FC6255",
+      "muted": "#8A96A3",
+      "text": "#F2F4F7"
+    }
+  }
+}

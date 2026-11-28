@@ -1,0 +1,10 @@
+{
+  "output": "lessons.mp4",
+  "quality": "low_quality",
+  "scenes": [
+    {"file": "08_transitions.py", "scene": "FirstScene"},
+    {"file": "08_transitions.py", "scene": "SecondScene", "transition": "slide_left", "duration": 0.6},
+    {"file": "06_theme.py", "scene": "ThemePalette", "transition": "wipe_up", "duration": 0.6},
+    {"file": "10_slides.py", "scene": "Slides", "transition": "fade", "duration": 0.5}
+  ]
+}

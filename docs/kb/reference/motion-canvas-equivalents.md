@@ -63,3 +63,21 @@ manim-stage keeps Manim's vocabulary. When a Motion Canvas idea is brought in, i
 | Transitions between scenes | Scene transitions built from Manim `Animation`s | M3 |
 | Player / viewport | Viewport | |
 | Editor plugin | Studio plugin (`manim_stage.plugins`) | M4 |
+
+## Motion Canvas guides as lessons
+
+Each Motion Canvas guide's main example, rebuilt in manim-stage as a runnable [feature lesson](../tutorials/feature-lessons.md) (`examples/lessons/`).
+
+| Motion Canvas guide | Lesson | Differences |
+|---|---|---|
+| Signals | `01_signals.py` `RadiusSignal` | `bind` replaces node-property signals |
+| Animation flow | `02_flow.py` `FlowHelpers` | Helpers return Manim `AnimationGroup`/`Succession` |
+| Tweening | `02_flow.py` `Tweening` | Timing functions are Manim `rate_func`s |
+| Code | `03_code.py` `CodeTour` | Moved lines slide instead of fading |
+| Time Events | `04_cues.py` `TimeEvents` | Shift-drag ripples (MC: ripple by default, Shift holds) |
+| Media (audio) | `05_sound.py` `Narrated`, `SoundEffects` | Many clips; narration bookmarks are cues |
+| Project variables | `06_theme.py` `ThemePalette` | Typed variables plus a colour theme |
+| Transitions | `08_transitions.py`, `lessons.sequence.json` | Joined after rendering by `manim-stage compose` |
+| Camera | `09_camera.py` `CenterOn` | No camera rotation in `MovingCameraScene` |
+| Presentation | `10_slides.py` `Slides` | Sections become web-player chapters; no pause-per-slide |
+| LaTeX | `12_text.py` `Formula` | Needs a LaTeX install |
