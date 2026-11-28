@@ -173,3 +173,24 @@ Record of decisions required by the spec (§3, §12.9). Status: Proposed → Acc
     - nodes / layout (flexbox) → Mobject families plus Manim's `arrange`/`next_to`; a flex-style `Layout` helper only if needed (M3).
   - The editor uses Manim's words in the UI (Mobject, Animation, Section, rate_func, …).
   - Every ported concept has a KB page with the MC concept it comes from, the Manim primitive it is built on, and a tested example. The mapping table lives in `docs/kb/reference/motion-canvas-equivalents.md`.
+
+## ADR-0014 — HTML docs site built from the repository Markdown
+
+- **Status:** Accepted (2026-11-27). Owner direction: the docs must be an HTML site, regenerated with every update, bug fix and release.
+- **Decision:**
+  - **Tool:** MkDocs with Material, configured in `mkdocs.yml`. It's Python, so it fits the stack, and it reads the existing Markdown unchanged.
+  - **Source stays Markdown:** the files keep working on GitHub and in the offline KB.
+  - **Hooks adapt the Markdown for the site** (`scripts/docs_hooks.py`):
+    - the repo-root `PORTING.md`, `CHANGELOG.md` and `spec.md` become pages;
+    - links to code and examples go to GitHub;
+    - the `no-run` test marker is stripped;
+    - the footer shows the version.
+  - **Built and published automatically:**
+    - every PR runs a strict build, so a broken link or anchor, or a page missing from `nav`, fails CI;
+    - every push to `main` deploys to GitHub Pages;
+    - every release attaches the built site as a zip, so each version's docs are kept.
+- **Rationale:**
+  - one source of truth;
+  - broken docs are caught in review;
+  - no extra steps for maintainers.
+- **Known risk:** Material for MkDocs reaches end of life on 2027-05-05. Its successor, Zensical, reads `mkdocs.yml`; migrate before then. The hooks are small and would need porting.

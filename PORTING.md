@@ -319,6 +319,11 @@ One record per Motion Canvas feature. Status: **Ported** (implemented and tested
 - **PR flow:** one backlog item per PR; CI on Windows/Linux/macOS × Python 3.11–3.13; merge when green. PR template checklist includes KB and this file.
 - **Regression guard:** golden frames + byte-identical CLI output with manim-stage imported (`tests/test_regression.py`).
 - **Docs kept honest:** every KB code example runs in CI (`tests/test_kb_examples.py`).
+- **HTML docs site (ADR-0014):**
+  - `mkdocs.yml` + `scripts/docs_hooks.py` build `docs/` and `PORTING.md`/`CHANGELOG.md`/`spec.md` into a site;
+  - `.github/workflows/docs.yml` builds it strictly on every PR and deploys it to GitHub Pages on every push to `main`;
+  - `release.yml` attaches the built site to each release.
+  - A new docs page must be added to `nav` in `mkdocs.yml`, or the build fails.
 - **Determinism:** runner enforces a seed; static scan warns about clock/entropy reads.
 
 ## How this file is maintained

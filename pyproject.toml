@@ -45,6 +45,12 @@ dev = [
     "PySide6-Essentials>=6.8; python_version >= '3.12'",
     "ruff>=0.8",
     "sounddevice>=0.5",
+    { include-group = "docs" },  # tests/test_docs_site.py builds the site
+]
+# The HTML docs site (mkdocs.yml, ADR-0014).
+docs = [
+    "mkdocs>=1.6,<2",
+    "mkdocs-material>=9.5,<10",
 ]
 
 [tool.uv.sources]

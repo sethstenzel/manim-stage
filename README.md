@@ -1,6 +1,6 @@
 # manim-stage
 
-Motion Canvas–class authoring for [Manim Community Edition](https://github.com/ManimCommunity/manim): a desktop Studio editor written in Python, a seekable timeline that understands Manim's animations, export through Manim's own CLI, and (coming next) named timing cues for narration, an audio workspace and code-diff animations. It is an **optional Python layer on top of Manim**, not a fork and not a new renderer. Manim's terms and concepts are kept throughout (see [ADR-0013](docs/architecture-decisions.md)).
+Motion Canvas–class authoring for [Manim Community Edition](https://github.com/ManimCommunity/manim): a desktop Studio editor written in Python, a seekable timeline that understands Manim's animations, export through Manim's own CLI, named timing cues for narration, an audio workspace and code-diff animations. It is an **optional Python layer on top of Manim**, not a fork and not a new renderer. Manim's terms and concepts are kept throughout (see [ADR-0013](docs/architecture-decisions.md)).
 
 ![Studio editor](docs/kb/img/timeline-dark.png)
 
@@ -9,6 +9,7 @@ Motion Canvas–class authoring for [Manim Community Edition](https://github.com
 > - Coming from plain Manim or Motion Canvas? Read the [migration guide](docs/migration-guide.md). To install a release, see [docs/release.md](docs/release.md).
 >
 > - Spec: [`spec.md`](spec.md)
+> - **Docs site: <https://sethstenzel.github.io/manim-stage/>** (rebuilt on every change to `main`)
 > - Knowledge base: [`docs/kb/`](docs/kb/README.md)
 > - How Motion Canvas features are ported: [`PORTING.md`](PORTING.md)
 > - Decisions: [`docs/architecture-decisions.md`](docs/architecture-decisions.md)
