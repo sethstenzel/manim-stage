@@ -103,6 +103,7 @@ The editor must cover every Motion Canvas editor capability **and** surface Mani
 | 4.2 | Educational helpers: call stack, array/linked list/tree layouts, graph edges, sequence diagrams, trace-driven animation | ☑ | F12 |
 | 4.3 | Interactive demo parameters (editor-time) vs linear export; rendered web playback with chapters | ☑ | F12 |
 | 4.4 | Performance pass, migration guide, three third-party-style examples, release packaging, compatibility suite | ☑ | M4 gate PASSED: `docs/m4-gate-report.md` |
+| 4.5 | HTML docs site (MkDocs Material) built on every PR, deployed on every push to `main`, attached to releases | ☑ | ADR-0014 |
 
 ## Upstream contributions to propose (spec §12.5)
 

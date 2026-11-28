@@ -29,9 +29,22 @@ From source: `git clone … && uv sync && uv run manim-stage studio examples/bub
    - checks that the tag matches the version;
    - builds and checks the wheel;
    - smoke-tests it on all three OSes;
-   - creates the GitHub Release with the files.
+   - builds the docs site;
+   - creates the GitHub Release with the wheel, the sdist and `manim-stage-docs-vX.Y.Z.zip`.
 
-**PyPI:** not yet. PyPI metadata can't pin a git commit of Manim. Once Manim 0.30 is on PyPI:
+## Docs site
+
+- **Live:** <https://sethstenzel.github.io/manim-stage/>, generated from `docs/` plus `PORTING.md`, `CHANGELOG.md` and `spec.md` ([ADR-0014](architecture-decisions.md)).
+- **Automatic:**
+  - every PR builds it in strict mode (`.github/workflows/docs.yml`);
+  - every push to `main` redeploys it, whether a feature, a bug fix or a release;
+  - each release attaches its own copy. Unzip it and open `index.html`; it works offline.
+- **Locally:** `uv run --only-group docs mkdocs serve`, then open <http://127.0.0.1:8000>. `mkdocs build --strict` writes `site/`.
+- **New page?** Add it to `nav` in `mkdocs.yml`; the strict build fails otherwise.
+
+## PyPI
+
+**Not yet.** PyPI metadata can't pin a git commit of Manim. Once Manim 0.30 is on PyPI:
 - set `manim>=0.30` in `dependencies`;
 - remove `[tool.uv.sources]`;
 - add a trusted-publishing job (`pypa/gh-action-pypi-publish`) to `release.yml`.

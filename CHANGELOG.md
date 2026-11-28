@@ -38,3 +38,4 @@ First release. Manim stays the renderer and the source of truth; manim-stage add
 - **Three third-party-style examples.**
 - **Performance:** PNG encoding overlaps drawing; the first full 1080p30 preview is 36% faster with one worker.
 - **Packaging:** the wheel is smoke-tested on Windows, Linux and macOS; a tag-driven release workflow.
+- **HTML docs site** at <https://sethstenzel.github.io/manim-stage/>, rebuilt on every change to `main`; each release attaches a copy.

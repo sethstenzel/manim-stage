@@ -2,6 +2,16 @@
 
 Newest first. One entry per feature PR or upstream sync. Each entry lists what is new, what changed and what was removed, with links to KB pages.
 
+## 2026-11-27 — HTML docs site
+
+- **New:** these docs are an HTML site, <https://sethstenzel.github.io/manim-stage/>. It includes the KB, the guides, the reports, `PORTING.md`, the changelog and the spec, with search and dark mode.
+- **Rebuilt automatically:**
+  - every PR builds the site strictly; broken links or anchors fail CI;
+  - every push to `main` (feature, bug fix or release) redeploys it;
+  - every GitHub Release attaches a zip of the site for that version.
+- **Fixed:** release notes dropped the last line of the newest `CHANGELOG.md` section.
+- Details: [ADR-0014](../architecture-decisions.md), [installing and releasing](../release.md#docs-site).
+
 ## 2026-11-27 — 0.1.0: performance, migration guide, packaging, M4 gate passed (backlog 4.4)
 
 - **Faster:** preview runners PNG-encode on worker threads, overlapping drawing. The first full 1080p30 preview is 36% faster with one worker ([benchmarks](../benchmarks.md)).

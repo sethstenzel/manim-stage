@@ -1,0 +1,157 @@
+# HTML docs site, built from docs/ plus PORTING.md, CHANGELOG.md and spec.md.
+#   Build:   uv run --only-group docs mkdocs build --strict   (output: site/)
+#   Preview: uv run --only-group docs mkdocs serve
+# CI builds it on every PR (strict: broken links or pages missing from nav fail),
+# deploys it to GitHub Pages on every push to main, and attaches it to each release.
+# Adding a docs page? Add it to `nav` below, or the build fails.
+site_name: manim-stage
+site_description: Motion Canvas-class authoring for Manim
+site_url: https://sethstenzel.github.io/manim-stage/
+repo_url: https://github.com/sethstenzel/manim-stage
+repo_name: sethstenzel/manim-stage
+edit_uri: edit/main/docs/
+docs_dir: docs
+site_dir: site
+strict: true
+
+exclude_docs: |
+  kb/_template.md
+
+hooks:
+  - scripts/docs_hooks.py
+
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+  anchors: warn
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.indexes
+    - navigation.footer
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+    - content.action.edit
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: teal
+      toggle:
+        icon: material/weather-sunny
+        name: Light mode
+  # System fonts: no requests to Google Fonts, and the site works offline.
+  font: false
+  icon:
+    repo: fontawesome/brands/github
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+plugins:
+  - search
+  # Release zips are built with OFFLINE=true, so they can be opened from disk (file://).
+  - offline:
+      enabled: !ENV [OFFLINE, false]
+
+nav:
+  - Home: index.md
+  - Get started:
+      - Installing and releasing: release.md
+      - Migration guide: migration-guide.md
+      - Tutorials:
+          - kb/tutorials/narrated-bubble-sort.md
+          - kb/tutorials/multi-scene-lesson.md
+      - What's new: kb/whats-new.md
+      - Changelog: changelog.md
+  - Features:
+      - Knowledge base: kb/README.md
+      - Studio:
+          - kb/manim-stage/studio-editor.md
+          - kb/manim-stage/timeline.md
+          - kb/manim-stage/inspector.md
+          - kb/manim-stage/library.md
+          - kb/manim-stage/config.md
+          - kb/manim-stage/sections.md
+          - kb/manim-stage/camera.md
+          - kb/manim-stage/text-latex.md
+          - kb/manim-stage/assets.md
+          - kb/manim-stage/export.md
+          - kb/manim-stage/plugins.md
+      - Authoring:
+          - kb/manim-stage/cues.md
+          - kb/manim-stage/narration.md
+          - kb/manim-stage/audio.md
+          - kb/manim-stage/animated-code.md
+          - kb/manim-stage/signals.md
+          - kb/manim-stage/project.md
+          - kb/manim-stage/transitions.md
+          - kb/manim-stage/edu.md
+          - kb/manim-stage/demo-params.md
+          - kb/manim-stage/web-player.md
+      - Engine:
+          - kb/manim-stage/event-capture.md
+          - kb/manim-stage/runner.md
+          - kb/manim-stage/preview-service.md
+          - kb/manim-stage/frame-cache.md
+          - kb/manim-stage/cli.md
+      - Manim features we build on:
+          - kb/manim/evaluate-and-timeline.md
+          - kb/manim/sound-and-sections.md
+  - Reference:
+      - kb/reference/compatibility.md
+      - kb/reference/motion-canvas-equivalents.md
+      - kb/reference/data-formats.md
+      - JSON schemas: schemas/README.md
+      - kb/workflow/regression-tests.md
+      - kb/workflow/upstream-sync.md
+      - Upstream sync process: upstream-sync.md
+      - Benchmarks: benchmarks.md
+  - Project:
+      - How Motion Canvas was ported: porting.md
+      - Specification: spec.md
+      - Architecture decisions: architecture-decisions.md
+      - Backlog: backlog.md
+      - Gate reports:
+          - m0-gate-report.md
+          - m1-gate-report.md
+          - m2-gate-report.md
+          - m3-gate-report.md
+          - m4-gate-report.md
+      - Audits:
+          - capability-audit.md
+          - audit/manim-core.md
+          - audit/manim-features.md
+          - audit/motion-canvas.md
+          - audit/ecosystem.md

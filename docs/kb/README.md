@@ -1,6 +1,6 @@
 # manim-stage knowledge base
 
-A local, offline reference for **every manim-stage feature and how to use it**. It also covers the Manim features we build on, and the Motion Canvas behaviour we mirror. It works without a network connection, and its examples are tested.
+A local, offline reference for **every manim-stage feature and how to use it**, also published as an [HTML site](https://sethstenzel.github.io/manim-stage/). It also covers the Manim features we build on, and the Motion Canvas behaviour we mirror. It works without a network connection, and its examples are tested.
 
 - **New this update:** [whats-new.md](whats-new.md)
 - **How Motion Canvas features were ported (decisions, implementation, process):** [`PORTING.md`](../../PORTING.md)
@@ -138,3 +138,4 @@ A local, offline reference for **every manim-stage feature and how to use it**. 
 2. **Every upstream sync** (`/upstream-sync`) records new, changed or removed upstream features we use or mirror, in the relevant page and in `whats-new.md`.
 3. **Every fenced `python` block is executed by `tests/test_kb_examples.py`.** Mark fragments that must not run (e.g. Planned APIs) as `python no-run`. Examples must be self-contained and fast: low resolution, short scenes.
 4. Pages state status, renderer support and limitations honestly. Link the spec feature ID, ADRs and source files.
+5. **The KB is also published as HTML** at <https://sethstenzel.github.io/manim-stage/> (ADR-0014). Add every new page to `nav` in `mkdocs.yml`; CI's strict build fails on a missing page or a broken link or anchor. Preview locally with `uv run --only-group docs mkdocs serve`.

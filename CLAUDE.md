@@ -26,6 +26,7 @@
 - `docs/backlog.md` — implementation backlog
 - `PORTING.md` — running log of how Motion Canvas features are ported into Manim: decisions, implementations, processes. **Update it in every PR that ports, designs or changes such a feature.**
 - `docs/kb/` — local knowledge base of every feature and its use. **Every feature PR and every upstream sync must update it** (pages + `whats-new.md`); KB examples are smoke-tested.
+- Docs site (ADR-0014): `mkdocs.yml` + `scripts/docs_hooks.py` publish `docs/`, `PORTING.md`, `CHANGELOG.md` and `spec.md` to https://sethstenzel.github.io/manim-stage/ on every push to `main`. Add new pages to `nav`; `uv run --only-group docs mkdocs serve` previews.
 
 ## Dev commands
 - `uv sync` → venv with Manim pinned to the commit in `pyproject.toml` (`[tool.uv.sources]`)

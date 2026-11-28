@@ -2,7 +2,7 @@ name: release
 
 # Runs when a version tag (v0.1.0, …) is pushed. Builds the sdist and wheel, checks the
 # wheel, smoke-installs it on Windows, Linux and macOS with the pinned Manim, then
-# attaches the files to a GitHub Release.
+# attaches the files and a zip of the HTML docs site to a GitHub Release.
 #
 # Not published to PyPI yet: manim-stage needs a Manim commit that isn't on PyPI
 # (ADR-0003), and PyPI metadata can't pin a git commit. Publish to PyPI once Manim
@@ -29,6 +29,13 @@ jobs:
           test "v${VERSION}" = "${GITHUB_REF_NAME}" || { echo "tag ${GITHUB_REF_NAME} != v${VERSION}"; exit 1; }
       - run: uv build
       - run: uv run --no-project python scripts/check_wheel.py dist/*.whl
+      - name: Build the docs site for this release
+        env:
+          NO_MKDOCS_2_WARNING: "1"
+          OFFLINE: "true"  # browsable from disk: open index.html
+        run: |
+          uv run --locked --only-group docs mkdocs build --strict
+          (cd site && zip -qr "../dist/manim-stage-docs-${GITHUB_REF_NAME}.zip" .)
       - uses: actions/upload-artifact@v4
         with:
           name: dist
@@ -88,10 +95,18 @@ jobs:
         with:
           name: dist
           path: dist/
-      - name: Create the release with the wheel and sdist
+      - name: Release notes from CHANGELOG.md
+        # The lines between "## [x.y.z]" and the next "## [" heading (or the end of the file).
+        run: |
+          awk -v v="${GITHUB_REF_NAME#v}" '
+            /^## \[/ { if (found) exit; if (index($0, "## [" v "]") == 1) { found = 1; next } }
+            found { print }
+          ' CHANGELOG.md > notes.md
+          test -s notes.md || { echo "no CHANGELOG.md section for ${GITHUB_REF_NAME}"; exit 1; }
+      - name: Create the release with the wheel, sdist and docs site
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "${GITHUB_REF_NAME}" dist/* \
             --title "manim-stage ${GITHUB_REF_NAME}" \
-            --notes-file <(sed -n "/^## \[${GITHUB_REF_NAME#v}\]/,/^## \[/p" CHANGELOG.md | sed '$d')
+            --notes-file notes.md
